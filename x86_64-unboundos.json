@@ -1,11 +1,10 @@
 {
-  "_comment_target": "Custom target for the UnboundOS bare-metal kernel. CPU is base x86_64; SIMD is NOT statically enabled here. The dispatch table picks tiers at runtime after CPUID/XCR0 probing. Adding `target-feature=+avx2` here would bypass the loader-selected dispatch and is forbidden per CLAUDE.md Section 3.",
   "llvm-target": "x86_64-unknown-none",
   "data-layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
   "arch": "x86_64",
   "target-endian": "little",
-  "target-pointer-width": "64",
-  "target-c-int-width": "32",
+  "target-pointer-width": 64,
+  "target-c-int-width": 32,
   "os": "none",
   "env": "",
   "vendor": "unknown",
@@ -21,7 +20,5 @@
   "tls-model": "initial-exec",
   "frame-pointer": "always",
   "supported-sanitizers": [],
-  "is-builtin": false,
-  "rustc-abi": "x86-softfloat",
-  "_comment_features": "Soft-float and disabled SIMD at the base ABI level. The kernel enables SSE/AVX bits via CR0/CR4/XCR0 manipulation only after CPUID confirms support. SIMD-using crates (notably crates/llm) opt in per-function via #[target_feature] on functions reachable only through the dispatch table."
+  "rustc-abi": "x86-softfloat"
 }

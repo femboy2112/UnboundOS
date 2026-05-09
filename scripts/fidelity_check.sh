@@ -51,7 +51,8 @@ if rustup component list --installed 2>/dev/null | grep -q rust-src; then
     run_gate "cargo build -p kernel (custom target)" \
         cargo build -p kernel \
         --target x86_64-unboundos.json \
-        -Z build-std=core,alloc || true
+        -Z build-std=core,alloc \
+        -Z json-target-spec || true
 else
     echo "[fidelity] skip: kernel build (rust-src not installed)" >&2
 fi

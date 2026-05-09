@@ -14,7 +14,8 @@ Boot the kernel in QEMU and walk the spec §12.4 smoke checklist.
    ```bash
    cargo build -p kernel \
        --target x86_64-unboundos.json \
-       -Z build-std=core,alloc
+       -Z build-std=core,alloc \
+       -Z json-target-spec
    ```
 
 2. Boot in QEMU with serial captured to a log:

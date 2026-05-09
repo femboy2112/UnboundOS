@@ -97,7 +97,7 @@ The standard workflow. Claude Code can run any of these without asking.
 
 ```bash
 # Build the kernel for the custom target
-cargo build -p kernel --target x86_64-unboundos.json -Z build-std=core,alloc
+cargo build -p kernel --target x86_64-unboundos.json -Z build-std=core,alloc -Z json-target-spec
 
 # Run smoke tests in QEMU (captures serial)
 make qemu-headless

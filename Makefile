@@ -33,6 +33,7 @@ kernel:
 	$(CARGO) build -p kernel \
 		--target x86_64-unboundos.json \
 		-Z build-std=core,alloc \
+		-Z json-target-spec \
 		--release
 
 .PHONY: image
