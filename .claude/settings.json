@@ -136,5 +136,33 @@
   },
   "model": {
     "thinking": "auto"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 scripts/hook_pre_graph_runtime.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 scripts/hook_post_address_scan.py"
+          },
+          {
+            "type": "command",
+            "command": "bash scripts/hook_post_cargo_fmt.sh"
+          }
+        ]
+      }
+    ]
   }
 }
