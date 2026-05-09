@@ -15,6 +15,17 @@
 
 #![no_std]
 #![forbid(unsafe_op_in_unsafe_fn)]
+// TODO M0 (spec §13): drop these allows once the 22 §5.6 verifier
+// checks return real errors (`unnecessary_wraps`), the public API
+// gains per-error documentation (`missing_errors_doc`), and the
+// narrative spec-quote comments are converted to fully-backticked
+// references (`doc_markdown`). The lints are appropriate; the code
+// is pre-implementation.
+#![allow(
+    clippy::doc_markdown,
+    clippy::missing_errors_doc,
+    clippy::unnecessary_wraps
+)]
 
 pub mod loader;
 pub mod verifier;
@@ -51,28 +62,28 @@ pub struct GraphRuntimeHandle {
 /// structural variants that the parser surfaces.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum GraphLoadError {
-    BadMagic,                                          // check  1
-    UnsupportedVersion,                                // check  2
-    BadHeaderLength,                                   // check  3
-    BadSectionTable,                                   // check  4
-    NodeCountExceedsLimit,                             // check  5
-    WireCountExceedsLimit,                             // check  6
-    NodeIndexUnresolved { node_id: u32 },              // check  7
-    WireEndpointUnresolved { wire_id: u32 },           // check  8
-    PinIndexOutOfRange { node_id: u32, pin_index: u16 },// check 9
-    WireTypeMismatch { wire_id: u32 },                 // check 10
-    UnknownNodeType { node_id: u32, type_id: u32 },    // check 11
-    UndeclaredCapability { capability_id: u32 },       // check 12
-    UnbrokenCycle { sample_node_id: u32 },             // check 13
-    PayloadSizeUnbounded { wire_id: u32 },             // check 14
-    GraphArenaBudgetExceeded { required: u64 },        // check 15
-    ModelRefUnresolved { ref_index: u32 },             // check 16
-    ChecksumMismatch { section_index: u32 },           // check 17
-    UiLayoutInvalid,                                   // check 18
-    MissingConstantBlob { node_id: u32 },              // check 19
-    ConstantBlobLayoutBad { node_id: u32 },            // check 20
-    SchedulingSectionMissing,                          // check 21
-    OpaqueResourceSyntaxBad { ref_index: u32 },        // check 22
+    BadMagic,                                            // check  1
+    UnsupportedVersion,                                  // check  2
+    BadHeaderLength,                                     // check  3
+    BadSectionTable,                                     // check  4
+    NodeCountExceedsLimit,                               // check  5
+    WireCountExceedsLimit,                               // check  6
+    NodeIndexUnresolved { node_id: u32 },                // check  7
+    WireEndpointUnresolved { wire_id: u32 },             // check  8
+    PinIndexOutOfRange { node_id: u32, pin_index: u16 }, // check 9
+    WireTypeMismatch { wire_id: u32 },                   // check 10
+    UnknownNodeType { node_id: u32, type_id: u32 },      // check 11
+    UndeclaredCapability { capability_id: u32 },         // check 12
+    UnbrokenCycle { sample_node_id: u32 },               // check 13
+    PayloadSizeUnbounded { wire_id: u32 },               // check 14
+    GraphArenaBudgetExceeded { required: u64 },          // check 15
+    ModelRefUnresolved { ref_index: u32 },               // check 16
+    ChecksumMismatch { section_index: u32 },             // check 17
+    UiLayoutInvalid,                                     // check 18
+    MissingConstantBlob { node_id: u32 },                // check 19
+    ConstantBlobLayoutBad { node_id: u32 },              // check 20
+    SchedulingSectionMissing,                            // check 21
+    OpaqueResourceSyntaxBad { ref_index: u32 },          // check 22
 
     // Structural failures from the parser, surfaced as load errors.
     ParseTruncated,

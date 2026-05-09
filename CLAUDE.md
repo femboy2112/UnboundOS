@@ -2,7 +2,7 @@
 
 UnboundOS is a single-address-space, bare-metal x86_64 dataflow operating environment.
 The primary execution unit is a **verified executable graph**, not a process or thread.
-Authoritative spec: `docs/UnboundOS_Tech_Spec_v2_1_1.pdf` (referenced as "spec" below).
+Authoritative spec: `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf` (referenced as "spec" below).
 
 This file is loaded by Claude Code on every session. It is the binding contract for all
 work in this repo. When the spec and this file conflict, the spec wins; flag the conflict.
@@ -66,20 +66,24 @@ unboundos/
 ├── Cargo.toml                        # Workspace
 ├── rust-toolchain.toml               # Pinned nightly + rust-src
 ├── .gitignore
-├── targets/
-│   └── x86_64-unboundos.json         # Custom target spec for no_std kernel
+├── x86_64-unboundos.json             # Custom target spec for no_std kernel
 ├── kernel/                           # The unikernel crate
 │   ├── Cargo.toml
 │   └── src/
 │       ├── main.rs                   # _start entry, IDT install, heartbeat
 │       └── ...
+├── crates/
+│   ├── umod/                         # UMOD persistent format types
+│   ├── umdl/                         # UMDL model package format
+│   ├── graph/                        # Verifier + loader (single GraphRuntime gate)
+│   └── llm/                          # Tensor dispatch table + LLM subsystem
 ├── docs/
-│   └── UnboundOS_Tech_Spec_v2_1_1.pdf
-├── fixtures/
-│   ├── golden/                       # Golden .MOD and .UMDL test artifacts
-│   └── fuzz/                         # Parser fuzz corpora
-├── tools/
-│   └── address-scan/                 # Persistent-pointer leakage scanner
+│   └── UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf
+├── tests/
+│   ├── golden_graphs/                # Golden .MOD test artifacts (registry.toml)
+│   ├── golden_models/                # Golden .UMDL test artifacts
+│   └── fuzz_corpus/                  # Parser fuzz corpora (umod/, umdl/)
+├── scripts/                          # fidelity_check.sh, address_scan.py, qemu.sh, …
 └── .claude/
     ├── settings.json                 # Permissions and env
     ├── agents/                       # Specialized subagents
@@ -93,27 +97,19 @@ The standard workflow. Claude Code can run any of these without asking.
 
 ```bash
 # Build the kernel for the custom target
-cargo build -p kernel --target targets/x86_64-unboundos.json -Z build-std=core,compiler_builtins
+cargo build -p kernel --target x86_64-unboundos.json -Z build-std=core,alloc -Z build-std-features=compiler-builtins-mem -Z json-target-spec
 
 # Run smoke tests in QEMU (captures serial)
-make qemu-smoke
-
-# CPU profile probe (proves AVX is not assumed)
-make qemu-no-avx
-make qemu-scalar
+make qemu-headless
 
 # Lint the kernel for std leakage
-cargo clippy -p kernel --target targets/x86_64-unboundos.json
+cargo clippy --workspace --all-targets -- -D warnings
 
 # Address-scan all persistent fixtures
-python3 tools/address-scan/scan.py fixtures/
+python3 scripts/address_scan.py tests/golden_graphs tests/golden_models
 
-# Parser fuzz
-make parser-fuzz-umod
-make parser-fuzz-umdl
-
-# Golden graph regression
-make golden-graphs
+# Aggregate fidelity gate sweep (the canonical pre-commit check)
+make fidelity
 ```
 
 If `make` targets are missing, propose a `Makefile` patch rather than improvising

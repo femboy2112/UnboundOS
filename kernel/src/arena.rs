@@ -2,8 +2,16 @@
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ArenaId {
-    Boot, Kernel, Graph, Scratch,
-    ModelWeight, Inference, KvCache, Tokenizer, Sampler, ScratchTensor,
+    Boot,
+    Kernel,
+    Graph,
+    Scratch,
+    ModelWeight,
+    Inference,
+    KvCache,
+    Tokenizer,
+    Sampler,
+    ScratchTensor,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
