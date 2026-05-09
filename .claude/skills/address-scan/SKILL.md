@@ -1,6 +1,6 @@
 ---
 name: address-scan
-description: Run the persistent-pointer leakage scanner (tools/address-scan/scan.py) over .MOD/.UMDL fixtures. Spec §6.10 and §14.1 require persistent files to contain no raw runtime addresses. Use before committing any new fixture, after any UMOD/UMDL emit code change, and as part of /fidelity-check. Reports flagged byte sequences resembling x86_64 kernel virtual addresses.
+description: Run the persistent-pointer leakage scanner (scripts/address_scan.py) over .MOD/.UMDL fixtures. Spec §6.10 and §14.1 require persistent files to contain no raw runtime addresses. Use before committing any new fixture, after any UMOD/UMDL emit code change, and as part of /fidelity-check. Reports flagged byte sequences resembling x86_64 kernel virtual addresses.
 argument-hint: "[path]"
 allowed-tools: Read, Bash
 ---
@@ -12,13 +12,13 @@ Scan persistent artifacts for raw-pointer leakage.
 ## Procedure
 
 1. Resolve `$ARGUMENTS`:
-   - empty → scan `fixtures/`
+   - empty → scan `tests/golden_graphs tests/golden_models`
    - directory → scan recursively
    - file → scan that file
 
 2. Run the scanner:
    ```bash
-   python3 tools/address-scan/scan.py "$path"
+   python3 scripts/address_scan.py "$path"
    ```
 
 3. The scanner flags 8-byte little-endian values matching canonical x86_64 patterns:
@@ -36,10 +36,12 @@ Scan persistent artifacts for raw-pointer leakage.
    ```
 
 5. If `FLAGGED` and the affected file is a release-track fixture (under
-   `fixtures/golden/`), this is a `BLOCK` for spec §6.10 / §14.1.
+   `tests/golden_graphs/` or `tests/golden_models/`), this is a `BLOCK` for spec
+   §6.10 / §14.1.
 
-   If the affected file is a fuzz fixture (under `fixtures/fuzz/suspicious-pointers/`),
-   this is `EXPECTED` — those fixtures are intentionally suspicious.
+   If the affected file is a fuzz fixture (under
+   `tests/fuzz_corpus/suspicious-pointers/`), this is `EXPECTED` — those fixtures
+   are intentionally suspicious.
 
 ## Notes
 

@@ -52,7 +52,7 @@ Run the full spec §5.6 verifier checklist on `$ARGUMENTS`. The path may be a si
 4. After per-file verdicts, also run the address-scan to catch persistent-pointer
    leakage (spec §6.10):
    ```bash
-   python3 tools/address-scan/scan.py <path>
+   python3 scripts/address_scan.py <path>
    ```
    Include its output as a separate section.
 

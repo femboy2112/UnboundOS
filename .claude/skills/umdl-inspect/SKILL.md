@@ -83,7 +83,7 @@ Dump and validate a `.UMDL` model package symbolically.
 
 7. Run the address-scan on the `.UMDL`:
    ```bash
-   python3 tools/address-scan/scan.py "$path"
+   python3 scripts/address_scan.py "$path"
    ```
    Persistent files MUST NOT contain raw runtime addresses (spec §10.4, §6.10).
    Flagged values are a fail.

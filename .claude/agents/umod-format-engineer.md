@@ -85,7 +85,7 @@ pub struct UmodNodeDescriptor {
 ```
 
 Integration tests SHOULD scan emitted `.MOD` files for byte sequences resembling
-canonical kernel virtual addresses (use `tools/address-scan/scan.py`) and reject
+canonical kernel virtual addresses (use `scripts/address_scan.py`) and reject
 artifacts that appear to contain live addresses.
 
 ## External references (spec §6.8)
@@ -144,8 +144,8 @@ When asked to implement, edit, or audit UMOD code:
    against file size before any read.
 5. Provide structured `GraphLoadError` variants — one per check in spec §5.6 and §6.9 —
    so the verifier can report precisely.
-6. After every change, run `python3 tools/address-scan/scan.py fixtures/golden/`.
-7. Add or update golden fixtures under `fixtures/golden/` to cover new format paths.
+6. After every change, run `python3 scripts/address_scan.py tests/golden_graphs tests/golden_models`.
+7. Add or update golden fixtures under `tests/golden_graphs/` to cover new format paths.
 
 ## Output
 

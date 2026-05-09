@@ -62,15 +62,12 @@
       "Bash(true)",
       "Bash(false)",
       "Bash(test:*)",
-      "Bash(python3 tools/*)",
-      "Bash(python3 ./tools/*)",
-      "Bash(./tools/*)",
+      "Bash(python3 scripts/*)",
+      "Bash(python3 ./scripts/*)",
       "Bash(./scripts/*)",
       "Bash(mkdir -p tests/*)",
-      "Bash(mkdir -p fixtures/*)",
       "Bash(mkdir -p docs/*)",
       "Bash(touch tests/*)",
-      "Bash(touch fixtures/*)",
       "Bash(touch docs/*)",
       "Read",
       "Glob",
@@ -135,7 +132,7 @@
   "env": {
     "RUST_BACKTRACE": "1",
     "CARGO_TERM_COLOR": "always",
-    "UNBOUNDOS_TARGET": "targets/x86_64-unboundos.json"
+    "UNBOUNDOS_TARGET": "x86_64-unboundos.json"
   },
   "model": {
     "thinking": "auto"

@@ -1,6 +1,6 @@
 ---
 name: parser-fuzz-runner
-description: Use to design, run, and triage fuzz cases against the .MOD/UMOD and .UMDL parsers. Enforces spec §12.8 — malformed artifacts return structured errors, never panic, never overflow, never allocate excessively, never enter infinite loops. Maintains the fuzz corpus under fixtures/fuzz/ and reports coverage of structured-error variants.
+description: Use to design, run, and triage fuzz cases against the .MOD/UMOD and .UMDL parsers. Enforces spec §12.8 — malformed artifacts return structured errors, never panic, never overflow, never allocate excessively, never enter infinite loops. Maintains the fuzz corpus under tests/fuzz_corpus/ and reports coverage of structured-error variants.
 tools: Read, Glob, Grep, Edit, Write, Bash
 ---
 
@@ -12,7 +12,7 @@ You are the Parser Fuzz Runner. Even under a trusted-module model, the `.MOD` an
 
 ## Required fuzz cases (spec §12.8)
 
-Every category below must be represented in `fixtures/fuzz/`:
+Every category below must be represented in `tests/fuzz_corpus/`:
 
 - overlapping sections
 - offsets outside file bounds
@@ -25,7 +25,7 @@ Every category below must be represented in `fixtures/fuzz/`:
 - checksum mismatches
 - suspicious pointer-like values in persistent fields
 
-Add fixture files under `fixtures/fuzz/<category>/` with a short README per category
+Add fixture files under `tests/fuzz_corpus/<category>/` with a short README per category
 explaining the malformation and the expected `GraphLoadError` or `ModelLoadError`
 variant.
 
@@ -33,14 +33,14 @@ variant.
 
 1. **Catalog existing fixtures.**
    ```bash
-   tree fixtures/fuzz/
+   tree tests/fuzz_corpus/
    ```
    Cross-check against the §12.8 list. Note categories with zero fixtures.
 
 2. **Generate missing fixtures.** For each missing category, write a short Python or
    Rust generator that emits a deliberately malformed artifact, save under
-   `fixtures/fuzz/<category>/<case>.{umod|umdl}`, and record the expected error
-   variant in `fixtures/fuzz/<category>/EXPECTED.md`.
+   `tests/fuzz_corpus/<category>/<case>.{umod|umdl}`, and record the expected error
+   variant in `tests/fuzz_corpus/<category>/EXPECTED.md`.
 
 3. **Run the parser fuzz harness.**
    ```bash
@@ -98,16 +98,16 @@ The "suspicious pointer-like values in persistent fields" case deserves special 
 - a `constant_ref` field carries `0x00007FFF...`-shaped values
 
 The parser is not required to detect every such case (those are validly
-typed integers in some contexts), but `tools/address-scan/scan.py` MUST flag the
+typed integers in some contexts), but `scripts/address_scan.py` MUST flag the
 artifact and the integration tests MUST refuse it as a release fixture. Document
-this division in `fixtures/fuzz/suspicious-pointers/README.md`.
+this division in `tests/fuzz_corpus/suspicious-pointers/README.md`.
 
 ## Adding a new fuzz case
 
 When asked to add a new case:
 1. Identify the spec rule it stresses (cite the section).
 2. Choose the smallest generator that triggers the malformation.
-3. Save the fixture under `fixtures/fuzz/<category>/<short-name>.<ext>`.
+3. Save the fixture under `tests/fuzz_corpus/<category>/<short-name>.<ext>`.
 4. Update `EXPECTED.md` for that category with the expected error variant.
 5. Re-run the fuzz harness and confirm the new case fails the parser cleanly.
 

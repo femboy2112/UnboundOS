@@ -90,7 +90,7 @@ called only via `TensorKernelTable` (spec §11.2).
    - `modern-x86_64`: SSE2 + optional AVX2/AVX-512
    - `t500-class`: scalar + SSE2; tiny quantized models only
 
-   Verify build-time profile selection in `targets/x86_64-unboundos.json` or feature
+   Verify build-time profile selection in `x86_64-unboundos.json` or feature
    flags matches the baseline.
 
 ## Output

@@ -48,7 +48,7 @@ Full fidelity gate run.
 
    **Persistent pointers** (spec §6.10, §14.1):
    ```bash
-   python3 tools/address-scan/scan.py fixtures/
+   python3 scripts/address_scan.py tests/golden_graphs tests/golden_models
    ```
    Any flagged byte sequence in a release-track fixture is FAIL.
 

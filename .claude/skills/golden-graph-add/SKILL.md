@@ -1,6 +1,6 @@
 ---
 name: golden-graph-add
-description: Add a new golden graph fixture under fixtures/golden/. Constructs a symbolic UMOD buffer, runs it through the verifier, and registers it in the golden-graph test suite. Never builds a runtime graph directly. Use when adding a new test case to the spec §12.7 minimum suite or extending coverage.
+description: Add a new golden graph fixture under tests/golden_graphs/. Constructs a symbolic UMOD buffer, runs it through the verifier, and registers it in the golden-graph test suite. Never builds a runtime graph directly. Use when adding a new test case to the spec §12.7 minimum suite or extending coverage.
 argument-hint: <name> [description]
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash
 ---
@@ -23,7 +23,7 @@ Add a new golden graph fixture. The minimum suite (spec §12.7):
 
 1. Resolve `<name>` from `$ARGUMENTS`. Sanitize to `[a-z0-9_-]`. Path:
    ```
-   fixtures/golden/<name>/
+   tests/golden_graphs/<name>/
        graph.umod          # the binary fixture
        README.md           # what the fixture exercises
        expected.json       # expected verifier verdict + node firing trace
@@ -35,16 +35,16 @@ Add a new golden graph fixture. The minimum suite (spec §12.7):
 3. Build the symbolic UMOD buffer using the host-side builder:
    ```bash
    cargo run -p unbound-tools --bin umod-build -- \
-       --spec fixtures/golden/<name>/spec.toml \
-       --out fixtures/golden/<name>/graph.umod
+       --spec tests/golden_graphs/<name>/spec.toml \
+       --out tests/golden_graphs/<name>/graph.umod
    ```
    If the builder is not yet implemented, write a small Python or Rust script under
-   `fixtures/golden/<name>/build.py` that emits the bytes per the format in
+   `tests/golden_graphs/<name>/build.py` that emits the bytes per the format in
    CLAUDE.md (UMOD layout). Commit the script alongside the fixture.
 
 4. Run the fixture through the verifier:
    ```
-   /verify-graph fixtures/golden/<name>/graph.umod
+   /verify-graph tests/golden_graphs/<name>/graph.umod
    ```
    The expected verdict is one of:
    - `READY` for valid fixtures
@@ -54,7 +54,7 @@ Add a new golden graph fixture. The minimum suite (spec §12.7):
    Record the expected verdict in `expected.json`.
 
 5. Register the fixture in the test harness:
-   - Append to `kernel/tests/golden_graphs.rs` (or wherever golden tests live).
+   - Append to `crates/umod/tests/golden_graphs.rs` (or wherever golden tests live).
    - The test loads the fixture, runs the verifier, and asserts the expected
      verdict matches.
 
@@ -65,7 +65,7 @@ Add a new golden graph fixture. The minimum suite (spec §12.7):
 
 7. Run the address-scan to confirm the new fixture contains no persistent pointers:
    ```bash
-   python3 tools/address-scan/scan.py fixtures/golden/<name>/
+   python3 scripts/address_scan.py tests/golden_graphs/<name>/
    ```
 
 8. Output:
@@ -74,7 +74,7 @@ Add a new golden graph fixture. The minimum suite (spec §12.7):
    # Golden Graph Added — <name>
 
    ## Fixture
-   - path: fixtures/golden/<name>/graph.umod
+   - path: tests/golden_graphs/<name>/graph.umod
    - size: <bytes>
    - graph stable ID: 0x<hex>
 
@@ -88,7 +88,7 @@ Add a new golden graph fixture. The minimum suite (spec §12.7):
    clean | flagged: <details>
 
    ## Test registration
-   - kernel/tests/golden_graphs.rs: line <n>
+   - crates/umod/tests/golden_graphs.rs: line <n>
    ```
 
 ## Rules

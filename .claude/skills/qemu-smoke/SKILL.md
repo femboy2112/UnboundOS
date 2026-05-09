@@ -13,8 +13,8 @@ Boot the kernel in QEMU and walk the spec §12.4 smoke checklist.
 1. Clean build for the custom target:
    ```bash
    cargo build -p kernel \
-       --target targets/x86_64-unboundos.json \
-       -Z build-std=core,compiler_builtins
+       --target x86_64-unboundos.json \
+       -Z build-std=core,alloc
    ```
 
 2. Boot in QEMU with serial captured to a log:
