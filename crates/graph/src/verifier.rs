@@ -56,35 +56,75 @@ fn check_version(_bytes: &[u8]) -> Result<(), GraphLoadError> {
     Ok(())
 }
 
-fn check_header_length(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_section_table(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_node_count(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_wire_count(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_node_indices(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_wire_endpoints(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_pin_indices(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_wire_types(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_node_types(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_capabilities(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
+fn check_header_length(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_section_table(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_node_count(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_wire_count(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_node_indices(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_wire_endpoints(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_pin_indices(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_wire_types(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_node_types(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_capabilities(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
 
 /// Check 13. Reject any cycle that does not pass through a node
 /// tagged with `NodeFlags::CYCLE_BREAK` (DelayOneTick, RegisterNode,
 /// KVCacheNode, StateCellNode, FrameBufferNode, …; spec §5.10).
-fn check_no_unbroken_cycles(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
+fn check_no_unbroken_cycles(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
 
-fn check_payload_sizes(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_graph_arena_budget(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_model_refs(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_checksums(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_ui_layout(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_constant_blobs_exist(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_constant_blob_layouts(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
-fn check_scheduling_section(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
+fn check_payload_sizes(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_graph_arena_budget(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_model_refs(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_checksums(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_ui_layout(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_constant_blobs_exist(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_constant_blob_layouts(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
+fn check_scheduling_section(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
 
 /// Check 22. Every external reference must use the approved
 /// opaque-resource grammar (spec §6.8). Delegates to the umod crate's
 /// `parse_resource_ref`, which rejects POSIX paths.
-fn check_opaque_resource_syntax(_bytes: &[u8]) -> Result<(), GraphLoadError> { Ok(()) }
+fn check_opaque_resource_syntax(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {

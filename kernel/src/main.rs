@@ -15,6 +15,12 @@
 #![no_std]
 #![no_main]
 #![forbid(unsafe_op_in_unsafe_fn)]
+// TODO M0/M1 (spec §13): drop this allow once the boot path, IDT,
+// and arena allocator stop being stubs and the SimdTier variants
+// are constructed by `cpu::detect_features`. The scaffolding types
+// (ArenaId, AllocError, the non-Scalar SimdTier variants) are
+// declared ahead of their first use.
+#![allow(dead_code)]
 
 use core::panic::PanicInfo;
 
