@@ -16,12 +16,13 @@
 #![no_main]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![feature(abi_x86_interrupt)]
-// TODO M0/M1 (spec §13): drop this allow once the boot path, IDT,
-// and arena allocator stop being stubs and the SimdTier variants
-// are constructed by `cpu::detect_features`. The scaffolding types
-// (ArenaId, AllocError, the non-Scalar SimdTier variants, the
-// boot_diag snapshot reader, idt::is_installed, etc.) are declared
-// ahead of their first use.
+// TODO M0/M1 (spec §13): drop this allow once the remaining
+// scaffolding types start being constructed. The CPU-feature path
+// is now real (§3.3/§3.4), so all `SimdTier` variants are reached
+// through `CpuFeatures::intended_tier` and `enable_math_features`.
+// The remaining unused declarations are `ArenaId`, `AllocError`,
+// the `boot_diag::snapshot` reader, `idt::is_installed`, etc., all
+// staged ahead of their first use.
 #![allow(dead_code)]
 // Kernel idiom: bit-level descriptor pack/unpack relies on
 // intentional truncating casts and lossy field widths. Pedantic

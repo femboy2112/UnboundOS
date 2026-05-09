@@ -45,8 +45,13 @@ pub unsafe fn run() -> ! {
     //    §1.6 heartbeat order — BOOT_BEGIN, CPU_PROFILE, MEMMAP_OK,
     //    IDT_OK, BOOT_OK — is preserved). CPUID is read-only and does
     //    not raise interrupts, so executing it before the IDT is safe.
-    let tier = cpu::detect_features();
-    heartbeat::emit_kv_str("UNBOUNDOS_CPU_PROFILE", tier.as_str());
+    //    The intended tier is what `enable_math_features` will activate
+    //    in step 10; the heartbeat reports it pre-enable so that an
+    //    early fault in the enable path still has its CPU profile on
+    //    the wire.
+    let features = cpu::detect_features();
+    let intended_tier = features.intended_tier();
+    heartbeat::emit_kv_str("UNBOUNDOS_CPU_PROFILE", intended_tier.as_str());
 
     // 7. Ingest memory map (§3.2 step 7).
     // TODO M1 (spec §3.1, §4.2): consume the Limine memory-map
@@ -69,10 +74,12 @@ pub unsafe fn run() -> ! {
 
     // 10. Enable permitted SIMD/FPU state (§3.2 step 10).
     // SAFETY: cpu::enable_math_features is the sole CR0/CR4/XCR0
-    // writer. detect_features ran in step 9 above; tier is honest.
-    unsafe {
-        cpu::enable_math_features(tier);
-    }
+    // writer. detect_features ran in step 9 above; `features` is
+    // honest. On a conformant CPU the achieved tier equals the
+    // intended tier emitted in CPU_PROFILE; debug builds assert it.
+    let active_tier = unsafe { cpu::enable_math_features(features) };
+    debug_assert_eq!(active_tier, intended_tier);
+    let _ = active_tier;
 
     // 11. Initialize framebuffer if available (§3.2 step 11).
     // TODO M2 (spec §3.7, §3.9): once framebuffer init succeeds,
