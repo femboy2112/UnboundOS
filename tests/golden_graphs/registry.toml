@@ -1,0 +1,37 @@
+# Golden graph fixture registry.
+#
+# Each [[fixtures]] entry corresponds to a `.umod` file in this
+# directory. The harness in `crates/umod/tests/golden_graphs.rs`
+# enumerates this list and asserts each fixture's verifier outcome
+# matches `expected`.
+#
+# Add new entries via the /golden-graph-add skill, never by editing
+# bytes directly. The skill builds via the host-side UMOD builder
+# and runs the verifier before the entry is committed.
+#
+# `expected` values:
+#   "verifies"                    — all 22 spec §5.6 checks pass
+#   "rejects:<GraphLoadError>"    — verifier rejects with the named
+#                                   error variant. Examples:
+#                                     rejects:UnbrokenCycle
+#                                     rejects:WireTypeMismatch
+#                                     rejects:UnknownNodeType
+#                                     rejects:OpaqueResourceSyntaxBad
+
+# Positive fixtures — spec §12.7 minimum suite.
+# (Add as the host builder lands. Until then, this file is the schema
+# only; the harness reads zero entries and the test passes vacuously.)
+
+# Example positive entry (uncomment and add the .umod file when ready):
+# [[fixtures]]
+# name = "single-pulse"
+# path = "single-pulse.umod"
+# expected = "verifies"
+# notes = "PulseSource → CounterSink. Smallest non-trivial graph."
+
+# Example negative entry:
+# [[fixtures]]
+# name = "invalid-cycle"
+# path = "invalid-cycle.umod"
+# expected = "rejects:UnbrokenCycle"
+# notes = "Combinational cycle without a CYCLE_BREAK node — must reject."

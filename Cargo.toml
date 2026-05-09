@@ -1,0 +1,41 @@
+[workspace]
+resolver = "2"
+members = [
+    "kernel",
+    "crates/umod",
+    "crates/umdl",
+    "crates/graph",
+    "crates/llm",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.78"
+license = "Apache-2.0"
+authors = ["UnboundOS Architecture and Core Systems Division"]
+publish = false
+
+[workspace.lints.rust]
+# Forbid uncovered unsafe usage. Every unsafe block carries a SAFETY: comment.
+unsafe_op_in_unsafe_fn = "forbid"
+
+[workspace.lints.clippy]
+# Strict lint floor. CI runs `clippy --workspace -- -D warnings`.
+all = "deny"
+pedantic = "warn"
+
+# Release profile for the kernel: no panic unwinding, small code size.
+[profile.release]
+panic = "abort"
+lto = "thin"
+codegen-units = 1
+opt-level = 3
+debug = "line-tables-only"
+strip = "none"   # keep symbols for SSOD RIP resolution
+
+[profile.dev]
+panic = "abort"
+opt-level = 1
+debug = true
+overflow-checks = true

@@ -1,0 +1,24 @@
+[package]
+name = "kernel"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+umod = { path = "../crates/umod" }
+umdl = { path = "../crates/umdl" }
+graph = { path = "../crates/graph" }
+llm = { path = "../crates/llm" }
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "kernel"
+path = "src/main.rs"
+test = false
+bench = false
+doc = false

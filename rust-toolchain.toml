@@ -1,0 +1,8 @@
+# Pinned toolchain for UnboundOS. nightly is required for build-std and
+# for x86_64-specific intrinsics that are not yet stable on no_std.
+# Bump deliberately and run /fidelity-check immediately after.
+[toolchain]
+channel = "nightly-2026-04-15"
+components = ["rust-src", "rustfmt", "clippy", "llvm-tools-preview"]
+profile = "minimal"
+targets = []

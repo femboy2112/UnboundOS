@@ -1,0 +1,38 @@
+# UnboundOS Golden Model Fixtures
+
+Tiny `.UMDL` model packages used by the umdl-llm-engineer subagent's
+reference test sweep (spec §10.13). These are intentionally small —
+fixed weights, deterministic outputs — so every backend tier
+(scalar / SSE2 / AVX / AVX2 / AVX-512) can be cross-validated against
+the same inputs.
+
+Files in this directory are produced by the host-side conversion
+tools (out of scope for the bare-metal runtime crate). Validate them
+with `/umdl-inspect` and `/address-scan` after every regeneration.
+
+## Suggested layout
+
+```
+tests/golden_models/
+├── tiny-q4-bpe/
+│   ├── model.umdl
+│   └── reference/
+│       ├── tokenizer-roundtrip.txt
+│       ├── logits-frame-0.bin
+│       └── greedy-tokens-seed-42.txt
+└── tiny-q8-spu/
+    └── …
+```
+
+Each model directory carries the reference vectors that every
+backend tier must reproduce bit-for-bit.
+
+## Hard rules
+
+- No model files larger than what comfortably fits in CI memory
+  (target: each `.umdl` ≤ 32 MiB).
+- Every `.umdl` here must pass `/umdl-inspect --verify-checksums`.
+- Every `.umdl` here must pass `/address-scan` (no pointer-like
+  values).
+- A change to a reference vector requires a paired commit message
+  that explains why the new vector is correct.
