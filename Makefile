@@ -33,6 +33,7 @@ kernel:
 	$(CARGO) build -p kernel \
 		--target x86_64-unboundos.json \
 		-Z build-std=core,alloc \
+		-Z build-std-features=compiler-builtins-mem \
 		-Z json-target-spec \
 		--release
 

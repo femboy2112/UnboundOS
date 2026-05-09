@@ -26,6 +26,11 @@ fidelity gate work without setting a `--target-dir` or env var.
 
 ## Required cargo flags
 
-A custom JSON target requires `-Z build-std=core,alloc -Z json-target-spec`
-on a nightly toolchain with `rust-src` installed. The pinned toolchain in
-`rust-toolchain.toml` (`nightly-2026-04-15`) installs `rust-src` automatically.
+A custom JSON target requires
+`-Z build-std=core,alloc -Z build-std-features=compiler-builtins-mem -Z json-target-spec`
+on a nightly toolchain with `rust-src` installed. The `compiler-builtins-mem`
+feature exposes `memcpy` / `memset` / `memmove` / `memcmp` as global symbols so
+the linker can resolve compiler-emitted intrinsic calls in `no_std` code (any
+non-trivial `core::ptr::copy_nonoverlapping`, slice copy, etc.). The pinned
+toolchain in `rust-toolchain.toml` (`nightly-2026-04-15`) installs `rust-src`
+automatically.

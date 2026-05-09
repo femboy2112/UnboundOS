@@ -15,6 +15,7 @@ Boot the kernel in QEMU and walk the spec §12.4 smoke checklist.
    cargo build -p kernel \
        --target x86_64-unboundos.json \
        -Z build-std=core,alloc \
+       -Z build-std-features=compiler-builtins-mem \
        -Z json-target-spec
    ```
 
