@@ -2,7 +2,7 @@
 //!
 //! Persistent format. Header + tokenizer section + tensor descriptor
 //! table + weight blob + checksum section. No pointers, no host
-//! paths, no Linux/CUDA assumptions. Loaded into ModelWeightArena;
+//! paths, no Linux/CUDA assumptions. Loaded into `ModelWeightArena`;
 //! becomes read-only after load on profiles that support paging.
 
 #![no_std]
@@ -75,7 +75,9 @@ pub enum TokenizerType {
     RawByteToToken = 3,
 }
 
-/// Tensor descriptor — spec §10.12.
+/// Tensor descriptor — spec §10.12. The `pad_after_rank` field
+/// makes the implicit `#[repr(C)]` alignment padding explicit so
+/// the on-disk layout is auditable.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct TensorDesc {
@@ -83,7 +85,7 @@ pub struct TensorDesc {
     pub scalar_type: u8,
     pub quant_type: u8,
     pub rank: u8,
-    pub _reserved: u8,
+    pub pad_after_rank: u8,
     pub dims: [u32; 4],
     pub byte_offset: u64,
     pub byte_length: u64,
