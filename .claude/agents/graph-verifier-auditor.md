@@ -1,6 +1,6 @@
 ---
 name: graph-verifier-auditor
-description: Use whenever code is added, edited, or proposed in the graph load, verify, compile, or runtime construction path. Enforces spec §5.7 (single verifier gate) and §1.9 (graph mutation gate). The only legal path to a GraphRuntime is graph_load_from_umod → verifier → graph_compile_verified. Audits for shortcuts, dev-mode bypasses, test-only direct constructors, and IDE editor paths that build runtime structures without verification.
+description: Use whenever code is added, edited, or proposed in the graph load, verify, compile, or runtime construction path. Enforces spec §5.7 (single verifier gate) and §1.9 (graph mutation gate). The only legal path to a GraphRuntime is graph_load_from_umod → verifier → graph_compile_verified. Audits for shortcuts, dev-mode bypasses, test-only direct constructors, and IDE editor paths that build runtime structures without verification. May be spawned by the `current-mission` agent during step validation when the active campaign step touches the graph load/verify/compile path.
 tools: Read, Glob, Grep, Bash
 ---
 

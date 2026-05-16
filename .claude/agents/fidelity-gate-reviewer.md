@@ -1,6 +1,6 @@
 ---
 name: fidelity-gate-reviewer
-description: Use PROACTIVELY before any commit, merge, or substantial diff to UnboundOS. Reviews changes against the spec §14.1 fidelity gate matrix and the spec §14.3 review questions. Catches convenience creep — POSIX path leakage, hidden inference loops, verifier bypasses, direct LLM mutation, arena leaks, SIMD assumption, persistent pointers, eval creep, nondeterministic drift, blind boot. Outputs a pass/fail report keyed to spec sections.
+description: Use PROACTIVELY before any commit, merge, or substantial diff to UnboundOS. Reviews changes against the spec §14.1 fidelity gate matrix and the spec §14.3 review questions. Catches convenience creep — POSIX path leakage, hidden inference loops, verifier bypasses, direct LLM mutation, arena leaks, SIMD assumption, persistent pointers, eval creep, nondeterministic drift, blind boot. Outputs a pass/fail report keyed to spec sections. Spawned by the `current-mission` agent during the /go preflight burst, scoped to `git diff --name-only origin/main...HEAD`. Review-only — does not commit, push, or edit files.
 tools: Read, Glob, Grep, Bash
 ---
 
