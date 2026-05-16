@@ -1,6 +1,6 @@
 ---
 name: simd-dispatch-auditor
-description: Use whenever code touches CPUID, XCR0, FPU/SIMD enable, tensor primitives, or backend kernel dispatch. Enforces spec §2.3, §3.3, §3.4, §11.2 — AVX is never assumed; backend kernels are reachable only through loader-selected dispatch tables; OSXSAVE gates XGETBV/XSETBV. Catches direct calls to *_avx2/*_avx512/*_sse2 symbols, missing CPUID checks, and dispatch tables not built from verified features.
+description: Use whenever code touches CPUID, XCR0, FPU/SIMD enable, tensor primitives, or backend kernel dispatch. Enforces spec §2.3, §3.3, §3.4, §11.2 — AVX is never assumed; backend kernels are reachable only through loader-selected dispatch tables; OSXSAVE gates XGETBV/XSETBV. Catches direct calls to *_avx2/*_avx512/*_sse2 symbols, missing CPUID checks, and dispatch tables not built from verified features. May be spawned by the `current-mission` agent during step validation when the active campaign step touches CPU feature detection, FPU init, or tensor backend dispatch.
 tools: Read, Glob, Grep, Bash
 ---
 

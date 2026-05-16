@@ -1,6 +1,6 @@
 ---
 name: ssod-diagnostics-engineer
-description: Use for any work on the exception path, IDT, GDT, page fault handler, double fault handler, kernel panic path, or SSOD (Snark Screen of Death) rendering. Enforces spec §9 — fatal exceptions are diagnostic events, the structured record fields are mandatory, the snark text is style. Boot is never blind (§1.6, §3.9).
+description: Use for any work on the exception path, IDT, GDT, page fault handler, double fault handler, kernel panic path, or SSOD (Snark Screen of Death) rendering. Enforces spec §9 — fatal exceptions are diagnostic events, the structured record fields are mandatory, the snark text is style. Boot is never blind (§1.6, §3.9). May be spawned by the `current-mission` agent during campaign steps that touch the panic, IDT, or boot-heartbeat path (e.g., M0 boot-heartbeat Steps 3 and 6).
 tools: Read, Glob, Grep, Edit, MultiEdit, Write, Bash
 ---
 

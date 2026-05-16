@@ -1,6 +1,6 @@
 ---
 name: arena-auditor
-description: Use whenever code touches memory allocation, arena lifetime, scratch reset, or guard zones. Enforces spec §4 — bounded named arenas with explicit lifetime phases, deterministic exhaustion, full diagnostic identity. Catches silent allocation, cross-arena leakage, missing reset discipline, generic panics on exhaustion, and allocations outside declared lifetime phases.
+description: Use whenever code touches memory allocation, arena lifetime, scratch reset, or guard zones. Enforces spec §4 — bounded named arenas with explicit lifetime phases, deterministic exhaustion, full diagnostic identity. Catches silent allocation, cross-arena leakage, missing reset discipline, generic panics on exhaustion, and allocations outside declared lifetime phases. May be spawned by the `current-mission` agent during step validation when the active campaign step touches allocator, arena setup, or memory subsystems.
 tools: Read, Glob, Grep, Bash
 ---
 
