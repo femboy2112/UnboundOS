@@ -4,7 +4,25 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C1.M0 Step 3 IDT install and `UNBOUNDOS_IDT_OK`: ready.
+- C1.M0 Step 4 Boot-diagnostic-buffer fallback: ready.
+
+## 2026-05-21T04:38:06Z - C1.M0 Step 3 IDT install and `UNBOUNDOS_IDT_OK`
+
+- Status: completed
+- Summary: Wired the M0-required fatal IDT vectors (#DE, #UD, #DF, #GP, #PF)
+  through `ssod::kernel_panic` with `DiagnosticContext`, added a minimal
+  serial/boot-diagnostic-buffer SSOD stub record, and preserved the existing
+  `UNBOUNDOS_IDT_OK` emission immediately after `idt::install()`.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, source audit of `kernel/src/boot.rs`,
+  `kernel/src/idt.rs`, and `kernel/src/ssod.rs`, `make fmt`, `make clippy`,
+  `make kernel`, and `python3 scripts/verify.py --mission current`.
+- Notes: read-only subagent audits flagged the campaign tension between
+  installing IDT before real memory-map ingest and preserving the documented
+  heartbeat order (`MEMMAP_OK` before `IDT_OK`). Current M0 still uses a
+  zero-byte placeholder rather than real memory-map traversal; Step 7 remains
+  the QEMU heartbeat assertion owner.
+- Blockers: none.
 
 ## 2026-05-21T04:32:10Z - C1.M0 Step 2 Serial UART probe and heartbeat string emission
 

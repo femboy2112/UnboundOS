@@ -1,17 +1,16 @@
 //! Interrupt Descriptor Table — spec §3.5, §9.2.
 //!
-//! Installs a 256-entry IDT. Every vector is wired to a halt
-//! handler so an unexpected interrupt parks the CPU rather than
-//! triple-faulting. Spec §3.5 mandates entries for at least
+//! Installs a 256-entry IDT. Every vector is wired to a handler so an
+//! unexpected interrupt parks the CPU rather than triple-faulting.
+//! Spec §3.5 mandates entries for at least
 //! #DE (0), #UD (6), #DF (8), #GP (13), #PF (14); these vectors
 //! are reachable through this table once `install` runs.
 //!
-//! Differentiated SSOD reporting (spec §9.2 "Mandatory diagnostic
-//! fields") is layered on top of this scaffolding by the
-//! ssod-diagnostics-engineer subagent later. For now the priority
-//! is making `UNBOUNDOS_IDT_OK` honest in the §1.6 heartbeat — i.e.
-//! an IDT really is loaded by the time the line is emitted.
+//! The M0-required fatal vectors route through the SSOD diagnostic
+//! surface. Full SSOD record formatting lands later, but these handlers
+//! already fill `DiagnosticContext` and avoid blind halts.
 
+use crate::ssod::{self, DiagnosticContext};
 use core::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Copy, Clone)]
@@ -93,6 +92,51 @@ extern "x86-interrupt" fn halt_handler_double_fault(_frame: InterruptStackFrame,
     halt_loop()
 }
 
+extern "x86-interrupt" fn divide_error_handler(frame: InterruptStackFrame) {
+    kernel_panic_no_error(0, "divide_error", frame);
+}
+
+extern "x86-interrupt" fn invalid_opcode_handler(frame: InterruptStackFrame) {
+    kernel_panic_no_error(6, "invalid_opcode", frame);
+}
+
+extern "x86-interrupt" fn double_fault_handler(frame: InterruptStackFrame, err: u64) -> ! {
+    kernel_panic_with_error(8, "double_fault", frame, err)
+}
+
+extern "x86-interrupt" fn general_protection_fault_handler(frame: InterruptStackFrame, err: u64) {
+    kernel_panic_with_error(13, "general_protection_fault", frame, err);
+}
+
+extern "x86-interrupt" fn page_fault_handler(frame: InterruptStackFrame, err: u64) {
+    kernel_panic_with_error(14, "page_fault", frame, err);
+}
+
+fn kernel_panic_no_error(vector: u8, reason: &str, frame: InterruptStackFrame) -> ! {
+    ssod::kernel_panic(reason, diagnostic_context(vector, frame, None))
+}
+
+fn kernel_panic_with_error(vector: u8, reason: &str, frame: InterruptStackFrame, err: u64) -> ! {
+    ssod::kernel_panic(reason, diagnostic_context(vector, frame, Some(err)))
+}
+
+fn diagnostic_context(
+    vector: u8,
+    frame: InterruptStackFrame,
+    error_code: Option<u64>,
+) -> DiagnosticContext {
+    DiagnosticContext {
+        vector,
+        instruction_pointer: frame.instruction_pointer,
+        code_segment: frame.code_segment,
+        cpu_flags: frame.cpu_flags,
+        stack_pointer: frame.stack_pointer,
+        stack_segment: frame.stack_segment,
+        has_error_code: error_code.is_some(),
+        error_code: error_code.unwrap_or(0),
+    }
+}
+
 fn halt_loop() -> ! {
     loop {
         // SAFETY: hlt is always safe; the CPU parks until reset.
@@ -140,6 +184,12 @@ pub unsafe fn install() {
             entry.set_handler(halt_handler as *const () as u64, cs);
         }
     }
+
+    idt[0].set_handler(divide_error_handler as *const () as u64, cs);
+    idt[6].set_handler(invalid_opcode_handler as *const () as u64, cs);
+    idt[8].set_handler(double_fault_handler as *const () as u64, cs);
+    idt[13].set_handler(general_protection_fault_handler as *const () as u64, cs);
+    idt[14].set_handler(page_fault_handler as *const () as u64, cs);
 
     let pointer = IdtPointer {
         limit: (core::mem::size_of::<[IdtEntry; 256]>() - 1) as u16,

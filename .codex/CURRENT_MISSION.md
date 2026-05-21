@@ -1,33 +1,29 @@
 # Current Mission
 
-Mission: C1.M0 Step 3 IDT install and `UNBOUNDOS_IDT_OK`
+Mission: C1.M0 Step 4 Boot-diagnostic-buffer fallback
 Campaign: C1 M0 Boot Heartbeat
 Status: ready
 
 ## Objective
 
-Execute M0 campaign Step 3 from `docs/campaigns/m0-boot-heartbeat.md`: verify
-or implement early IDT installation with fatal handler stubs, then emit
-`UNBOUNDOS_IDT_OK` after `lidt` succeeds.
+Execute M0 campaign Step 4 from `docs/campaigns/m0-boot-heartbeat.md`: verify
+or implement the no-UART boot-diagnostic-buffer fallback for heartbeat lines.
 
 ## Scope
 
 Allowed changes:
 
-- `kernel/src/main.rs`
-- `kernel/src/boot.rs`
 - `kernel/src/heartbeat.rs`
-- `kernel/src/idt.rs`
-- `kernel/src/ssod.rs`
+- `kernel/src/boot_diag.rs`
+- `kernel/src/serial.rs`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- Implementing Step 4 framebuffer fallback behavior, Step 6 full SSOD record
-  formatting, Step 7 QEMU heartbeat assertions, or any M1+ bootloader/allocator
-  behavior.
+- Implementing framebuffer rendering, full SSOD formatting, Step 7 QEMU
+  heartbeat assertions, or any M1+ bootloader/allocator behavior.
 - Constructing or bypassing any `GraphRuntime`.
 - Editing scripts, campaign archives, catalog rows, or implementation files
   outside the allowed list.
@@ -35,12 +31,13 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- The early boot path installs an IDT before allocator or graph work.
-- Fatal handler stubs for M0-scope exceptions route through the structured
-  diagnostic surface rather than silently returning or rebooting.
-- `kernel/src/boot.rs` emits `UNBOUNDOS_IDT_OK` immediately after IDT install
-  succeeds.
-- No M1+ behavior is implemented as part of this mission.
+- A failed COM1 probe records `BOOT_NO_SERIAL` into the boot diagnostic buffer.
+- Every heartbeat emission records into `boot_diag` even when UART output is
+  unavailable.
+- Source exposes the `BOOT_HEARTBEAT_BUFFER_PRESENT` marker for the future M2
+  framebuffer dump path.
+- No framebuffer implementation or Step 7 QEMU assertion work is added in this
+  mission.
 
 ## Verification Commands
 
@@ -55,6 +52,6 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m0-boot-heartbeat`. `make qemu-headless` and
-`make gates` remain non-authoritative until Step 7 owns the QEMU heartbeat
-assertion path.
+Campaign branch: `campaign/m0-boot-heartbeat`. `make qemu-no-serial`,
+`make qemu-headless`, and `make gates` remain non-authoritative until the later
+QEMU assertion path lands.
