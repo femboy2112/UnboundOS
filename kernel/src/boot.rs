@@ -11,7 +11,9 @@ use crate::{cpu, idt, serial, ssod};
 pub unsafe fn run() -> ! {
     // 1. Disable interrupts.
     // SAFETY: pre-IDT phase; interrupts must be off until handlers exist.
-    unsafe { core::arch::asm!("cli"); }
+    unsafe {
+        core::arch::asm!("cli");
+    }
 
     // 2. Initialize serial logging.
     serial::init();
@@ -36,7 +38,9 @@ pub unsafe fn run() -> ! {
 
     // 6. Enable permitted SIMD/FPU state.
     // SAFETY: cpu::enable_math_features is the sole CR0/CR4/XCR0 writer.
-    unsafe { cpu::enable_math_features(tier); }
+    unsafe {
+        cpu::enable_math_features(tier);
+    }
 
     // 7. Initialize framebuffer (optional). If no framebuffer, log
     //    BOOT_NO_SERIAL fallback path is unnecessary here because

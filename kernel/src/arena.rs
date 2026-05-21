@@ -1,12 +1,22 @@
 //! Bounded named arenas. Spec section 4.
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[allow(dead_code)]
 pub enum ArenaId {
-    Boot, Kernel, Graph, Scratch,
-    ModelWeight, Inference, KvCache, Tokenizer, Sampler, ScratchTensor,
+    Boot,
+    Kernel,
+    Graph,
+    Scratch,
+    ModelWeight,
+    Inference,
+    KvCache,
+    Tokenizer,
+    Sampler,
+    ScratchTensor,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[allow(dead_code)]
 pub enum AllocError {
     InvalidAlignment,
     Overflow,

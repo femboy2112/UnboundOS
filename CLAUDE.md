@@ -2,10 +2,11 @@
 
 UnboundOS is a single-address-space, bare-metal x86_64 dataflow operating environment.
 The primary execution unit is a **verified executable graph**, not a process or thread.
-Authoritative spec: `docs/UnboundOS_Tech_Spec_v2_1_1.pdf` (referenced as "spec" below).
+Authoritative spec: `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
+(referenced as "spec" below).
 
-This file is loaded by Claude Code on every session. It is the binding contract for all
-work in this repo. When the spec and this file conflict, the spec wins; flag the conflict.
+This file is the binding contract for all agent work in this repo. When the
+spec and this file conflict, the spec wins; flag the conflict.
 
 ---
 
@@ -62,51 +63,51 @@ canonical path. Cite the spec section.
 ```
 unboundos/
 ├── CLAUDE.md                         # This file — project constitution
-├── README-claude.md                  # Operator guide for the .claude/ setup
+├── README-claude.md                  # Codex mission setup and compatibility guide
 ├── Cargo.toml                        # Workspace
 ├── rust-toolchain.toml               # Pinned nightly + rust-src
 ├── .gitignore
-├── targets/
-│   └── x86_64-unboundos.json         # Custom target spec for no_std kernel
+├── x86_64-unboundos.json             # Custom target spec for no_std kernel
 ├── kernel/                           # The unikernel crate
 │   ├── Cargo.toml
 │   └── src/
 │       ├── main.rs                   # _start entry, IDT install, heartbeat
 │       └── ...
 ├── docs/
-│   └── UnboundOS_Tech_Spec_v2_1_1.pdf
-├── fixtures/
-│   ├── golden/                       # Golden .MOD and .UMDL test artifacts
-│   └── fuzz/                         # Parser fuzz corpora
-├── tools/
-│   └── address-scan/                 # Persistent-pointer leakage scanner
-└── .claude/
-    ├── settings.json                 # Permissions and env
-    ├── agents/                       # Specialized subagents
-    ├── skills/                       # Slash-command skills
-    └── output-styles/
+│   └── UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf
+├── tests/
+│   ├── golden_graphs/                # Golden .MOD test artifacts
+│   ├── golden_models/                # Golden .UMDL test artifacts
+│   └── fuzz_corpus/                  # Parser fuzz corpora
+├── scripts/
+│   ├── address_scan.py               # Persistent-pointer leakage scanner
+│   ├── status.py                     # Codex mission status
+│   ├── verify.py                     # Codex mission verification
+│   └── mission.py                    # Codex mission state helper
+├── .codex/                           # Current campaign, mission, plan, log
+└── .agents/
+    ├── agents/                       # Specialized review roles
+    └── skills/                       # Codex skills
 ```
 
 ## 5. Build, Test, Run
 
-The standard workflow. Claude Code can run any of these without asking.
+The standard workflow. Codex can run the non-mutating checks directly; commands
+that require unavailable local tooling must be reported as blockers.
 
 ```bash
 # Build the kernel for the custom target
-cargo build -p kernel --target targets/x86_64-unboundos.json -Z build-std=core,compiler_builtins
+cargo build -p kernel --target x86_64-unboundos.json -Z json-target-spec -Z build-std=core,alloc
 
-# Run smoke tests in QEMU (captures serial)
-make qemu-smoke
-
-# CPU profile probe (proves AVX is not assumed)
-make qemu-no-avx
-make qemu-scalar
+# Run QEMU once real image generation is implemented
+make qemu-headless
+make qemu-no-serial
 
 # Lint the kernel for std leakage
-cargo clippy -p kernel --target targets/x86_64-unboundos.json
+cargo clippy -p kernel --target x86_64-unboundos.json
 
 # Address-scan all persistent fixtures
-python3 tools/address-scan/scan.py fixtures/
+python3 scripts/address_scan.py tests/golden_graphs tests/golden_models
 
 # Parser fuzz
 make parser-fuzz-umod
@@ -135,9 +136,9 @@ shell pipelines per session.
 - **Diagnostics** for any fatal path use the `DiagnosticContext` struct and route through
   `kernel_panic(reason, ctx)`.
 
-## 7. When to use which subagent
+## 7. When to use which agent role
 
-| Task | Subagent |
+| Task | Agent role |
 |------|----------|
 | Reviewing a PR or diff for spec compliance | `fidelity-gate-reviewer` |
 | Anything touching graph load, verify, or runtime construction | `graph-verifier-auditor` |
@@ -148,23 +149,20 @@ shell pipelines per session.
 | IDT, page fault, double fault, snark matrix, structured records | `ssod-diagnostics-engineer` |
 | Running parser fuzz and triaging structured-error coverage | `parser-fuzz-runner` |
 
-The main thread should delegate context-heavy reads (e.g. spec-walking, multi-file audits)
-to subagents to keep its window clean.
+The main thread should use the matching `.agents/agents/*.md` role for
+context-heavy reads and pre-completion review.
 
-## 8. Slash skills you can invoke
+## 8. Codex skills you can invoke
 
-All in `.claude/skills/<name>/SKILL.md`. Also auto-invokable when the description matches.
+Skills live in `.agents/skills/<name>/SKILL.md`.
 
-- `/verify-graph <path>` — run the spec §5.6 verifier checklist on a `.MOD`
-- `/audit-arenas` — full repo allocation audit
-- `/fidelity-check` — runs the spec §14.1 fidelity gate matrix
-- `/qemu-smoke` — boots kernel in QEMU, captures serial, asserts heartbeat
-- `/golden-graph-add <name>` — adds a new golden graph fixture with full verification
-- `/simd-probe-review` — reviews CPUID/XCR0 enable code against spec §3.3–§3.4
-- `/umdl-inspect <path>` — dumps `.UMDL` header, tensors, checksums
-- `/ssod-decode <log>` — parses a structured SSOD record and explains it
-- `/boot-heartbeat-check` — verifies boot order matches spec §3.2 and §1.6
-- `/address-scan [path]` — runs the persistent-pointer leakage scanner
+- `unboundos-go` — execute exactly one active mission from `.codex/`, verify,
+  commit, push, and stop.
+
+Future missions may add narrower skills for graph verification, arena audits,
+QEMU smoke, fixture generation, SIMD review, UMDL inspection, SSOD decoding,
+and parser fuzzing. Until those files exist, use the scripts and agent roles
+listed in this document.
 
 ## 9. The 8 review questions (spec §14.3)
 
@@ -180,7 +178,8 @@ mutation must answer:
 7. Does this make boot, crash, or load failure less diagnosable?
 8. Does this weaken deterministic replay guarantees?
 
-If any answer is yes or unclear, run `/fidelity-check` and stop until the operator
+If any answer is yes or unclear, run `python3 scripts/verify.py --mission
+current` and `make fidelity` when available, then stop until the operator
 confirms.
 
 ## 10. Definitional anchors

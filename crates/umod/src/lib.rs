@@ -62,7 +62,7 @@ pub struct NodeDescriptor {
     pub output_pin_count: u16,
     pub capability_base: u32,
     pub capability_count: u16,
-    pub _reserved0: u16,
+    pub reserved0: u16,
     pub ui_x: i32,
     pub ui_y: i32,
     pub label_offset: u32,
@@ -120,8 +120,13 @@ pub enum ResourceRefError {
 /// paths, `local://`, `..`, `~`, and any non-ASCII-printable byte.
 ///
 /// Stub. Real implementation: locate `:`, match prefix to
-/// `ResourceType`, validate opaque_id charset/length, reject
+/// `ResourceType`, validate `opaque_id` charset/length, reject
 /// path-shaped inputs.
+///
+/// # Errors
+///
+/// Returns [`ResourceRefError`] when the bytes do not match the approved
+/// opaque-resource grammar.
 pub fn parse_resource_ref(_bytes: &[u8]) -> Result<ResourceRef<'_>, ResourceRefError> {
     Err(ResourceRefError::Empty)
 }

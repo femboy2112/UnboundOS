@@ -62,7 +62,7 @@ pub struct StructuredActionBuffer {
 #[derive(Copy, Clone, Debug)]
 pub struct SamplerConfig {
     pub max_new_tokens: u32,
-    pub temperature_q15: i32,    // fixed-point ×2^15 to keep deterministic math
+    pub temperature_q15: i32, // fixed-point ×2^15 to keep deterministic math
     pub top_k: u32,
     pub top_p_q15: i32,
     pub repetition_penalty_q15: i32,

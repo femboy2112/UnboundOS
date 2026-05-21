@@ -1,41 +1,36 @@
-# UnboundOS — Claude Code Setup
+# UnboundOS — Codex Mission Setup
 
-This directory contains the Claude Code configuration for the UnboundOS
-repo: a project constitution, eight specialist subagents, eleven
-slash-command skills, hooks, permissions, and a strict output style.
-The setup is built around the v2.1.1 fidelity-hardening spec
-(`docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`) and treats
-the design contract as non-negotiable.
+This repo uses a Codex-native control surface for mission-by-mission
+implementation. The setup is built around the v2.1.1 fidelity-hardening spec
+(`docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`) and treats the
+design contract as non-negotiable.
 
 ## Quick start
 
 ```bash
-# From repo root (after cloning):
-cat CLAUDE.md                      # read the constitution end-to-end
-ls .claude/agents                  # specialist subagents
-ls .claude/skills                  # slash-command-style workflows
-cat .claude/settings.json          # permissions, hooks, env
-
-# In Claude Code:
-/fidelity-check                    # full local gate sweep
-/qemu-smoke                        # build + boot + heartbeat assert
-/verify-graph tests/golden_graphs/single-pulse.umod
-/audit-arenas
-/simd-probe-review
+# From repo root:
+cat CLAUDE.md
+cat .codex/CURRENT_CAMPAIGN.md
+cat .codex/CURRENT_MISSION.md
+python3 scripts/status.py
+python3 scripts/verify.py --mission current --dry-run
 ```
 
-Subagents are dispatched via the Task tool with
-`subagent_type=<name>`, e.g. `fidelity-gate-reviewer`,
-`graph-verifier-auditor`, `arena-auditor`, etc. Skills are invoked as
-slash commands.
+When the operator says `go`, use `.agents/skills/unboundos-go/SKILL.md`.
+That workflow executes exactly one active mission, verifies it, commits,
+pushes, and stops.
 
 ## File map
 
 ```
 CLAUDE.md                                   # project constitution
-README-claude.md                            # this file
-.claude/
-├── settings.json                            # permissions, hooks, env, output style
+README-claude.md                            # this compatibility guide
+.codex/
+├── CURRENT_CAMPAIGN.md                      # active campaign and stop rule
+├── CURRENT_MISSION.md                       # current mission contract
+├── PROJECT_PLAN.md                          # campaign roadmap
+└── MISSION_LOG.md                           # completed mission ledger
+.agents/
 ├── agents/
 │   ├── fidelity-gate-reviewer.md
 │   ├── graph-verifier-auditor.md
@@ -45,20 +40,12 @@ README-claude.md                            # this file
 │   ├── umdl-llm-engineer.md
 │   ├── ssod-diagnostics-engineer.md
 │   └── parser-fuzz-runner.md
-├── skills/
-│   ├── verify-graph/SKILL.md
-│   ├── audit-arenas/SKILL.md
-│   ├── fidelity-check/SKILL.md
-│   ├── qemu-smoke/SKILL.md
-│   ├── golden-graph-add/SKILL.md
-│   ├── simd-probe-review/SKILL.md
-│   ├── umdl-inspect/SKILL.md
-│   ├── ssod-decode/SKILL.md
-│   ├── boot-heartbeat-check/SKILL.md
-│   ├── address-scan/SKILL.md
-│   └── parser-fuzz/SKILL.md
-└── output-styles/
-    └── fidelity-strict.md
+└── skills/
+    └── unboundos-go/SKILL.md
+scripts/
+├── status.py
+├── verify.py
+└── mission.py
 ```
 
 ## Workflow guide
@@ -68,42 +55,43 @@ README-claude.md                            # this file
 1. Read or recall the relevant CLAUDE.md section.
 2. Plan with a subagent if the change is large; implement directly if
    small.
-3. Run `/fidelity-check` before declaring done.
-4. Run `/qemu-smoke` if the change touches kernel/, allocator, IDT, or
-   framebuffer.
-5. Pass through the `fidelity-gate-reviewer` subagent before opening a
-   PR.
+3. Run `python3 scripts/verify.py --mission current` before declaring done.
+   Control-plane or documentation-only missions may explicitly use
+   `--allow-missing-rust`; implementation missions must treat missing Rust
+   tooling as a blocker.
+4. Run `make qemu-headless` once the active mission reaches real boot image
+   support and touches kernel, allocator, IDT, or framebuffer behavior.
+5. Use `fidelity-gate-reviewer` before opening a PR or publishing a mission
+   with implementation changes.
 
 ### Format / spec changes
 
 Use `umod-format-engineer` or `umdl-llm-engineer` for any change to
 `crates/umod` or `crates/umdl`. After the change:
 
-1. `/golden-graph-add <name>` for any new graph-level concept.
+1. Add a golden graph fixture for any new graph-level concept.
 2. Add fuzz fixtures for new failure modes.
-3. `/parser-fuzz` to confirm the parser handles the new failure modes
-   structurally.
-4. `/address-scan` to confirm no pointer-like values leaked into the
-   new fixtures.
-5. `/verify-graph <fixture>` for each new fixture.
-6. `/fidelity-check`.
+3. Run the parser fuzz mission checks once the corpus runner exists.
+4. Run `python3 scripts/address_scan.py tests/golden_graphs tests/golden_models`.
+5. Verify each new fixture through the normal graph loader.
+6. Run `python3 scripts/verify.py --mission current`.
 
 ### LLM subsystem work
 
 Use `umdl-llm-engineer`. After the change:
 
-1. `/audit-arenas` — confirms LLM arena phase boundaries hold.
-2. `/simd-probe-review` — confirms backend dispatch is honored.
-3. `/umdl-inspect <model>` — confirms package well-formedness.
+1. Use `arena-auditor` to confirm LLM arena phase boundaries hold.
+2. Use `simd-dispatch-auditor` to confirm backend dispatch is honored.
+3. Inspect the model package with the UMDL tooling once implemented.
 4. Reference test sweep across all available SIMD tiers
    (`UNBOUNDOS_FORCE_SIMD=scalar|sse2|avx|avx2|avx512`).
-5. `/fidelity-check`.
+5. Run `python3 scripts/verify.py --mission current`.
 
 ### Crash investigation
 
 When QEMU smoke or real hardware reports a fault:
 
-1. `/ssod-decode <log>` — decode the structured record.
+1. Decode the structured record with the SSOD tooling once implemented.
 2. Identify the fault family and the file:line of the reported RIP.
 3. If diagnostic identity is incomplete (missing arena/graph/node
    IDs), open an issue against the diagnostic emitter. Incomplete
@@ -114,35 +102,12 @@ When QEMU smoke or real hardware reports a fault:
 
 ## Permission posture
 
-The `settings.json` is set to **loose**: build/test/inspection
-commands auto-allow; mutating ops on the host or outside-repo writes
-require approval. Specifically:
-
-- Auto-allow: `cargo`, `qemu-system-x86_64`, `make`, `git` read-only,
-  shell inspection (`ls`, `find`, `rg`, `grep`, `cat`, `xxd`, etc.),
-  `python3 scripts/`, `./scripts/`.
-- Ask: `git push`, `git commit`, `git reset`, `git rebase`,
-  `git checkout`, `git merge`, `cargo publish`, `rustup default`,
-  `make install`, `sudo`.
-- Deny: `rm -rf /`, `dd if=`, `mkfs`, `curl | sh`, writes to
-  `/etc`, `/usr`, `/boot`, `~/.ssh`, `~/.gnupg`.
-
-If you need a tighter posture, edit `.claude/settings.json` and move
-items from `allow` to `ask`.
-
-## Hooks
-
-Two `PostToolUse` hooks fire on `Edit` and `Write`:
-
-1. After edits to `crates/umod`, `crates/umdl`, or `tests/golden_*` /
-   `tests/fuzz_corpus/`, the address scan runs. Any pointer-like value
-   prints a warning.
-2. After edits to `*.rs` anywhere in the repo, `cargo fmt --check`
-   runs. Format drift prints a reminder.
-
-A `PreToolUse` hook **blocks** edits that introduce direct
-`GraphRuntime { ... }` construction outside `crates/graph/src/loader.rs`.
-The single-verifier-gate invariant is mechanically enforced.
+There is no committed `.claude/settings.json` in this Codex-first surface.
+Rely on the active Codex sandbox and the mission scope in
+`.codex/CURRENT_MISSION.md`. Any future hook restoration should preserve the
+same invariants: address scan after artifact changes, format checks after Rust
+changes, and a hard block on direct `GraphRuntime { ... }` construction outside
+`crates/graph/src/loader.rs`.
 
 ## Environment
 
@@ -157,26 +122,24 @@ profile (`qemu-dev`, `legacy-bios`, `modern-x86_64`, `t500-class`).
 
 ## What this setup does **not** do
 
-- It does not push to GitHub, deploy, or run on real hardware. All
-  Bash commands run locally inside the Claude Code sandbox.
+- It does not deploy or run on real hardware. The mission workflow does commit
+  and push after completed missions because `.codex/CURRENT_CAMPAIGN.md`
+  declares that publication policy.
 - It does not bypass any Section-2 rule. There is no
   `--skip-fidelity` flag and no plan to add one.
 - It does not write `.UMDL` model packages from scratch. Use the
   host-side conversion tools (out of scope for this repo's bare-metal
-  runtime) to produce `.UMDL` packages, then validate them with
-  `/umdl-inspect` here.
+  runtime) to produce `.UMDL` packages, then validate them with repo-local UMDL
+  tooling once that mission lands.
 
 ## Extending
 
-- **New skill:** `mkdir .claude/skills/<name>` and add `SKILL.md`
-  with frontmatter `name`, `description`, `argument-hint`,
-  `allowed-tools`. Skills become available as `/<name>`.
-- **New subagent:** add `.claude/agents/<name>.md` with frontmatter
-  `name`, `description`, `tools`. Dispatched via the Task tool.
-- **New hook:** edit `.claude/settings.json` `hooks` block. Match
-  patterns are `PreToolUse`, `PostToolUse`, plus the matcher regex.
+- **New skill:** add `.agents/skills/<name>/SKILL.md` with frontmatter
+  `name` and `description`.
+- **New agent role:** add `.agents/agents/<name>.md` with frontmatter
+  `name` and `description`.
+- **New mission:** update `.codex/CURRENT_CAMPAIGN.md`,
+  `.codex/CURRENT_MISSION.md`, and `.codex/PROJECT_PLAN.md`.
 
-When extending, keep the same pattern: name, description tied to a
-CLAUDE.md section, hard rules at the bottom, output schema explicit.
-The fidelity-strict style is the default; outputs that don't conform
-will feel out of place.
+When extending, keep the same pattern: name, description tied to a `CLAUDE.md`
+section, hard rules at the bottom, and explicit verification commands.

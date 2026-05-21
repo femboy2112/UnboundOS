@@ -1,7 +1,14 @@
 //! CPU feature detection and SIMD enable. Spec sections 3.3, 3.4.
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum SimdTier { Scalar, Sse2, Avx, Avx2, Avx512 }
+#[allow(dead_code)]
+pub enum SimdTier {
+    Scalar,
+    Sse2,
+    Avx,
+    Avx2,
+    Avx512,
+}
 
 impl SimdTier {
     pub fn as_str(self) -> &'static str {

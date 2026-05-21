@@ -12,6 +12,8 @@ pub fn halt_idle() -> ! {
     loop {
         // SAFETY: hlt with interrupts disabled is safe and stable; the
         // CPU parks until reset.
-        unsafe { core::arch::asm!("hlt"); }
+        unsafe {
+            core::arch::asm!("hlt");
+        }
     }
 }

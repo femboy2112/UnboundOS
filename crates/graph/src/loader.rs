@@ -1,12 +1,9 @@
 //! Graph runtime loader. **The only legal site of `GraphRuntime`
 //! construction in the entire workspace.** Spec §5.7, §5.8.
 //!
-//! The PreToolUse hook in `.claude/settings.json` blocks any literal
-//! `GraphRuntime { ... }` introduced outside this file. The
-//! graph-verifier-auditor subagent verifies the same invariant at
-//! review time. There is no test-only path, no dev-mode bypass, no
-//! IDE editor shortcut. The IDE itself routes through
-//! `verify_umod` → `compile`.
+//! `graph-verifier-auditor` verifies the same invariant at review time. There
+//! is no test-only path, no dev-mode bypass, no IDE editor shortcut. The IDE
+//! itself routes through `verify_umod` → `compile`.
 
 use crate::{GraphCompileError, GraphRuntimeHandle, VerifiedGraph};
 
@@ -16,6 +13,8 @@ use crate::{GraphCompileError, GraphRuntimeHandle, VerifiedGraph};
 pub(crate) fn compile(
     _verified: VerifiedGraph<'_>,
 ) -> Result<GraphRuntimeHandle, GraphCompileError> {
+    #![allow(clippy::unnecessary_wraps)]
+
     // 1. Allocate node runtime table in GraphArena.
     // 2. Allocate wire runtime table in GraphArena.
     // 3. Resolve dispatch table for each node's node_type_id.

@@ -32,6 +32,7 @@ build:
 kernel:
 	$(CARGO) build -p kernel \
 		--target x86_64-unboundos.json \
+		-Z json-target-spec \
 		-Z build-std=core,alloc \
 		--release
 

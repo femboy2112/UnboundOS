@@ -8,10 +8,8 @@
 //!   VerifiedGraph  ──▶  graph_compile_verified  ──▶  GraphRuntimeHandle
 //! ```
 //!
-//! `GraphRuntime` is constructed nowhere except `loader.rs`. The
-//! PreToolUse hook in `.claude/settings.json` blocks any literal
-//! `GraphRuntime { ... }` introduced outside that file. The
-//! `graph-verifier-auditor` subagent enforces this at review time.
+//! `GraphRuntime` is constructed nowhere except `loader.rs`.
+//! `graph-verifier-auditor` enforces this at review time.
 
 #![no_std]
 #![forbid(unsafe_op_in_unsafe_fn)]
@@ -51,28 +49,28 @@ pub struct GraphRuntimeHandle {
 /// structural variants that the parser surfaces.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum GraphLoadError {
-    BadMagic,                                          // check  1
-    UnsupportedVersion,                                // check  2
-    BadHeaderLength,                                   // check  3
-    BadSectionTable,                                   // check  4
-    NodeCountExceedsLimit,                             // check  5
-    WireCountExceedsLimit,                             // check  6
-    NodeIndexUnresolved { node_id: u32 },              // check  7
-    WireEndpointUnresolved { wire_id: u32 },           // check  8
-    PinIndexOutOfRange { node_id: u32, pin_index: u16 },// check 9
-    WireTypeMismatch { wire_id: u32 },                 // check 10
-    UnknownNodeType { node_id: u32, type_id: u32 },    // check 11
-    UndeclaredCapability { capability_id: u32 },       // check 12
-    UnbrokenCycle { sample_node_id: u32 },             // check 13
-    PayloadSizeUnbounded { wire_id: u32 },             // check 14
-    GraphArenaBudgetExceeded { required: u64 },        // check 15
-    ModelRefUnresolved { ref_index: u32 },             // check 16
-    ChecksumMismatch { section_index: u32 },           // check 17
-    UiLayoutInvalid,                                   // check 18
-    MissingConstantBlob { node_id: u32 },              // check 19
-    ConstantBlobLayoutBad { node_id: u32 },            // check 20
-    SchedulingSectionMissing,                          // check 21
-    OpaqueResourceSyntaxBad { ref_index: u32 },        // check 22
+    BadMagic,                                            // check  1
+    UnsupportedVersion,                                  // check  2
+    BadHeaderLength,                                     // check  3
+    BadSectionTable,                                     // check  4
+    NodeCountExceedsLimit,                               // check  5
+    WireCountExceedsLimit,                               // check  6
+    NodeIndexUnresolved { node_id: u32 },                // check  7
+    WireEndpointUnresolved { wire_id: u32 },             // check  8
+    PinIndexOutOfRange { node_id: u32, pin_index: u16 }, // check 9
+    WireTypeMismatch { wire_id: u32 },                   // check 10
+    UnknownNodeType { node_id: u32, type_id: u32 },      // check 11
+    UndeclaredCapability { capability_id: u32 },         // check 12
+    UnbrokenCycle { sample_node_id: u32 },               // check 13
+    PayloadSizeUnbounded { wire_id: u32 },               // check 14
+    GraphArenaBudgetExceeded { required: u64 },          // check 15
+    ModelRefUnresolved { ref_index: u32 },               // check 16
+    ChecksumMismatch { section_index: u32 },             // check 17
+    UiLayoutInvalid,                                     // check 18
+    MissingConstantBlob { node_id: u32 },                // check 19
+    ConstantBlobLayoutBad { node_id: u32 },              // check 20
+    SchedulingSectionMissing,                            // check 21
+    OpaqueResourceSyntaxBad { ref_index: u32 },          // check 22
 
     // Structural failures from the parser, surfaced as load errors.
     ParseTruncated,
@@ -89,12 +87,22 @@ pub enum GraphCompileError {
 
 /// Top-level entry point. Verifies the byte buffer against all 22
 /// spec §5.6 checks. Single legal entry to `VerifiedGraph`.
+///
+/// # Errors
+///
+/// Returns [`GraphLoadError`] when parsing or any verifier check rejects the
+/// UMOD byte buffer.
 pub fn graph_load_from_umod(bytes: &[u8]) -> Result<VerifiedGraph<'_>, GraphLoadError> {
     verifier::verify_umod(bytes)
 }
 
 /// Compile a verified graph into runtime structures inside
 /// `GraphArena`. Single legal entry to `GraphRuntimeHandle`.
+///
+/// # Errors
+///
+/// Returns [`GraphCompileError`] when runtime graph allocation or dispatch
+/// binding fails.
 pub fn graph_compile_verified(
     verified: VerifiedGraph<'_>,
 ) -> Result<GraphRuntimeHandle, GraphCompileError> {
