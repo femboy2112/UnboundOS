@@ -27,11 +27,15 @@ When the operator says `go`, Codex must complete exactly one active mission:
 
 Install and validate the Codex-native workflow.
 
-- C0.M1: mission/campaign docs, agents, skill, scripts, doc path alignment.
-- C0.M2: prove `go` state transition by advancing to C1.M0 without touching
+- C0.M1: completed mission/campaign docs, agents, skill, scripts, doc path
+  alignment.
+- C0.M2: completed `go` state transition by advancing to C1.M0 without touching
   implementation files.
 
 ### C1 M0 Boot Heartbeat
+
+Active campaign: `docs/campaigns/m0-boot-heartbeat.md` on branch
+`campaign/m0-boot-heartbeat`.
 
 Exit criterion: QEMU boots the kernel, serial prints the required heartbeat,
 and the kernel intentionally reaches halt/idle.
