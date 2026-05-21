@@ -1,30 +1,33 @@
 # Current Mission
 
-Mission: C1.M0 Step 2 Serial UART probe and heartbeat string emission
+Mission: C1.M0 Step 3 IDT install and `UNBOUNDOS_IDT_OK`
 Campaign: C1 M0 Boot Heartbeat
 Status: ready
 
 ## Objective
 
-Execute M0 campaign Step 2 from `docs/campaigns/m0-boot-heartbeat.md`: confirm
-the COM1 UART loopback probe and the first three heartbeat emissions are present
-and ordered, patching only if validation shows drift.
+Execute M0 campaign Step 3 from `docs/campaigns/m0-boot-heartbeat.md`: verify
+or implement early IDT installation with fatal handler stubs, then emit
+`UNBOUNDOS_IDT_OK` after `lidt` succeeds.
 
 ## Scope
 
 Allowed changes:
 
-- `kernel/src/serial.rs`
-- `kernel/src/heartbeat.rs`
+- `kernel/src/main.rs`
 - `kernel/src/boot.rs`
+- `kernel/src/heartbeat.rs`
+- `kernel/src/idt.rs`
+- `kernel/src/ssod.rs`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- Implementing Step 3 IDT work, Step 4 framebuffer fallback behavior, Step 7
-  QEMU heartbeat assertions, or any M1+ bootloader/allocator behavior.
+- Implementing Step 4 framebuffer fallback behavior, Step 6 full SSOD record
+  formatting, Step 7 QEMU heartbeat assertions, or any M1+ bootloader/allocator
+  behavior.
 - Constructing or bypassing any `GraphRuntime`.
 - Editing scripts, campaign archives, catalog rows, or implementation files
   outside the allowed list.
@@ -32,14 +35,12 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- `kernel/src/serial.rs` initializes COM1 and probes internal loopback before
-  marking the UART available.
-- `kernel/src/heartbeat.rs` records heartbeat lines into the boot diagnostic
-  buffer even when UART output is unavailable.
-- `kernel/src/boot.rs` emits `UNBOUNDOS_BOOT_BEGIN`,
-  `UNBOUNDOS_CPU_PROFILE`, and `UNBOUNDOS_MEMMAP_OK` in that order.
-- If validation is already green, make no implementation changes and advance
-  only by the mission closeout rules on the next `go`.
+- The early boot path installs an IDT before allocator or graph work.
+- Fatal handler stubs for M0-scope exceptions route through the structured
+  diagnostic surface rather than silently returning or rebooting.
+- `kernel/src/boot.rs` emits `UNBOUNDOS_IDT_OK` immediately after IDT install
+  succeeds.
+- No M1+ behavior is implemented as part of this mission.
 
 ## Verification Commands
 
@@ -54,6 +55,6 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m0-boot-heartbeat`. `make qemu-headless` may still
-fail before Step 7 lands; Step 2 only owns the UART probe and first three
-heartbeat emissions.
+Campaign branch: `campaign/m0-boot-heartbeat`. `make qemu-headless` and
+`make gates` remain non-authoritative until Step 7 owns the QEMU heartbeat
+assertion path.

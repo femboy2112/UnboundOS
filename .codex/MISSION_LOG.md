@@ -4,7 +4,26 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C1.M0 Step 2 Serial UART probe and heartbeat string emission: ready.
+- C1.M0 Step 3 IDT install and `UNBOUNDOS_IDT_OK`: ready.
+
+## 2026-05-21T04:32:10Z - C1.M0 Step 2 Serial UART probe and heartbeat string emission
+
+- Status: completed
+- Summary: Verified the existing Step 2 implementation without code changes:
+  COM1 initializes through an internal loopback probe, failed UART probes leave
+  writes disabled while heartbeat records to `boot_diag`, and
+  `UNBOUNDOS_BOOT_BEGIN`, `UNBOUNDOS_CPU_PROFILE`, and `UNBOUNDOS_MEMMAP_OK`
+  are emitted in source order.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, source audit of
+  `kernel/src/serial.rs`, `kernel/src/heartbeat.rs`, and `kernel/src/boot.rs`,
+  `make fmt`, `make clippy`, `make kernel`, and
+  `python3 scripts/verify.py --mission current`.
+- Notes: read-only subagent audits found no H2/H3/H6/H9/H10 implementation
+  violation in the Step 2 surface. They flagged the archived exact-line QEMU
+  grep and `--assert-heartbeat` gate as Step 7/tooling concerns; those remain
+  out of Step 2 implementation scope.
+- Blockers: none.
 
 ## 2026-05-21T04:27:24Z - C1.M0 Step 1 Boot-order assertion vs spec §3.2
 
