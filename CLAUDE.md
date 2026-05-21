@@ -73,21 +73,25 @@ unboundos/
 │   └── src/
 │       ├── main.rs                   # _start entry, IDT install, heartbeat
 │       └── ...
+├── crates/
+│   ├── umod/                         # UMOD persistent format types
+│   ├── umdl/                         # UMDL model package format
+│   ├── graph/                        # Verifier + loader (single GraphRuntime gate)
+│   └── llm/                          # Tensor dispatch table + LLM subsystem
 ├── docs/
 │   └── UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf
 ├── tests/
-│   ├── golden_graphs/                # Golden .MOD test artifacts
+│   ├── golden_graphs/                # Golden .MOD test artifacts (registry.toml)
 │   ├── golden_models/                # Golden .UMDL test artifacts
-│   └── fuzz_corpus/                  # Parser fuzz corpora
-├── scripts/
-│   ├── address_scan.py               # Persistent-pointer leakage scanner
-│   ├── status.py                     # Codex mission status
-│   ├── verify.py                     # Codex mission verification
-│   └── mission.py                    # Codex mission state helper
-├── .codex/                           # Current campaign, mission, plan, log
-└── .agents/
-    ├── agents/                       # Specialized review roles
-    └── skills/                       # Codex skills
+│   └── fuzz_corpus/                  # Parser fuzz corpora (umod/, umdl/)
+├── scripts/                          # fidelity_check.sh, address_scan.py, qemu.sh, mission helpers, …
+├── .codex/                           # Codex campaign, mission, project plan, log
+├── .agents/                          # Codex review roles and skills
+└── .claude/
+    ├── settings.json                 # Permissions and env
+    ├── agents/                       # Specialized subagents
+    ├── skills/                       # Slash-command skills
+    └── output-styles/
 ```
 
 ## 5. Build, Test, Run
@@ -97,24 +101,19 @@ that require unavailable local tooling must be reported as blockers.
 
 ```bash
 # Build the kernel for the custom target
-cargo build -p kernel --target x86_64-unboundos.json -Z json-target-spec -Z build-std=core,alloc
+cargo build -p kernel --target x86_64-unboundos.json -Z build-std=core,alloc -Z build-std-features=compiler-builtins-mem -Z json-target-spec
 
-# Run QEMU once real image generation is implemented
+# Run smoke tests in QEMU (captures serial)
 make qemu-headless
-make qemu-no-serial
 
 # Lint the kernel for std leakage
-cargo clippy -p kernel --target x86_64-unboundos.json
+cargo clippy --workspace --all-targets -- -D warnings
 
 # Address-scan all persistent fixtures
 python3 scripts/address_scan.py tests/golden_graphs tests/golden_models
 
-# Parser fuzz
-make parser-fuzz-umod
-make parser-fuzz-umdl
-
-# Golden graph regression
-make golden-graphs
+# Aggregate fidelity gate sweep (the canonical pre-commit check)
+make fidelity
 ```
 
 If `make` targets are missing, propose a `Makefile` patch rather than improvising
@@ -219,3 +218,85 @@ confirms.
   store, spec §7.1)
 
 If a request would step outside this list, name the line being crossed and ask.
+
+## 13. Mission / Campaign workflow
+
+UnboundOS code changes happen inside **milestone campaigns**. The structure is
+three files plus an archive directory:
+
+- `MILESTONE_CATALOG.md` — registry of M0–M12 (spec §13). Exactly one row is
+  `IN-PROGRESS` at a time. Each row names its owning campaign file.
+- `CURRENT_CAMPAIGN.md` — working copy of the active milestone's campaign file.
+  Defines `## Macro sequence` (numbered Steps) plus per-Step `Purpose:`,
+  `Allowed files:`, `Required work:`, `Validation:` blocks. May contain an
+  explicit `# Step N — Review gate` step that forces a mandatory stop.
+- `CURRENT_MISSION.md` — operator-facing entrypoint. Names the active
+  milestone, the campaign branch, required reads, baseline to verify, and the
+  final-report format. This is the file `/go` reads first.
+- `docs/campaigns/` — archive. Each milestone has one file here; the top-level
+  `CURRENT_CAMPAIGN.md` is a working copy of the active one. Completed campaign
+  files are never edited.
+
+Rules:
+
+- One campaign branch per milestone (`campaign/m<N>-<slug>`).
+- One commit per Step. Push every Step. Never push to `main` during campaign
+  execution. Never `git push --force`.
+- A Step's `Allowed files:` block is binding. Edits outside the listed paths
+  require a new step (or a new campaign), not silent scope expansion.
+- A Step's `Validation:` block doubles as the detection oracle the
+  `current-mission` agent uses to decide whether the Step is already done.
+- `Review gate` Steps are mandatory stops. The operator must explicitly clear
+  them before subsequent Steps run.
+- Catalog rows flip `IN-PROGRESS → DONE` only when their gate criteria are
+  reproducible from a clean checkout via `make gates`.
+
+The `/go`, `/repo-state`, and `/fidelity-lint` commands under
+`.claude/commands/` drive this workflow. The `current-mission`,
+`campaign-state`, `spec-refresher`, and `milestone-explorer` agents under
+`.claude/agents/` are the executors and diagnostics.
+
+## 14. The /go contract
+
+When the operator types `/go` (or "go", or "run the current mission"), Claude
+delegates to the `current-mission` agent and runs the following sequence:
+
+1. Read `CURRENT_MISSION.md`. Parse `## Required reads`.
+2. **Single parallel preflight burst** in one message:
+   - `Read` every required-reads path.
+   - `Bash`: `git status`, `git log --oneline -10`,
+     `git log --merges --oneline origin/main | head -10`,
+     `git branch --show-current`, `make repo-state`, `make gates`.
+   - `Task`: `subagent_type=campaign-state`,
+     `subagent_type=fidelity-gate-reviewer` (scoped to the diff).
+3. Synthesize. Stop immediately on any blocker (see stop list below).
+4. Pick the lowest-numbered Step whose `Required work` is not yet observable.
+5. Refuse any Edit/Write outside the Step's `Allowed files:` set.
+6. Execute the Step.
+7. Run the Step's `Validation:` block verbatim. Stop on first failure.
+8. Generate the commit message via
+   `python3 scripts/milestone_advance.py <M-id> <step-n>`. Stage only the
+   `Allowed files`. Commit.
+9. `git push -u origin <campaign-branch>`. Never main. Never `--force`.
+10. Loop back to step 4. **Do as much work as the gates allow in one
+    invocation.**
+11. Emit the final report from `CURRENT_MISSION.md ## Final report format`.
+
+`/go` stops at the first of:
+
+- **Review gate** — the next Step's header is `# Step N — Review gate`.
+- **Gate failure** — any of `make gates` sub-gates fail (fmt, clippy, test,
+  address-scan, fidelity matrix, qemu-smoke).
+- **Hard-rule violation** — `fidelity-gate-reviewer` returns BLOCK or any
+  pre-tool hook (e.g., `hook_pre_graph_runtime.py`) refuses an edit.
+- **Branch guard** — current branch is `main` or any non-campaign branch.
+- **Stale baseline** — `## Baseline to verify` in the mission disagrees with
+  `make repo-state`.
+- **Out-of-scope edit needed** — required path is not in the Step's
+  `Allowed files`.
+- **Ambiguity** — `campaign-state` returns `USER-JUDGMENT`.
+- **Done** — macro sequence exhausted; operator may open the final PR.
+
+`/go` MUST NOT bypass any of H1–H10. If a Step's `Required work` appears to
+require a violation, the agent escalates to the operator instead of executing
+the Step.

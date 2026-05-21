@@ -1,0 +1,43 @@
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# fuzz output
+fuzz/target/
+fuzz/artifacts/
+fuzz/corpus/
+
+# Build artifacts
+*.img
+*.iso
+*.bin.tmp
+build/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+*~
+
+# Local QEMU / serial logs
+/tmp/unboundos-*.log
+*.serial.log
+
+# Address scan / fidelity scratch
+.fidelity-cache/
+.address-scan-cache/
+
+# Local-only Claude Code state (do NOT commit personal session data)
+.claude/local/
+.claude/cache/
+.claude/sessions/
+
+# Skills/agents/settings ARE committed — they are project config.
+# Negate the broad ignore to be explicit:
+!.claude/settings.json
+!.claude/agents/
+!.claude/skills/
+!.claude/output-styles/

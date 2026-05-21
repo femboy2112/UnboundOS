@@ -50,39 +50,56 @@ pub struct SectionDescriptor {
 
 const _: () = assert!(core::mem::size_of::<SectionDescriptor>() == 0x20);
 
-/// Node descriptor — spec §6.5.
+/// Node descriptor — spec §6.5. `node_type_id` is `u64` to match the
+/// spec table and Appendix A's `NodeTypeId = u64`. The `pad_*` fields
+/// make the implicit `#[repr(C)]` alignment padding explicit so the
+/// on-disk layout is auditable.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct NodeDescriptor {
     pub node_id: u32,
-    pub node_type_id: u32,
+    pub pad_after_node_id: u32,
+    pub node_type_id: u64,
     pub input_pin_base: u32,
     pub input_pin_count: u16,
+    pub pad_after_input_pin_count: u16,
     pub output_pin_base: u32,
     pub output_pin_count: u16,
+    pub pad_after_output_pin_count: u16,
     pub capability_base: u32,
     pub capability_count: u16,
-    pub reserved0: u16,
+    pub pad_after_capability_count: u16,
     pub ui_x: i32,
     pub ui_y: i32,
     pub label_offset: u32,
     pub constant_ref: u32,
 }
 
-/// Wire descriptor — spec §6.6.
+const _: () = assert!(core::mem::size_of::<NodeDescriptor>() == 0x38);
+
+/// Wire descriptor — spec §6.6. Fields are in spec order:
+/// `wire_id, src_node_id, src_pin_index, dst_node_id, dst_pin_index,
+/// type_id, payload_size, alignment, flags`. `type_id` and
+/// `payload_size` are `u64` per the spec table and Appendix A
+/// (`TypeId = u64`).
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct WireDescriptor {
     pub wire_id: u32,
     pub src_node_id: u32,
     pub src_pin_index: u16,
-    pub dst_pin_index: u16,
+    pub pad_after_src_pin_index: u16,
     pub dst_node_id: u32,
-    pub type_id: u32,
-    pub payload_size: u32,
+    pub dst_pin_index: u16,
+    pub pad_after_dst_pin_index: u16,
+    pub pad_before_type_id: u32,
+    pub type_id: u64,
+    pub payload_size: u64,
     pub alignment: u32,
     pub flags: u32,
 }
+
+const _: () = assert!(core::mem::size_of::<WireDescriptor>() == 0x30);
 
 /// Approved opaque-resource grammar (spec §6.8):
 /// `resource_ref = resource_type ":" opaque_id`
@@ -125,8 +142,11 @@ pub enum ResourceRefError {
 ///
 /// # Errors
 ///
-/// Returns [`ResourceRefError`] when the bytes do not match the approved
-/// opaque-resource grammar.
+/// Returns a `ResourceRefError` variant if the input is empty,
+/// missing the `:` separator, has an unknown `resource_type`
+/// prefix, has an empty/too-long/invalid-charset `opaque_id`,
+/// looks like a path (`/`, `..`, `local://`, `\`), or contains
+/// any non-ASCII-printable byte.
 pub fn parse_resource_ref(_bytes: &[u8]) -> Result<ResourceRef<'_>, ResourceRefError> {
     Err(ResourceRefError::Empty)
 }

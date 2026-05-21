@@ -1,7 +1,6 @@
 //! CPU feature detection and SIMD enable. Spec sections 3.3, 3.4.
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-#[allow(dead_code)]
 pub enum SimdTier {
     Scalar,
     Sse2,

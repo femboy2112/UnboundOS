@@ -21,6 +21,9 @@ help:
 	@echo "  make address-scan    # scan persistent fixtures"
 	@echo "  make fmt             # cargo fmt --check"
 	@echo "  make clippy          # cargo clippy -D warnings"
+	@echo "  make gates           # run all gates sequentially (fmt/clippy/test/scan/fidelity/qemu)"
+	@echo "  make repo-state      # JSON verdict from scripts/milestone_state.py"
+	@echo "  make mission-preflight # repo-state then gates (the /go preflight)"
 	@echo "  make clean           # cargo clean"
 
 .PHONY: build
@@ -34,6 +37,8 @@ kernel:
 		--target x86_64-unboundos.json \
 		-Z json-target-spec \
 		-Z build-std=core,alloc \
+		-Z build-std-features=compiler-builtins-mem \
+		-Z json-target-spec \
 		--release
 
 .PHONY: image
@@ -71,6 +76,19 @@ fmt:
 .PHONY: clippy
 clippy:
 	$(CARGO) clippy --workspace --all-targets -- -D warnings
+
+.PHONY: gates
+gates:
+	./scripts/gates.sh
+
+.PHONY: repo-state
+repo-state:
+	python3 scripts/milestone_state.py
+
+.PHONY: mission-preflight
+mission-preflight:
+	@$(MAKE) -s repo-state
+	@$(MAKE) -s gates
 
 .PHONY: clean
 clean:

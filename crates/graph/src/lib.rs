@@ -13,6 +13,17 @@
 
 #![no_std]
 #![forbid(unsafe_op_in_unsafe_fn)]
+// TODO M0 (spec §13): drop these allows once the 22 §5.6 verifier
+// checks return real errors (`unnecessary_wraps`), the public API
+// gains per-error documentation (`missing_errors_doc`), and the
+// narrative spec-quote comments are converted to fully-backticked
+// references (`doc_markdown`). The lints are appropriate; the code
+// is pre-implementation.
+#![allow(
+    clippy::doc_markdown,
+    clippy::missing_errors_doc,
+    clippy::unnecessary_wraps
+)]
 
 pub mod loader;
 pub mod verifier;

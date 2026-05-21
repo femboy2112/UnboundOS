@@ -27,7 +27,7 @@ use umdl::SimdTier;
 /// `kernels/runtime_assert.rs` (TBD).
 #[must_use]
 pub fn build_dispatch_table(active: SimdTier) -> TensorKernelTable {
-    // Real implementation: match on `_active` and return a table
+    // Real implementation: match on `active` and return a table
     // whose function pointers reference the matching backend
     // (`kernels::scalar::matvec_q4`, `kernels::sse2::matvec_q4`,
     // `kernels::avx2::matvec_q4`, …).

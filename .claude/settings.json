@@ -1,0 +1,172 @@
+{
+  "$schema": "https://docs.claude.com/schemas/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(cargo:*)",
+      "Bash(rustc:*)",
+      "Bash(rustup:*)",
+      "Bash(rust-objdump:*)",
+      "Bash(rust-objcopy:*)",
+      "Bash(rust-readobj:*)",
+      "Bash(rust-nm:*)",
+      "Bash(make:*)",
+      "Bash(qemu-system-x86_64:*)",
+      "Bash(qemu-img:*)",
+      "Bash(git status)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git stash:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)",
+      "Bash(git remote:*)",
+      "Bash(git tag:*)",
+      "Bash(git restore:*)",
+      "Bash(git push:*)",
+      "Bash(git push -u:*)",
+      "Bash(git push origin:*)",
+      "Bash(git push -u origin:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(tree:*)",
+      "Bash(file:*)",
+      "Bash(xxd:*)",
+      "Bash(hexdump:*)",
+      "Bash(od:*)",
+      "Bash(stat:*)",
+      "Bash(du:*)",
+      "Bash(df:*)",
+      "Bash(realpath:*)",
+      "Bash(basename:*)",
+      "Bash(dirname:*)",
+      "Bash(diff:*)",
+      "Bash(patch:*)",
+      "Bash(awk:*)",
+      "Bash(sed:*)",
+      "Bash(cut:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(tr:*)",
+      "Bash(tee:*)",
+      "Bash(echo:*)",
+      "Bash(printf:*)",
+      "Bash(env:*)",
+      "Bash(true)",
+      "Bash(false)",
+      "Bash(test:*)",
+      "Bash(python3 scripts/*)",
+      "Bash(python3 ./scripts/*)",
+      "Bash(./scripts/*)",
+      "Bash(mkdir -p tests/*)",
+      "Bash(mkdir -p docs/*)",
+      "Bash(touch tests/*)",
+      "Bash(touch docs/*)",
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit",
+      "MultiEdit",
+      "Write",
+      "WebFetch(domain:docs.claude.com)",
+      "WebFetch(domain:doc.rust-lang.org)",
+      "WebFetch(domain:rust-lang.github.io)",
+      "WebFetch(domain:rust-osdev.com)",
+      "WebFetch(domain:wiki.osdev.org)",
+      "WebFetch(domain:limine-bootloader.org)",
+      "WebFetch(domain:intel.com)",
+      "WebFetch(domain:software.intel.com)",
+      "WebFetch(domain:felixcloutier.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(su:*)",
+      "Bash(rm -rf /:*)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf ~/:*)",
+      "Bash(rm -rf $HOME)",
+      "Bash(rm -rf $HOME/:*)",
+      "Bash(rm -rf ..)",
+      "Bash(rm -rf ../:*)",
+      "Bash(rm -rf .)",
+      "Bash(rm -rf ./)",
+      "Bash(rm -rf .git)",
+      "Bash(rm -rf .git/:*)",
+      "Bash(dd:*)",
+      "Bash(mkfs:*)",
+      "Bash(fdisk:*)",
+      "Bash(parted:*)",
+      "Bash(mount:*)",
+      "Bash(umount:*)",
+      "Bash(chmod 777:*)",
+      "Bash(chown:*)",
+      "Bash(curl:* | sh)",
+      "Bash(curl:* | bash)",
+      "Bash(curl:* | sh:*)",
+      "Bash(curl:* | bash:*)",
+      "Bash(wget:* | sh)",
+      "Bash(wget:* | bash)",
+      "Bash(eval:*)",
+      "Bash(exec:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force-with-lease:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fdx:*)",
+      "Bash(git filter-branch:*)",
+      "Bash(npm:*)",
+      "Bash(pip install:*)",
+      "Bash(pipx:*)"
+    ]
+  },
+  "env": {
+    "RUST_BACKTRACE": "1",
+    "CARGO_TERM_COLOR": "always",
+    "UNBOUNDOS_TARGET": "x86_64-unboundos.json"
+  },
+  "model": {
+    "thinking": "auto"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 scripts/hook_pre_graph_runtime.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 scripts/hook_post_address_scan.py"
+          },
+          {
+            "type": "command",
+            "command": "bash scripts/hook_post_cargo_fmt.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
