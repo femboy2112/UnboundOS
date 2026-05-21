@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C1 M0 Boot Heartbeat
-Active mission: C1.M0 Step 1 Boot-order assertion vs spec §3.2
+Active mission: C1.M0 Step 2 Serial UART probe and heartbeat string emission
 Status: ready
 Stop rule: stop after one complete mission, even when the next mission is obvious.
 Publish policy: commit and push after each completed mission.
@@ -20,7 +20,7 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C1.M0 Step 1 Boot-order assertion vs spec §3.2.
+1. C1.M0 Step 1 Boot-order assertion vs spec §3.2. Completed.
 2. C1.M0 Step 2 Serial UART probe and heartbeat string emission.
 3. C1.M0 Step 3 IDT install and `UNBOUNDOS_IDT_OK`.
 4. C1.M0 Step 4 Boot-diagnostic-buffer fallback.
