@@ -4,7 +4,26 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C1.M0 Step 4 Boot-diagnostic-buffer fallback: ready.
+- C1.M0 Step 5 Review gate: ready.
+
+## 2026-05-22T23:56:36Z - C1.M0 Step 4 Boot-diagnostic-buffer fallback
+
+- Status: completed
+- Summary: Promoted the boot-diagnostic-buffer fallback markers into
+  `boot_diag` source-visible symbols, routed failed UART probes through the
+  `BOOT_NO_SERIAL` marker, and kept every heartbeat emission recording into
+  the diagnostic buffer while leaving framebuffer and Step 7 QEMU assertion
+  work out of scope.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, source audit of
+  `kernel/src/serial.rs`, `kernel/src/heartbeat.rs`, `kernel/src/boot_diag.rs`,
+  and `kernel/src/boot.rs`, `make fmt`, `make clippy`, `make kernel`, and
+  `python3 scripts/verify.py --mission current`.
+- Notes: `make qemu-no-serial` was run and timed out after the current
+  placeholder image path; this remains non-authoritative for Step 4 per
+  `.codex/CURRENT_MISSION.md` and is still owned by the later QEMU assertion
+  path.
+- Blockers: none.
 
 ## 2026-05-21T04:38:06Z - C1.M0 Step 3 IDT install and `UNBOUNDOS_IDT_OK`
 

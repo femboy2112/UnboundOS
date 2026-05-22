@@ -17,7 +17,7 @@ const NEWLINE: &str = "\n";
 pub fn init() {
     serial::init();
     if !serial::is_available() {
-        boot_diag::record("BOOT_NO_SERIAL\n");
+        boot_diag::record(boot_diag::BOOT_NO_SERIAL_MARKER);
     }
 }
 
@@ -69,10 +69,13 @@ pub fn emit_kv_str(key: &str, value: &str) {
 ///   framebuffer::print_bytes(unsafe { boot_diag::snapshot() });
 /// ```
 ///
-/// The two strings live in `FRAMEBUFFER_FALLBACK_MARKERS` so the
-/// source-level /boot-heartbeat-check finds them before M2 lands.
-pub const FRAMEBUFFER_FALLBACK_MARKERS: [&str; 2] =
-    ["BOOT_NO_SERIAL\n", "BOOT_HEARTBEAT_BUFFER_PRESENT\n"];
+/// The two strings live in `boot_diag` as source-visible symbols and
+/// are collected here so the source-level /boot-heartbeat-check finds
+/// them before M2 lands.
+pub const FRAMEBUFFER_FALLBACK_MARKERS: [&str; 2] = [
+    boot_diag::BOOT_NO_SERIAL_MARKER,
+    boot_diag::BOOT_HEARTBEAT_BUFFER_PRESENT,
+];
 
 pub fn finalize_framebuffer_fallback() {
     if serial::is_available() {

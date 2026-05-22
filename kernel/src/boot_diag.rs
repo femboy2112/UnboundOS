@@ -14,6 +14,13 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 const DIAG_CAPACITY: usize = 4096;
 
+/// Recorded when the COM1 probe fails and the diagnostic buffer is
+/// the only heartbeat sink.
+pub const BOOT_NO_SERIAL_MARKER: &str = "BOOT_NO_SERIAL\n";
+
+/// Source-visible marker for the future M2 framebuffer dump path.
+pub const BOOT_HEARTBEAT_BUFFER_PRESENT: &str = "BOOT_HEARTBEAT_BUFFER_PRESENT\n";
+
 static mut DIAG_BUFFER: [u8; DIAG_CAPACITY] = [0u8; DIAG_CAPACITY];
 static DIAG_CURSOR: AtomicUsize = AtomicUsize::new(0);
 
