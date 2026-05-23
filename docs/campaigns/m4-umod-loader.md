@@ -211,6 +211,8 @@ Commit and push.
 
 # Step 4 — Capabilities, resources, constants, and scheduling checks
 
+Status: Completed.
+
 Purpose:
   Complete checks 12 and 14-22 for capabilities, payload bounds, GraphArena
   budget, model/resource references, checksums, UI layout, constants, and

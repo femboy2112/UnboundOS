@@ -31,6 +31,14 @@ pub const UMOD_MAX_WIRE_COUNT: u32 = 16_384;
 pub const SECTION_KIND_NODE_DESCRIPTORS: u32 = 1;
 pub const SECTION_KIND_WIRE_DESCRIPTORS: u32 = 2;
 pub const SECTION_KIND_PIN_TYPES: u32 = 3;
+pub const SECTION_KIND_CONSTANT_BLOBS: u32 = 4;
+pub const SECTION_KIND_CAPABILITIES: u32 = 5;
+pub const SECTION_KIND_UI_LAYOUT: u32 = 6;
+pub const SECTION_KIND_EXTERNAL_REFS: u32 = 7;
+pub const SECTION_KIND_CHECKSUMS: u32 = 8;
+pub const SECTION_KIND_SCHEDULING: u32 = 9;
+
+pub const SECTION_FLAG_REQUIRES_DETERMINISTIC_SCHEDULE: u32 = 1;
 
 /// Header at file offset 0. Spec §6.3, exact byte offsets.
 #[repr(C)]
@@ -381,6 +389,28 @@ pub fn find_section(
         index = index.saturating_add(1);
     }
     Ok(None)
+}
+
+/// Borrow the payload bytes covered by a previously validated section.
+///
+/// # Errors
+///
+/// Returns `SectionTableOutOfBounds` if the descriptor cannot be represented
+/// as a slice in the current address space.
+pub fn section_payload(
+    bytes: &[u8],
+    section: ParsedSectionDescriptor,
+) -> Result<&[u8], UmodParseError> {
+    let offset =
+        usize::try_from(section.offset).map_err(|_| UmodParseError::SectionTableOutOfBounds)?;
+    let length =
+        usize::try_from(section.length).map_err(|_| UmodParseError::SectionTableOutOfBounds)?;
+    let end = offset
+        .checked_add(length)
+        .ok_or(UmodParseError::SectionTableOutOfBounds)?;
+    bytes
+        .get(offset..end)
+        .ok_or(UmodParseError::SectionTableOutOfBounds)
 }
 
 /// Decode one node descriptor by index.

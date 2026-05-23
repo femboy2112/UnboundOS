@@ -4,8 +4,18 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C5.M4 Step 4 Capabilities, resources, constants, and scheduling checks:
-  ready.
+- C5.M4 Step 5 Persistent UMOD compile path: ready.
+
+## 2026-05-23T02:40:33Z - C5.M4 Step 4 Capabilities, resources, constants, and scheduling checks
+
+- Status: completed
+- Summary: Completed non-vacuous verifier checks for payload bounds, GraphArena
+  budget, model refs, section checksums, UI layout, constant blobs,
+  deterministic scheduling, and opaque external resource syntax.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p umod`, `cargo test -p
+  graph`, and `python3 scripts/verify.py --mission current`.
+- Blockers: none.
 
 ## 2026-05-23T02:29:49Z - C5.M4 Step 3 Node and wire semantic verifier checks
 
