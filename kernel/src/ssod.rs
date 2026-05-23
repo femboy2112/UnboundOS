@@ -1,6 +1,9 @@
 //! Snark Screen of Death — spec section 9.
 
-use crate::{boot_diag, serial};
+use crate::{
+    arena::{AllocError, ArenaFaultContext},
+    boot_diag, serial,
+};
 use core::panic::PanicInfo;
 
 #[derive(Copy, Clone)]
@@ -14,6 +17,7 @@ pub struct DiagnosticContext {
     pub stack_segment: u64,
     pub has_error_code: bool,
     pub error_code: u64,
+    pub arena_fault: Option<ArenaFaultContext>,
 }
 
 const SSOD_BEGIN: &str = "UNBOUNDOS_SSOD_BEGIN";
@@ -31,12 +35,19 @@ impl DiagnosticContext {
             stack_segment: 0,
             has_error_code: false,
             error_code: 0,
+            arena_fault: None,
         }
     }
 }
 
 pub fn from_rust_panic(_info: &PanicInfo) -> ! {
     kernel_panic("rust_panic", DiagnosticContext::rust_panic())
+}
+
+pub fn from_arena_alloc_error(error: AllocError) -> ! {
+    let mut ctx = DiagnosticContext::rust_panic();
+    ctx.arena_fault = error.arena_fault_context();
+    kernel_panic("arena_alloc_error", ctx)
 }
 
 /// M0-scope structured fatal diagnostic path.
@@ -65,13 +76,26 @@ pub fn kernel_panic(reason: &str, ctx: DiagnosticContext) -> ! {
     } else {
         emit_kv_str("error_code", M0_ABSENT_CONTEXT);
     }
-    emit_kv_str("arena_id", M0_ABSENT_CONTEXT);
+    if let Some(arena) = ctx.arena_fault {
+        emit_arena_fault(arena);
+    } else {
+        emit_kv_str("arena_id", M0_ABSENT_CONTEXT);
+    }
     emit_kv_str("graph_id", M0_ABSENT_CONTEXT);
     emit_kv_str("node_id", M0_ABSENT_CONTEXT);
     emit_kv_str("model_id", M0_ABSENT_CONTEXT);
     emit_line(SSOD_END);
 
     halt_idle()
+}
+
+fn emit_arena_fault(ctx: ArenaFaultContext) {
+    emit_kv_str("arena_id", ctx.arena.as_str());
+    emit_kv_hex("arena_requested", ctx.requested as u64);
+    emit_kv_hex("arena_alignment", ctx.alignment as u64);
+    emit_kv_hex("arena_base", ctx.base as u64);
+    emit_kv_hex("arena_cursor", ctx.cursor as u64);
+    emit_kv_hex("arena_limit", ctx.limit as u64);
 }
 
 pub fn halt_idle() -> ! {

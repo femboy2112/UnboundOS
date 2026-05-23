@@ -4,7 +4,18 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C3.M2 Step 3 Deterministic exhaustion diagnostics: ready.
+- C3.M2 Step 4 Memory-map and arena dump: ready.
+
+## 2026-05-23T01:26:10Z - C3.M2 Step 3 Deterministic exhaustion diagnostics
+
+- Status: completed
+- Summary: Added arena fault context extraction for exhaustion errors and
+  taught SSOD to serialize arena identity, requested size, alignment, base,
+  cursor, and limit while keeping graph/node/model context explicitly absent.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `python3 scripts/verify.py --mission
+  current`, and `make gates`.
+- Blockers: none.
 
 ## 2026-05-23T01:22:57Z - C3.M2 Step 2 Named M2 arena set
 

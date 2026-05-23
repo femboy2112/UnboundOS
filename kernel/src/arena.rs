@@ -15,6 +15,23 @@ pub enum ArenaId {
     ScratchTensor,
 }
 
+impl ArenaId {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Boot => "BootArena",
+            Self::Kernel => "KernelArena",
+            Self::Graph => "GraphArena",
+            Self::Scratch => "ScratchArena",
+            Self::ModelWeight => "ModelWeightArena",
+            Self::Inference => "InferenceArena",
+            Self::KvCache => "KVCacheArena",
+            Self::Tokenizer => "TokenizerArena",
+            Self::Sampler => "SamplerArena",
+            Self::ScratchTensor => "ScratchTensorArena",
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[allow(dead_code)]
 pub enum ArenaPhase {
@@ -83,6 +100,40 @@ pub enum AllocError {
         cursor: usize,
         limit: usize,
     },
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct ArenaFaultContext {
+    pub arena: ArenaId,
+    pub requested: usize,
+    pub alignment: usize,
+    pub base: usize,
+    pub cursor: usize,
+    pub limit: usize,
+}
+
+impl AllocError {
+    pub const fn arena_fault_context(self) -> Option<ArenaFaultContext> {
+        match self {
+            Self::OutOfArenaMemory {
+                arena,
+                requested,
+                alignment,
+                base,
+                cursor,
+                limit,
+                ..
+            } => Some(ArenaFaultContext {
+                arena,
+                requested,
+                alignment,
+                base,
+                cursor,
+                limit,
+            }),
+            Self::InvalidAlignment { .. } | Self::Overflow { .. } => None,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -261,8 +312,8 @@ fn align_up(value: usize, alignment: usize) -> Option<usize> {
 #[cfg(test)]
 mod tests {
     use super::{
-        AllocError, Arena, ArenaId, ArenaPhase, ArenaRange, M2ArenaRegions, M2ArenaSet, BOOT_ARENA,
-        GRAPH_ARENA, KERNEL_ARENA, SCRATCH_ARENA,
+        AllocError, Arena, ArenaFaultContext, ArenaId, ArenaPhase, ArenaRange, M2ArenaRegions,
+        M2ArenaSet, BOOT_ARENA, GRAPH_ARENA, KERNEL_ARENA, SCRATCH_ARENA,
     };
 
     #[test]
@@ -335,6 +386,17 @@ mod tests {
                 limit: 0x3020,
             }
         );
+        assert_eq!(
+            err.arena_fault_context(),
+            Some(ArenaFaultContext {
+                arena: ArenaId::Graph,
+                requested: 1,
+                alignment: 1,
+                base: 0x3000,
+                cursor: 0x3020,
+                limit: 0x3020,
+            })
+        );
     }
 
     #[test]
@@ -351,12 +413,16 @@ mod tests {
     #[test]
     fn m2_descriptors_name_required_arenas_and_phases() {
         assert_eq!(BOOT_ARENA.name, "BootArena");
+        assert_eq!(ArenaId::Boot.as_str(), "BootArena");
         assert_eq!(BOOT_ARENA.phase, ArenaPhase::BootOnly);
         assert_eq!(KERNEL_ARENA.name, "KernelArena");
+        assert_eq!(ArenaId::Kernel.as_str(), "KernelArena");
         assert_eq!(KERNEL_ARENA.phase, ArenaPhase::WholeBootSession);
         assert_eq!(GRAPH_ARENA.name, "GraphArena");
+        assert_eq!(ArenaId::Graph.as_str(), "GraphArena");
         assert_eq!(GRAPH_ARENA.phase, ArenaPhase::VerifiedGraphCompilation);
         assert_eq!(SCRATCH_ARENA.name, "ScratchArena");
+        assert_eq!(ArenaId::Scratch.as_str(), "ScratchArena");
         assert_eq!(SCRATCH_ARENA.phase, ArenaPhase::ScratchPhase);
     }
 

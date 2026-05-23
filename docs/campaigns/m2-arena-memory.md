@@ -159,6 +159,8 @@ Commit and push.
 
 # Step 3 — Deterministic exhaustion diagnostics
 
+Status: Completed.
+
 Purpose:
   Ensure arena exhaustion returns structured context and fatal boot/kernel
   exhaustion can route through SSOD with arena identity.

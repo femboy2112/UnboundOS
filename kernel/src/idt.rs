@@ -134,6 +134,7 @@ fn diagnostic_context(
         stack_segment: frame.stack_segment,
         has_error_code: error_code.is_some(),
         error_code: error_code.unwrap_or(0),
+        arena_fault: None,
     }
 }
 
