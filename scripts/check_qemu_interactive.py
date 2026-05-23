@@ -19,7 +19,10 @@ TIMEOUT_SECONDS = 30.0
 
 
 COMMANDS: tuple[tuple[str, str], ...] = (
-    ("help", "OK help commands=ping,graph,tokenize,toy,quant,retrieve,assistant,ssod,cpu,exit"),
+    (
+        "help",
+        "OK help commands=ping,graph,tokenize,toy,quant,kernels,retrieve,assistant,ssod,cpu,exit",
+    ),
     ("ping", "OK pong"),
     ("  ping  ", "OK pong"),
     ("unknown", "ERR unknown_command"),
@@ -27,6 +30,7 @@ COMMANDS: tuple[tuple[str, str], ...] = (
     ("tokenize", "OK tokenize text=hello tokens=5"),
     ("toy", "OK toy text="),
     ("quant", "OK quant tokens=67,68,69 last=69"),
+    ("kernels", "OK kernels matvec=8,-47 top=1,3"),
     ("retrieve", "OK retrieve count=2 context_len=111 top=index:spec-13.1"),
     (
         "assistant",

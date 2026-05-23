@@ -48,7 +48,10 @@ def main() -> int:
 
     for surface in (
         "project_i8_i8_i32: kernels::scalar::project_i8_i8_i32",
+        "matvec_q4: kernels::scalar::matvec_q4_i8_i32",
+        "sample_top_k: kernels::scalar::sample_top_k",
         "dispatch_table_routes_quantized_projection_through_scalar_kernel",
+        "dispatch_table_exercises_typed_scalar_entries",
     ):
         require(dispatch, surface, "dispatch-table quantized evidence", failures)
 
@@ -64,6 +67,16 @@ def main() -> int:
     ):
         require(quantized, surface, "quantized inference evidence", failures)
 
+    for text, label in (
+        (lib, "LLM tensor table surface"),
+        (dispatch, "dispatch-table quantized evidence"),
+    ):
+        for forbidden in (
+            "args TBD",
+            "fn(/* args TBD */)",
+            "Stub:",
+        ):
+            forbid(text, forbidden, label, failures)
     for text, label in (
         (scalar, "scalar kernel boundary"),
         (quantized, "quantized inference boundary"),

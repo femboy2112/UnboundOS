@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.30
+> **Catalog version:** v0.31
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -47,6 +47,13 @@ stale mission state. Completed campaigns are archived under
 
 ## Change log
 
+- **v0.31** — Replaced the M10 tensor dispatch table's zero-argument `TBD`
+  placeholders with typed scalar kernel entries for q4/q8 matvec, f32 vector
+  math, normalization, RoPE, attention-score, softmax, embedding lookup,
+  final projection, and top-k sampling. The quantized smoke now rejects `args
+  TBD`/`Stub:` regressions in the LLM table, and the live QEMU serial shell has
+  a `kernels` command that exercises matvec and top-k dispatch through the
+  running kernel.
 - **v0.30** — Removed stale top-level M0 mission/campaign state by converting
   `CURRENT_MISSION.md` and `CURRENT_CAMPAIGN.md` into explicit pointers to the
   authoritative `.codex/` control-plane files. `scripts/mission.py validate`

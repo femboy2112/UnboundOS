@@ -77,13 +77,14 @@ pub fn run(tier: SimdTier) -> ! {
 fn dispatch(command: &[u8], tier: SimdTier) {
     match trim_ascii(command) {
         b"help" => serial::write_str(
-            "OK help commands=ping,graph,tokenize,toy,quant,retrieve,assistant,ssod,cpu,exit\n",
+            "OK help commands=ping,graph,tokenize,toy,quant,kernels,retrieve,assistant,ssod,cpu,exit\n",
         ),
         b"ping" => serial::write_str("OK pong\n"),
         b"graph" => command_graph(),
         b"tokenize" => command_tokenize(),
         b"toy" => command_toy(),
         b"quant" => command_quant(),
+        b"kernels" => command_kernels(),
         b"retrieve" => command_retrieve(),
         b"assistant" => command_assistant(),
         b"ssod" => command_ssod(),
@@ -98,6 +99,30 @@ fn dispatch(command: &[u8], tier: SimdTier) {
         }
         _ => serial::write_str("ERR unknown_command\n"),
     }
+}
+
+fn command_kernels() {
+    let kernels = build_dispatch_table(ModelSimdTier::Scalar);
+    let input = [2, -3, 4];
+    let weights = [1, 2, 3, -4, 5, -6];
+    let mut matvec = [0i32; 2];
+    let logits = [3, 9, 1, 5];
+    let mut top = [0u32; 2];
+
+    let matvec_ok = (kernels.matvec_q8)(&input, &weights, 2, 3, &mut matvec).is_ok();
+    let top_ok = (kernels.sample_top_k)(&logits, 2, &mut top).is_ok();
+    if !matvec_ok || !top_ok {
+        serial::write_str("ERR kernels\n");
+        return;
+    }
+
+    serial::write_str("OK kernels matvec=");
+    write_i32_pair(matvec[0], matvec[1]);
+    serial::write_str(" top=");
+    serial::write_dec_u64(u64::from(top[0]));
+    serial::write_byte(b',');
+    serial::write_dec_u64(u64::from(top[1]));
+    serial::write_str("\n");
 }
 
 fn command_graph() {
@@ -396,6 +421,20 @@ fn write_optional_u32(value: Option<u32>) {
     } else {
         serial::write_str("none");
     }
+}
+
+fn write_i32_pair(first: i32, second: i32) {
+    write_i32(first);
+    serial::write_byte(b',');
+    write_i32(second);
+}
+
+fn write_i32(value: i32) {
+    let magnitude = value.unsigned_abs();
+    if value < 0 {
+        serial::write_byte(b'-');
+    }
+    serial::write_dec_u64(u64::from(magnitude));
 }
 
 fn write_ascii(bytes: &[u8]) {

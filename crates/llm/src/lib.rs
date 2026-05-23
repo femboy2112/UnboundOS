@@ -34,6 +34,36 @@ pub type ProjectI8Kernel = fn(
     output: &mut [i32],
 ) -> Result<usize, kernels::scalar::ScalarKernelError>;
 
+pub type MatVecI8Kernel = fn(
+    input: &[i8],
+    weights: &[i8],
+    rows: usize,
+    cols: usize,
+    output: &mut [i32],
+) -> Result<usize, kernels::scalar::ScalarKernelError>;
+
+pub type F32BinaryKernel = fn(
+    lhs: &[f32],
+    rhs: &[f32],
+    output: &mut [f32],
+) -> Result<usize, kernels::scalar::ScalarKernelError>;
+
+pub type F32UnaryKernel =
+    fn(input: &[f32], output: &mut [f32]) -> Result<usize, kernels::scalar::ScalarKernelError>;
+
+pub type EmbeddingLookupKernel = fn(
+    token_ids: &[u32],
+    embedding_table: &[f32],
+    embedding_width: usize,
+    output: &mut [f32],
+) -> Result<usize, kernels::scalar::ScalarKernelError>;
+
+pub type SampleTopKKernel = fn(
+    logits: &[i32],
+    top_k: usize,
+    output: &mut [u32],
+) -> Result<usize, kernels::scalar::ScalarKernelError>;
+
 /// Tensor kernel function pointers. The loader builds one of these
 /// per session, picking entries appropriate to the active SIMD tier
 /// and the model's declared minimum backend (§11.2).
@@ -45,18 +75,18 @@ pub type ProjectI8Kernel = fn(
 #[repr(C)]
 pub struct TensorKernelTable {
     pub project_i8_i8_i32: ProjectI8Kernel,
-    pub matvec_q4: fn(/* args TBD */),
-    pub matvec_q8: fn(/* args TBD */),
-    pub vec_add_f32: fn(/* args TBD */),
-    pub vec_mul_f32: fn(/* args TBD */),
-    pub rms_norm_f32: fn(/* args TBD */),
-    pub layer_norm_f32: fn(/* args TBD */),
-    pub rope_f32: fn(/* args TBD */),
-    pub attention_scores: fn(/* args TBD */),
-    pub softmax_f32: fn(/* args TBD */),
-    pub embedding_lookup: fn(/* args TBD */),
-    pub final_proj_q4: fn(/* args TBD */),
-    pub sample_top_k: fn(/* args TBD */),
+    pub matvec_q4: MatVecI8Kernel,
+    pub matvec_q8: MatVecI8Kernel,
+    pub vec_add_f32: F32BinaryKernel,
+    pub vec_mul_f32: F32BinaryKernel,
+    pub rms_norm_f32: F32UnaryKernel,
+    pub layer_norm_f32: F32UnaryKernel,
+    pub rope_f32: F32UnaryKernel,
+    pub attention_scores: F32BinaryKernel,
+    pub softmax_f32: F32UnaryKernel,
+    pub embedding_lookup: EmbeddingLookupKernel,
+    pub final_proj_q4: MatVecI8Kernel,
+    pub sample_top_k: SampleTopKKernel,
     pub active_tier: SimdTier,
 }
 
