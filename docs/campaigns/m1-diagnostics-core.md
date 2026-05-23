@@ -178,6 +178,8 @@ Commit and push.
 
 # Step 3 — Invalid-opcode SSOD proof
 
+Status: Completed.
+
 Purpose:
   Prove the #UD path routes through SSOD and includes reason and RIP in serial
   output.
