@@ -85,6 +85,43 @@ pub struct GraphDisplayState {
     last_completed_node: Option<u32>,
 }
 
+/// Read-only assistant explanation input copied from display state.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct GraphExplanationSnapshot {
+    graph_id: u64,
+    node_count: u32,
+    wire_count: u32,
+    active_node: Option<u32>,
+    last_completed_node: Option<u32>,
+}
+
+impl GraphExplanationSnapshot {
+    #[must_use]
+    pub const fn graph_id(&self) -> u64 {
+        self.graph_id
+    }
+
+    #[must_use]
+    pub const fn node_count(&self) -> u32 {
+        self.node_count
+    }
+
+    #[must_use]
+    pub const fn wire_count(&self) -> u32 {
+        self.wire_count
+    }
+
+    #[must_use]
+    pub const fn active_node(&self) -> Option<u32> {
+        self.active_node
+    }
+
+    #[must_use]
+    pub const fn last_completed_node(&self) -> Option<u32> {
+        self.last_completed_node
+    }
+}
+
 impl GraphDisplayState {
     #[must_use]
     pub(crate) const fn new(
@@ -126,6 +163,17 @@ impl GraphDisplayState {
     #[must_use]
     pub const fn last_completed_node(&self) -> Option<u32> {
         self.last_completed_node
+    }
+
+    #[must_use]
+    pub const fn explanation_snapshot(&self) -> GraphExplanationSnapshot {
+        GraphExplanationSnapshot {
+            graph_id: self.graph_id,
+            node_count: self.node_count,
+            wire_count: self.wire_count,
+            active_node: self.active_node,
+            last_completed_node: self.last_completed_node,
+        }
     }
 }
 
@@ -191,4 +239,24 @@ pub fn graph_compile_verified(
     verified: VerifiedGraph<'_>,
 ) -> Result<GraphRuntimeHandle, GraphCompileError> {
     loader::compile(verified)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn explanation_snapshot_is_copied_from_display_state() {
+        let display = GraphDisplayState::new(0x0053_5453, 3, 2, Some(1), Some(0));
+        let snapshot = display.explanation_snapshot();
+
+        assert_eq!(snapshot.graph_id(), display.graph_id());
+        assert_eq!(snapshot.node_count(), display.node_count());
+        assert_eq!(snapshot.wire_count(), display.wire_count());
+        assert_eq!(snapshot.active_node(), display.active_node());
+        assert_eq!(
+            snapshot.last_completed_node(),
+            display.last_completed_node()
+        );
+    }
 }

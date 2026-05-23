@@ -4,7 +4,22 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C12.M11 Step 2 Graph explanation snapshot: ready.
+- C12.M11 Step 3 SSOD explanation snapshot: ready.
+
+## 2026-05-23T08:34:34Z - C12.M11 Step 2 Graph explanation snapshot
+
+- Status: completed
+- Summary: Added a read-only `GraphExplanationSnapshot` copied from
+  `GraphDisplayState`, plus a no-std assistant graph explanation formatter
+  that writes graph identity, node/wire counts, active node, and last completed
+  node into caller-provided output.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p graph`, `cargo test -p llm`, and
+  `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code, runtime graph constructor,
+  mutation surface, hidden execution, or assistant write authority.
+- Blockers: none.
 
 ## 2026-05-23T08:30:21Z - C12.M11 Step 1 Structured action buffer contract
 

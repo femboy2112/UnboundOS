@@ -103,7 +103,7 @@ Commit and push.
 
 # Step 2 — Graph explanation snapshot
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Produce deterministic text/data explanations from verified graph display
@@ -137,6 +137,8 @@ Commit and push.
 ---
 
 # Step 3 — SSOD explanation snapshot
+
+Status: Active.
 
 Purpose:
   Produce deterministic explanations from structured SSOD diagnostic records.

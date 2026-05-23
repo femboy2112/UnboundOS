@@ -1,19 +1,19 @@
 # Current Mission
 
-Mission: C12.M11 Step 2 Graph explanation snapshot
+Mission: C12.M11 Step 3 SSOD explanation snapshot
 Campaign: C12 M11 IDE Assistant
 Status: ready
 
 ## Objective
 
-Execute M11 campaign Step 2 from `docs/campaigns/m11-ide-assistant.md`:
-produce deterministic text/data explanations from verified graph display state.
+Execute M11 campaign Step 3 from `docs/campaigns/m11-ide-assistant.md`:
+produce deterministic explanations from structured SSOD diagnostic records.
 
 ## Scope
 
 Allowed changes:
 
-- `crates/graph/src/lib.rs`
+- `kernel/src/ssod.rs`
 - `crates/llm/src/assistant.rs`
 - `docs/campaigns/m11-ide-assistant.md`
 - `.codex/CURRENT_MISSION.md`
@@ -22,17 +22,18 @@ Allowed changes:
 
 Out of scope:
 
-- SSOD explanation, unified assistant surface, smoke target, graph mutation,
-  storage, QEMU harness, thread/queue, eval, or execution-hook changes.
+- Unified assistant surface, smoke target, graph mutation, storage, QEMU
+  harness, thread/queue, eval, or execution-hook changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- Graph explanation input is read-only and derived from existing display
-  snapshot data.
-- Graph identity, node/wire counts, active node, and last completed node format
-  into caller-provided output.
-- No `GraphRuntime` constructor or graph mutation surface is introduced.
+- SSOD explanation input is read-only and derived from structured SSOD
+  diagnostic fields.
+- Reason/RIP/fault-family style information formats into caller-provided
+  output.
+- H10 remains intact: fatal diagnostics are not swallowed, weakened, or routed
+  around the SSOD record.
 
 ## Baseline to verify
 
@@ -48,15 +49,14 @@ python3 scripts/status.py
 python3 scripts/mission.py validate
 make fmt
 make clippy
-cargo test -p graph
 cargo test -p llm
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m11-ide-assistant`. Memory-unsafe Rust remains
-allowed by project identity, but M11 assistant explanation/action-buffer work
-should be safe, deterministic, bounded, and non-executing. Step 1 added
-fixed-width action proposal records and caller-owned `StructuredActionBuffer`
-storage.
+Campaign branch: `campaign/m11-ide-assistant`. Step 2 added read-only graph
+explanation snapshots and deterministic caller-buffer graph explanation text.
+Memory-unsafe Rust remains allowed by project identity, but M11 assistant
+explanation/action-buffer work should be safe, deterministic, bounded, and
+non-executing.

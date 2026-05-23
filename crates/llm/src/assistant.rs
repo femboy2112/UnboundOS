@@ -3,9 +3,13 @@
 //! Assistant output is proposal data only. It cannot mutate graph state,
 //! execute generated code, or bypass graph verification/operator approval.
 
+use core::fmt::{self, Write};
+use core::str;
+
 pub const ACTION_PAYLOAD_WORDS: usize = 4;
 pub const ACTION_TEXT_BYTES: usize = 32;
 pub const ACTION_TEXT_BYTES_U32: u32 = 32;
+pub const GRAPH_NODE_NONE: u32 = u32::MAX;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
@@ -20,6 +24,49 @@ pub enum AssistantActionError {
     UnsupportedKind { requested: u32 },
     OutputOverflow { required: u32, available: u32 },
     TextTooLong { required: u32, available: u32 },
+}
+
+/// Graph display facts accepted by the assistant explainer.
+///
+/// This is copied data only: it has no runtime graph handle, constructor, or
+/// mutation authority.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(C)]
+pub struct GraphExplanationInput {
+    pub graph_id: u64,
+    pub node_count: u32,
+    pub wire_count: u32,
+    pub active_node: u32,
+    pub last_completed_node: u32,
+}
+
+impl GraphExplanationInput {
+    #[must_use]
+    pub const fn new(
+        graph_id: u64,
+        node_count: u32,
+        wire_count: u32,
+        active_node: Option<u32>,
+        last_completed_node: Option<u32>,
+    ) -> Self {
+        Self {
+            graph_id,
+            node_count,
+            wire_count,
+            active_node: encode_optional_node(active_node),
+            last_completed_node: encode_optional_node(last_completed_node),
+        }
+    }
+
+    #[must_use]
+    pub const fn active_node(&self) -> Option<u32> {
+        decode_optional_node(self.active_node)
+    }
+
+    #[must_use]
+    pub const fn last_completed_node(&self) -> Option<u32> {
+        decode_optional_node(self.last_completed_node)
+    }
 }
 
 /// Fixed-width proposal record. Payload words are symbolic data, not pointers.
@@ -90,8 +137,11 @@ impl AssistantActionProposal {
     }
 
     #[must_use]
-    pub fn text_bytes(self) -> &'static [u8] {
-        &[]
+    pub fn text_bytes(&self) -> &[u8] {
+        let len = usize::try_from(self.text_len)
+            .unwrap_or(ACTION_TEXT_BYTES)
+            .min(ACTION_TEXT_BYTES);
+        &self.text[..len]
     }
 }
 
@@ -155,8 +205,99 @@ impl<'a> StructuredActionBuffer<'a> {
     }
 }
 
+/// Format a graph explanation into caller-provided storage.
+///
+/// # Errors
+///
+/// Returns `AssistantActionError::OutputOverflow` when `output` is too small
+/// for the deterministic explanation text.
+pub fn explain_graph<'a>(
+    input: &GraphExplanationInput,
+    output: &'a mut [u8],
+) -> Result<&'a str, AssistantActionError> {
+    let mut writer = BoundedTextWriter::new(output);
+    write!(
+        writer,
+        "graph=0x{:016x} nodes={} wires={} active_node=",
+        input.graph_id, input.node_count, input.wire_count
+    )
+    .map_err(|_| writer.overflow())?;
+    write_optional_node(&mut writer, input.active_node())?;
+    writer
+        .write_str(" last_completed_node=")
+        .map_err(|_| writer.overflow())?;
+    write_optional_node(&mut writer, input.last_completed_node())?;
+    writer.finish()
+}
+
+const fn encode_optional_node(node: Option<u32>) -> u32 {
+    match node {
+        Some(id) => id,
+        None => GRAPH_NODE_NONE,
+    }
+}
+
+const fn decode_optional_node(node: u32) -> Option<u32> {
+    if node == GRAPH_NODE_NONE {
+        None
+    } else {
+        Some(node)
+    }
+}
+
 fn len_to_u32(len: usize) -> u32 {
     u32::try_from(len).unwrap_or(u32::MAX)
+}
+
+fn write_optional_node(
+    writer: &mut BoundedTextWriter<'_>,
+    node: Option<u32>,
+) -> Result<(), AssistantActionError> {
+    match node {
+        Some(id) => write!(writer, "{id}").map_err(|_| writer.overflow()),
+        None => writer.write_str("none").map_err(|_| writer.overflow()),
+    }
+}
+
+struct BoundedTextWriter<'a> {
+    output: &'a mut [u8],
+    len: usize,
+    required: usize,
+}
+
+impl<'a> BoundedTextWriter<'a> {
+    const fn new(output: &'a mut [u8]) -> Self {
+        Self {
+            output,
+            len: 0,
+            required: 0,
+        }
+    }
+
+    fn overflow(&self) -> AssistantActionError {
+        AssistantActionError::OutputOverflow {
+            required: len_to_u32(self.required),
+            available: len_to_u32(self.output.len()),
+        }
+    }
+
+    fn finish(self) -> Result<&'a str, AssistantActionError> {
+        str::from_utf8(&self.output[..self.len]).map_err(|_| self.overflow())
+    }
+}
+
+impl Write for BoundedTextWriter<'_> {
+    fn write_str(&mut self, value: &str) -> fmt::Result {
+        let bytes = value.as_bytes();
+        self.required = self.required.saturating_add(bytes.len());
+        if self.required > self.output.len() {
+            return Err(fmt::Error);
+        }
+        let end = self.len + bytes.len();
+        self.output[self.len..end].copy_from_slice(bytes);
+        self.len = end;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -229,6 +370,7 @@ mod tests {
         let proposal = AssistantActionProposal::explain_only("explain").unwrap();
         assert_eq!(proposal.text_len, 7);
         assert_eq!(&proposal.text[..7], b"explain");
+        assert_eq!(proposal.text_bytes(), b"explain");
 
         assert_eq!(
             AssistantActionProposal::explain_only("x".repeat(ACTION_TEXT_BYTES + 1).as_str())
@@ -236,6 +378,33 @@ mod tests {
             AssistantActionError::TextTooLong {
                 required: 33,
                 available: ACTION_TEXT_BYTES_U32,
+            }
+        );
+    }
+
+    #[test]
+    fn graph_explanation_formats_display_snapshot_fields() {
+        let input = GraphExplanationInput::new(0x0053_5453, 3, 2, None, Some(3));
+        let mut output = [0u8; 96];
+
+        let explanation = explain_graph(&input, &mut output).unwrap();
+
+        assert_eq!(
+            explanation,
+            "graph=0x0000000000535453 nodes=3 wires=2 active_node=none last_completed_node=3"
+        );
+    }
+
+    #[test]
+    fn graph_explanation_reports_caller_output_overflow() {
+        let input = GraphExplanationInput::new(0x0053_5453, 3, 2, Some(1), Some(0));
+        let mut output = [0u8; 16];
+
+        assert_eq!(
+            explain_graph(&input, &mut output).unwrap_err(),
+            AssistantActionError::OutputOverflow {
+                required: 17,
+                available: 16,
             }
         );
     }
