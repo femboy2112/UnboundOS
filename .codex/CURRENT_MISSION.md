@@ -2,7 +2,7 @@
 
 Mission: C1.M0 Step 7 QEMU smoke headless assertion
 Campaign: C1 M0 Boot Heartbeat
-Status: ready
+Status: blocked
 
 ## Objective
 
@@ -55,7 +55,9 @@ make gates
 
 ## Notes
 
-Campaign branch: `campaign/m0-boot-heartbeat`. Current audits indicate the
-kernel already emits `UNBOUNDOS_BOOT_OK`; the likely implementation work is in
-`scripts/qemu.sh`. The current image builder may still block runtime QEMU
-success until real bootloader integration lands.
+Campaign branch: `campaign/m0-boot-heartbeat`. Stop reason: qemu-image-blocker.
+
+`scripts/qemu.sh --assert-heartbeat` now implements ordered heartbeat checking,
+but runtime QEMU smoke is blocked because `scripts/make_image.sh` still writes
+the deliberate placeholder image instead of a bootable image. Step 8 must not
+run until a real boot image path lets `make gates` pass.

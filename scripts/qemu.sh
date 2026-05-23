@@ -6,6 +6,7 @@
 #   ./scripts/qemu.sh --headless       # no display, capture serial to file
 #   ./scripts/qemu.sh --cpu Skylake-Client
 #   ./scripts/qemu.sh --no-serial      # exercise the no-UART fallback
+#   ./scripts/qemu.sh --assert-heartbeat
 #
 # Environment overrides:
 #   QEMU_CPU      override CPU model (default: qemu64)
@@ -24,16 +25,23 @@ IMAGE="${IMAGE:-/tmp/unboundos.img}"
 SERIAL_LOG="${SERIAL_LOG:-/tmp/unboundos-serial.log}"
 HEADLESS=0
 NO_SERIAL=0
+ASSERT_HEARTBEAT=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --headless)   HEADLESS=1; shift ;;
-        --no-serial)  NO_SERIAL=1; shift ;;
-        --cpu)        QEMU_CPU="$2"; shift 2 ;;
-        --image)      IMAGE="$2"; shift 2 ;;
-        *)            echo "[qemu] unknown arg: $1" >&2; exit 2 ;;
+        --headless)          HEADLESS=1; shift ;;
+        --no-serial)         NO_SERIAL=1; shift ;;
+        --assert-heartbeat)  ASSERT_HEARTBEAT=1; shift ;;
+        --cpu)               QEMU_CPU="$2"; shift 2 ;;
+        --image)             IMAGE="$2"; shift 2 ;;
+        *)                   echo "[qemu] unknown arg: $1" >&2; exit 2 ;;
     esac
 done
+
+if [ "$ASSERT_HEARTBEAT" -eq 1 ] && [ "$NO_SERIAL" -eq 1 ]; then
+    echo "[qemu] --assert-heartbeat requires serial capture" >&2
+    exit 2
+fi
 
 if [ ! -f "$IMAGE" ]; then
     echo "[qemu] image not found: $IMAGE" >&2
@@ -62,5 +70,56 @@ fi
 echo "[qemu] cpu=$QEMU_CPU ram=$QEMU_RAM image=$IMAGE"
 [ "$NO_SERIAL" -eq 0 ] && echo "[qemu] serial → $SERIAL_LOG"
 
-# 60s wall-clock budget; kernel must reach UNBOUNDOS_BOOT_OK before then.
-exec timeout 60s qemu-system-x86_64 "${ARGS[@]}"
+assert_heartbeat_order() {
+    local log="$1"
+    local expected=(
+        '^UNBOUNDOS_BOOT_BEGIN$'
+        '^UNBOUNDOS_CPU_PROFILE='
+        '^UNBOUNDOS_MEMMAP_OK='
+        '^UNBOUNDOS_IDT_OK$'
+        '^UNBOUNDOS_BOOT_OK$'
+    )
+    local idx=0
+    local line
+
+    while IFS= read -r line; do
+        if [[ "$line" =~ ${expected[$idx]} ]]; then
+            idx=$((idx + 1))
+            if [ "$idx" -eq "${#expected[@]}" ]; then
+                return 0
+            fi
+        fi
+    done <"$log"
+
+    echo "[qemu] missing heartbeat marker ${expected[$idx]} in $log" >&2
+    return 1
+}
+
+if [ "$ASSERT_HEARTBEAT" -eq 0 ]; then
+    # 60s wall-clock budget; kernel must reach UNBOUNDOS_BOOT_OK before then.
+    exec timeout 60s qemu-system-x86_64 "${ARGS[@]}"
+fi
+
+rm -f "$SERIAL_LOG"
+: >"$SERIAL_LOG"
+
+timeout 60s qemu-system-x86_64 "${ARGS[@]}" &
+QEMU_PID=$!
+
+for _ in $(seq 1 600); do
+    if assert_heartbeat_order "$SERIAL_LOG" >/dev/null 2>&1; then
+        kill "$QEMU_PID" >/dev/null 2>&1 || true
+        wait "$QEMU_PID" >/dev/null 2>&1 || true
+        echo "[qemu] heartbeat assertion passed"
+        exit 0
+    fi
+    if ! kill -0 "$QEMU_PID" >/dev/null 2>&1; then
+        wait "$QEMU_PID" || true
+        break
+    fi
+    sleep 0.1
+done
+
+kill "$QEMU_PID" >/dev/null 2>&1 || true
+wait "$QEMU_PID" >/dev/null 2>&1 || true
+assert_heartbeat_order "$SERIAL_LOG"

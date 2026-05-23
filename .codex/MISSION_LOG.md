@@ -4,7 +4,26 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C1.M0 Step 7 QEMU smoke headless assertion: ready.
+- C1.M0 Step 7 QEMU smoke headless assertion: blocked on bootable image
+  generation.
+
+## 2026-05-23T00:20:05Z - C1.M0 Step 7 QEMU smoke headless assertion
+
+- Status: blocked
+- Summary: Added `scripts/qemu.sh --assert-heartbeat` with stale-log clearing,
+  ordered serial-log matching for the five canonical heartbeat markers, and
+  early QEMU termination once `UNBOUNDOS_BOOT_OK` is observed. Normal
+  `make qemu-headless` remains non-asserting.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `bash -n scripts/qemu.sh`,
+  `make fmt`, `make clippy`, `make kernel`, and
+  `python3 scripts/verify.py --mission current`.
+- Runtime gates: `make qemu-headless` timed out through the deliberate
+  placeholder image path. `make gates` passed 5/6 gates and failed only at
+  `qemu-smoke heartbeat` because no serial heartbeat was observed from the
+  placeholder image.
+- Blockers: replace `scripts/make_image.sh` placeholder output with a real
+  bootable image path before Step 7 can pass and M0 can proceed to Step 8.
 
 ## 2026-05-23T00:13:59Z - C1.M0 Step 6 Panic path routed through SSOD
 

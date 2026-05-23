@@ -2,7 +2,7 @@
 
 Campaign: C1 M0 Boot Heartbeat
 Active mission: C1.M0 Step 7 QEMU smoke headless assertion
-Status: ready
+Status: blocked-qemu-image
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -32,7 +32,7 @@ See `.codex/CURRENT_MISSION.md`.
 4. C1.M0 Step 4 Boot-diagnostic-buffer fallback. Completed.
 5. C1.M0 Step 5 Review gate. Approved to continue by operator.
 6. C1.M0 Step 6 Panic path routed through SSOD. Completed.
-7. C1.M0 Step 7 QEMU smoke headless assertion. Active.
+7. C1.M0 Step 7 QEMU smoke headless assertion. Blocked on boot image.
 8. C1.M0 Step 8 M0 completion audit.
 
 ## Required Preflight For `go`
