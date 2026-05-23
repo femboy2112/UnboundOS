@@ -125,6 +125,11 @@ QEMU_COMMANDS = [
         ["make", "-s", "qemu-stress"],
         requires=("make", "python3", "qemu-system-x86_64"),
     ),
+    Command(
+        "qemu CPU/RAM matrix",
+        ["make", "-s", "qemu-matrix"],
+        requires=("make", "python3", "qemu-system-x86_64"),
+    ),
 ]
 
 

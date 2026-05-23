@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.35
+> **Catalog version:** v0.36
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -47,6 +47,12 @@ stale mission state. Completed campaigns are archived under
 
 ## Change log
 
+- **v0.36** — Added `make qemu-matrix`, a live hardware-profile matrix that
+  runs heartbeat, M2 arena/memory, boot-time graph load, framebuffer rendering,
+  and the interactive graph/LLM/retrieval/assistant shell under low-RAM,
+  baseline, larger-RAM, and `max` CPU QEMU profiles. The framebuffer and
+  interactive runners now honor `QEMU_CPU` and `QEMU_RAM`, and aggregate gates
+  plus mission verification reject matrix regressions.
 - **v0.35** — Expanded boot-owned arena initialization beyond the original M2
   four-arena slice. The QEMU memory/arena dump now requires ModelWeightArena,
   InferenceArena, KVCacheArena, and TokenizerArena to be carved from the

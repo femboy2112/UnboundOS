@@ -10,16 +10,19 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
 
 ## Verified Now
 
-- `make gates` passes 26/26, including live QEMU boots, the interactive serial
+- `make gates` passes 27/27, including live QEMU boots, the interactive serial
   shell, no-serial fallback, three SSOD fault vectors, M2 memory diagnostics,
   boot-time graph load, framebuffer memory inspection, storage, and the repeated
-  QEMU stress sweep.
+  QEMU stress and CPU/RAM matrix sweeps.
 - `python3 scripts/verify.py --mission current` passes and runs the same QEMU
   stress sweep.
 - `make qemu-stress` repeats 10 runtime paths twice by default:
   heartbeat, no-serial fallback, divide-error SSOD, invalid-opcode SSOD,
   page-fault SSOD, M2 memory dump, graph boot, framebuffer render, interactive
   graph/LLM/retrieval/assistant shell, and storage marker read.
+- `make qemu-matrix` runs heartbeat, M2 arena/memory, graph boot, framebuffer,
+  and interactive shell gates under low-RAM, baseline, larger-RAM, and `max`
+  CPU QEMU profiles.
 - The boot path now initializes and dynamically proves all spec §4.4 named
   early/model/inference arenas: BootArena, KernelArena, GraphArena,
   ScratchArena, ModelWeightArena, InferenceArena, KVCacheArena, and
@@ -79,9 +82,9 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
 6. Stress coverage is still short-run.
 
    `make qemu-stress` now catches single-shot flakiness by repeating all live
-   runtime paths twice. It is not a long soak test, randomized parser fuzz run,
-   CPU matrix, RAM-size matrix, storage-error matrix, or framebuffer-mode
-   matrix. Those should become separate gates before claiming broad robustness.
+   runtime paths twice, and `make qemu-matrix` covers several CPU/RAM profiles.
+   This is still not a long soak test, randomized parser fuzz run,
+   storage-error matrix, framebuffer-mode matrix, or broad host-hardware matrix.
 
 7. Stale closed-milestone TODOs and comments remain.
 
@@ -100,5 +103,5 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
    arenas with phase guards and diagnostics.
 4. Turn the framebuffer path into an interactive IDE surface rather than only a
    rendered diagnostic surface.
-5. Add matrix stress gates for CPU profile, RAM size, framebuffer mode, storage
-   errors, and malformed persistent artifacts.
+5. Add remaining matrix stress gates for framebuffer mode, storage errors, and
+   malformed persistent artifacts.

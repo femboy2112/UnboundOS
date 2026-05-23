@@ -36,6 +36,7 @@ help:
 	@echo "  make qemu-graph-boot # assert initial graph loads during boot"
 	@echo "  make qemu-framebuffer-smoke # capture framebuffer diagnostics from QEMU"
 	@echo "  make qemu-stress     # repeat live QEMU milestone smoke paths"
+	@echo "  make qemu-matrix     # live QEMU CPU/RAM profile matrix"
 	@echo "  make fidelity        # run scripts/fidelity_check.sh"
 	@echo "  make address-scan    # scan persistent fixtures"
 	@echo "  make fmt             # cargo fmt --check"
@@ -96,6 +97,10 @@ qemu-framebuffer-smoke:
 .PHONY: qemu-stress
 qemu-stress:
 	python3 scripts/check_qemu_stress.py
+
+.PHONY: qemu-matrix
+qemu-matrix:
+	python3 scripts/check_qemu_matrix.py
 
 .PHONY: qemu-storage-smoke
 qemu-storage-smoke:

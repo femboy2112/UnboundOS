@@ -20,6 +20,8 @@ MONITOR = Path("/tmp/unboundos-framebuffer-monitor.sock")
 VNC_DISPLAY = "127.0.0.1:77"
 TIMEOUT_SECONDS = 30.0
 MIN_RENDERED_WORDS = 128
+QEMU_CPU = os.environ.get("QEMU_CPU", "qemu64")
+QEMU_RAM = os.environ.get("QEMU_RAM", "512M")
 
 
 def wait_for(path: Path, needle: str, deadline: float) -> None:
@@ -93,9 +95,9 @@ def main() -> int:
         [
             "qemu-system-x86_64",
             "-cpu",
-            "qemu64",
+            QEMU_CPU,
             "-m",
-            "512M",
+            QEMU_RAM,
             "-no-reboot",
             "-device",
             "isa-debug-exit,iobase=0xf4,iosize=0x04",
@@ -152,7 +154,10 @@ def main() -> int:
                 pass
             proc.wait(timeout=3)
 
-    print(f"[qemu-framebuffer] PASS: {width}x{height} framebuffer has {lit_words} lit words")
+    print(
+        f"[qemu-framebuffer] PASS: cpu={QEMU_CPU} ram={QEMU_RAM} "
+        f"{width}x{height} framebuffer has {lit_words} lit words"
+    )
     return 0
 
 

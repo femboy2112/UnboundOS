@@ -16,6 +16,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE = Path("/tmp/unboundos.img")
 TIMEOUT_SECONDS = 30.0
+QEMU_CPU = os.environ.get("QEMU_CPU", "qemu64")
+QEMU_RAM = os.environ.get("QEMU_RAM", "512M")
 
 
 COMMANDS: tuple[tuple[str, str], ...] = (
@@ -74,9 +76,9 @@ def main() -> int:
         [
             "qemu-system-x86_64",
             "-cpu",
-            "qemu64",
+            QEMU_CPU,
             "-m",
-            "512M",
+            QEMU_RAM,
             "-no-reboot",
             "-device",
             "isa-debug-exit,iobase=0xf4,iosize=0x04",
@@ -133,7 +135,10 @@ def main() -> int:
             proc.wait(timeout=3)
         os.close(master_fd)
 
-    print("[qemu-interactive] PASS: live serial shell exercised graph/LLM/retrieval paths")
+    print(
+        f"[qemu-interactive] PASS: cpu={QEMU_CPU} ram={QEMU_RAM} "
+        "live serial shell exercised graph/LLM/retrieval paths"
+    )
     return 0
 
 
