@@ -1,0 +1,3 @@
+family:   overlapping_sections
+expected: GraphLoadError::BadSectionTable
+note:     Wire section starts inside the node descriptor section.

@@ -1,0 +1,3 @@
+family:   unbroken_cycles
+expected: GraphLoadError::UnbrokenCycle
+note:     Two transform nodes form a cycle without a delay/state cycle breaker.

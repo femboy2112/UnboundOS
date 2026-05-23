@@ -747,6 +747,77 @@ mod tests {
     }
 
     #[test]
+    fn golden_registry_fixture_is_exercised() {
+        let registry = include_str!("../../../tests/golden_graphs/registry.toml");
+
+        assert!(registry.contains("source-transform-sink.bin"));
+        assert!(verify_umod(include_bytes!(
+            "../../../tests/golden_graphs/source-transform-sink.bin"
+        ))
+        .is_ok());
+    }
+
+    #[test]
+    fn malformed_corpus_fixtures_reject_with_declared_errors() {
+        assert_eq!(
+            verify_umod(include_bytes!(
+                "../../../tests/fuzz_corpus/umod/bad_magic/bad-magic.bin"
+            ))
+            .unwrap_err(),
+            GraphLoadError::BadMagic
+        );
+        assert_eq!(
+            verify_umod(include_bytes!(
+                "../../../tests/fuzz_corpus/umod/unsupported_versions/unsupported-version.bin"
+            ))
+            .unwrap_err(),
+            GraphLoadError::UnsupportedVersion
+        );
+        assert_eq!(
+            verify_umod(include_bytes!(
+                "../../../tests/fuzz_corpus/umod/undersized_headers/truncated-header.bin"
+            ))
+            .unwrap_err(),
+            GraphLoadError::ParseTruncated
+        );
+        assert_eq!(
+            verify_umod(include_bytes!(
+                "../../../tests/fuzz_corpus/umod/offsets_outside_bounds/section-out-of-bounds.bin"
+            ))
+            .unwrap_err(),
+            GraphLoadError::BadSectionTable
+        );
+        assert_eq!(
+            verify_umod(include_bytes!(
+                "../../../tests/fuzz_corpus/umod/overlapping_sections/section-overlap.bin"
+            ))
+            .unwrap_err(),
+            GraphLoadError::BadSectionTable
+        );
+        assert_eq!(
+            verify_umod(include_bytes!(
+                "../../../tests/fuzz_corpus/umod/huge_counts_tiny_files/node-count-over-limit.bin"
+            ))
+            .unwrap_err(),
+            GraphLoadError::NodeCountExceedsLimit
+        );
+        assert_eq!(
+            verify_umod(include_bytes!(
+                "../../../tests/fuzz_corpus/umod/unknown_resource_syntax/path-shaped-resource-ref.bin"
+            ))
+            .unwrap_err(),
+            GraphLoadError::OpaqueResourceSyntaxBad { ref_index: 0 }
+        );
+        assert_eq!(
+            verify_umod(include_bytes!(
+                "../../../tests/fuzz_corpus/umod/unbroken_cycles/two-node-loop.bin"
+            ))
+            .unwrap_err(),
+            GraphLoadError::UnbrokenCycle { sample_node_id: 1 }
+        );
+    }
+
+    #[test]
     fn short_umod_header_fails_structurally() {
         let r = verify_umod(b"UMOD");
         assert_eq!(r.unwrap_err(), GraphLoadError::ParseTruncated);

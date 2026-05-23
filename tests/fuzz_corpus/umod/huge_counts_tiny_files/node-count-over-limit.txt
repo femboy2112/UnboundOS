@@ -1,0 +1,3 @@
+family:   huge_counts_tiny_files
+expected: GraphLoadError::NodeCountExceedsLimit
+note:     Header declares one more than the maximum supported node count.

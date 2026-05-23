@@ -1,6 +1,6 @@
 # Golden graph fixture registry.
 #
-# Each [[fixtures]] entry corresponds to a `.umod` file in this
+# Each [[fixtures]] entry corresponds to a UMOD byte fixture in this
 # directory. The harness in `crates/umod/tests/golden_graphs.rs`
 # enumerates this list and asserts each fixture's verifier outcome
 # matches `expected`.
@@ -19,15 +19,11 @@
 #                                     rejects:OpaqueResourceSyntaxBad
 
 # Positive fixtures — spec §12.7 minimum suite.
-# (Add as the host builder lands. Until then, this file is the schema
-# only; the harness reads zero entries and the test passes vacuously.)
-
-# Example positive entry (uncomment and add the .umod file when ready):
-# [[fixtures]]
-# name = "single-pulse"
-# path = "single-pulse.umod"
-# expected = "verifies"
-# notes = "PulseSource → CounterSink. Smallest non-trivial graph."
+[[fixtures]]
+name = "source-transform-sink"
+path = "source-transform-sink.bin"
+expected = "verifies"
+notes = "Source -> Transform -> Sink persistent UMOD bytes."
 
 # Example negative entry:
 # [[fixtures]]

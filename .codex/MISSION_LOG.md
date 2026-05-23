@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C5.M4 Step 6 Golden and malformed fixture coverage: ready.
+- C5.M4 Step 7 M4 completion audit: ready.
+
+## 2026-05-23T06:51:16Z - C5.M4 Step 6 Golden and malformed fixture coverage
+
+- Status: completed
+- Summary: Registered the source-transform-sink golden fixture, added malformed
+  UMOD corpus cases for bad magic/version, truncated header, out-of-bounds
+  sections, overlap, huge counts, invalid refs, and unbroken cycles, and added
+  graph verifier tests that include every fixture directly from checkout.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p umod`, `cargo test -p
+  graph`, `python3 scripts/address_scan.py tests/golden_graphs
+  tests/golden_models`, `python3 scripts/verify.py --mission current`, and
+  `make gates`.
+- Blockers: none.
 
 ## 2026-05-23T06:48:28Z - C5.M4 Step 5 Persistent UMOD compile path
 

@@ -1,0 +1,3 @@
+family:   offsets_outside_bounds
+expected: GraphLoadError::BadSectionTable
+note:     First section declares a payload extending beyond the file length.

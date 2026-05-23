@@ -286,6 +286,8 @@ Commit and push.
 
 # Step 6 — Golden and malformed fixture coverage
 
+Status: Completed.
+
 Purpose:
   Make M4 fixture coverage non-vacuous and reproducible from checkout.
 

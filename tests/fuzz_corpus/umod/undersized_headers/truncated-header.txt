@@ -1,0 +1,3 @@
+family:   undersized_headers
+expected: GraphLoadError::ParseTruncated
+note:     Buffer contains only magic bytes and no complete fixed-width header.
