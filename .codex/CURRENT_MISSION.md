@@ -2,7 +2,7 @@
 
 Mission: C1.M0 Step 5 Review gate
 Campaign: C1 M0 Boot Heartbeat
-Status: review-gate
+Status: blocked
 
 ## Objective
 
@@ -42,5 +42,8 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m0-boot-heartbeat`. The operator review items are
-listed under Step 5 in `docs/campaigns/m0-boot-heartbeat.md`.
+Campaign branch: `campaign/m0-boot-heartbeat`. Stop reason: review-gate.
+
+The operator review items are listed under Step 5 in
+`docs/campaigns/m0-boot-heartbeat.md`. Step 6+ remains blocked until the
+operator explicitly approves continuing past this gate.

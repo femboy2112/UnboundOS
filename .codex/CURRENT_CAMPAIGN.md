@@ -2,7 +2,7 @@
 
 Campaign: C1 M0 Boot Heartbeat
 Active mission: C1.M0 Step 5 Review gate
-Status: review-gate
+Status: blocked-review-gate
 Stop rule: stop after one complete mission, even when the next mission is obvious.
 Publish policy: commit and push after each completed mission.
 Campaign branch: campaign/m0-boot-heartbeat

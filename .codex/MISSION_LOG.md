@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C1.M0 Step 5 Review gate: ready.
+- C1.M0 Step 5 Review gate: blocked pending explicit operator approval for
+  Steps 6+.
+
+## 2026-05-23T00:03:42Z - C1.M0 Step 5 Review gate
+
+- Status: blocked
+- Summary: Re-validated the active review gate after Step 4 and recorded the
+  required stop without advancing to Step 6 or touching implementation files.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, review of
+  `docs/campaigns/m0-boot-heartbeat.md` Step 5, and
+  `python3 scripts/verify.py --mission current`.
+- Stop reason: review-gate. The campaign requires explicit operator approval
+  before Steps 6+ run.
+- Blockers: explicit operator approval to continue past the Step 5 review gate.
 
 ## 2026-05-22T23:56:36Z - C1.M0 Step 4 Boot-diagnostic-buffer fallback
 
