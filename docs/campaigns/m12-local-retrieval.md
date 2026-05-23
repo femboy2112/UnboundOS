@@ -193,7 +193,7 @@ Commit and push.
 
 # Step 5 — Assistant retrieval surface
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Connect local retrieval results to the assistant data surface.
@@ -223,6 +223,8 @@ Commit and push.
 ---
 
 # Step 6 — Retrieval smoke evidence and gates
+
+Status: Active.
 
 Purpose:
   Make local retrieval evidence reproducible from checkout.

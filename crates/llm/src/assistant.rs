@@ -1,10 +1,14 @@
-//! Local assistant data surfaces for M11.
+//! Local assistant data surfaces for M11/M12.
 //!
 //! Assistant output is proposal data only. It cannot mutate graph state,
 //! execute generated code, or bypass graph verification/operator approval.
 
 use core::fmt::{self, Write};
 use core::str;
+
+use crate::retrieval::{
+    pack_retrieval_context, RetrievalError, RetrievalIndexSnapshot, RetrievalResult,
+};
 
 pub const ACTION_PAYLOAD_WORDS: usize = 4;
 pub const ACTION_TEXT_BYTES: usize = 32;
@@ -28,6 +32,12 @@ pub enum AssistantActionError {
     ActionBufferRequired,
     OutputOverflow { required: u32, available: u32 },
     TextTooLong { required: u32, available: u32 },
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum AssistantRetrievalError {
+    RetrievalError(RetrievalError),
+    Action(AssistantActionError),
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -93,6 +103,24 @@ impl AssistantExplainRequest<'_> {
 pub struct AssistantExplainResponse {
     pub request_kind: u32,
     pub explanation_len: u32,
+    pub action_count: u32,
+}
+
+/// Explicit assistant retrieval request surface for M12.
+///
+/// Retrieval output is explanatory context only. Optional proposed actions stay
+/// as data and must be written through `StructuredActionBuffer`.
+#[derive(Copy, Clone, Debug)]
+pub struct AssistantRetrievalRequest<'a> {
+    pub index: &'a RetrievalIndexSnapshot<'a>,
+    pub results: &'a [RetrievalResult],
+    pub proposed_action: Option<AssistantActionProposal>,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(C)]
+pub struct AssistantRetrievalResponse {
+    pub context_len: u32,
     pub action_count: u32,
 }
 
@@ -455,6 +483,39 @@ pub fn assistant_explain(
     })
 }
 
+/// Pack local retrieval results into assistant context.
+///
+/// # Errors
+///
+/// Returns structured retrieval or action-buffer errors. This function never
+/// mutates graph state and never consumes host paths.
+pub fn assistant_retrieve_context(
+    request: AssistantRetrievalRequest<'_>,
+    output: &mut [u8],
+    actions: Option<&mut StructuredActionBuffer<'_>>,
+) -> Result<AssistantRetrievalResponse, AssistantRetrievalError> {
+    let context_len = pack_retrieval_context(request.index, request.results, output)
+        .map_err(AssistantRetrievalError::RetrievalError)?;
+
+    let action_count = match request.proposed_action {
+        Some(proposal) => {
+            let buffer = actions.ok_or(AssistantRetrievalError::Action(
+                AssistantActionError::ActionBufferRequired,
+            ))?;
+            buffer
+                .push(proposal)
+                .map_err(AssistantRetrievalError::Action)?;
+            len_to_u32(buffer.len())
+        }
+        None => 0,
+    };
+
+    Ok(AssistantRetrievalResponse {
+        context_len: len_to_u32(context_len),
+        action_count,
+    })
+}
+
 const fn encode_optional_node(node: Option<u32>) -> u32 {
     match node {
         Some(id) => id,
@@ -555,6 +616,8 @@ impl Write for BoundedTextWriter<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use crate::retrieval::RetrievalDocumentRef;
 
     fn empty_proposal() -> AssistantActionProposal {
         AssistantActionProposal::explain_only("").expect("empty proposal")
@@ -821,6 +884,109 @@ mod tests {
             )
             .unwrap_err(),
             AssistantActionError::UnsupportedRequest { requested: 99 }
+        );
+    }
+
+    #[test]
+    fn assistant_retrieve_context_packs_explanatory_context() {
+        let docs = [
+            RetrievalDocumentRef::new("index:spec-13.1", "Spec", "assistant searches local docs")
+                .unwrap(),
+            RetrievalDocumentRef::new("blob:assistant-note", "Note", "context pack").unwrap(),
+        ];
+        let index = RetrievalIndexSnapshot::new(&docs).unwrap();
+        let results = [
+            RetrievalResult::new(0, 90, "index:spec-13.1").unwrap(),
+            RetrievalResult::new(1, 70, "blob:assistant-note").unwrap(),
+        ];
+        let mut output = [0u8; 160];
+
+        let response = assistant_retrieve_context(
+            AssistantRetrievalRequest {
+                index: &index,
+                results: &results,
+                proposed_action: None,
+            },
+            &mut output,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(response.action_count, 0);
+        assert_eq!(
+            str::from_utf8(&output[..usize::try_from(response.context_len).unwrap()]).unwrap(),
+            "doc=index:spec-13.1\nsnippet=assistant searches local docs\n---\ndoc=blob:assistant-note\nsnippet=context pack\n---\n"
+        );
+    }
+
+    #[test]
+    fn assistant_retrieve_context_buffers_optional_actions() {
+        let docs = [RetrievalDocumentRef::new("index:spec", "Spec", "assistant context").unwrap()];
+        let index = RetrievalIndexSnapshot::new(&docs).unwrap();
+        let results = [RetrievalResult::new(0, 90, "index:spec").unwrap()];
+        let proposal = AssistantActionProposal::new(
+            AssistantActionKind::ProposeOperatorNote,
+            11,
+            [0; ACTION_PAYLOAD_WORDS],
+            "review context",
+        )
+        .unwrap();
+        let mut storage = [empty_proposal(); 1];
+        let mut actions = StructuredActionBuffer::new(&mut storage);
+        let mut output = [0u8; 80];
+
+        let response = assistant_retrieve_context(
+            AssistantRetrievalRequest {
+                index: &index,
+                results: &results,
+                proposed_action: Some(proposal),
+            },
+            &mut output,
+            Some(&mut actions),
+        )
+        .unwrap();
+
+        assert_eq!(response.action_count, 1);
+        assert_eq!(actions.proposals(), &[proposal]);
+    }
+
+    #[test]
+    fn assistant_retrieve_context_requires_action_buffer_and_maps_retrieval_errors() {
+        let docs = [RetrievalDocumentRef::new("index:spec", "Spec", "retrieval").unwrap()];
+        let index = RetrievalIndexSnapshot::new(&docs).unwrap();
+        let results = [RetrievalResult::new(0, 90, "index:spec").unwrap()];
+        let proposal = AssistantActionProposal::explain_only("note").unwrap();
+        let mut output = [0u8; 80];
+
+        assert_eq!(
+            assistant_retrieve_context(
+                AssistantRetrievalRequest {
+                    index: &index,
+                    results: &results,
+                    proposed_action: Some(proposal),
+                },
+                &mut output,
+                None,
+            )
+            .unwrap_err(),
+            AssistantRetrievalError::Action(AssistantActionError::ActionBufferRequired)
+        );
+
+        let mismatched = [RetrievalResult::new(0, 90, "index:other").unwrap()];
+        assert_eq!(
+            assistant_retrieve_context(
+                AssistantRetrievalRequest {
+                    index: &index,
+                    results: &mismatched,
+                    proposed_action: None,
+                },
+                &mut output,
+                None,
+            )
+            .unwrap_err(),
+            AssistantRetrievalError::RetrievalError(RetrievalError::DocumentRefInvalid {
+                index: 0
+            })
         );
     }
 }

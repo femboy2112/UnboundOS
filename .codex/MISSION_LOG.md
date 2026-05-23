@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C13.M12 Step 5 Assistant retrieval surface: ready.
+- C13.M12 Step 6 Retrieval smoke evidence and gates: ready.
+
+## 2026-05-23T09:05:18Z - C13.M12 Step 5 Assistant retrieval surface
+
+- Status: completed
+- Summary: Added an explicit assistant retrieval request/response surface,
+  packed retrieval results into caller-provided explanatory context, and kept
+  optional proposed actions routed only through `StructuredActionBuffer`.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Notes: The project still allows memory-unsafe Rust by identity; this mission
+  did not need new unsafe code and kept retrieval deterministic,
+  non-executing, and graph-mutation-free.
+- Blockers: none.
 
 ## 2026-05-23T08:59:14Z - C13.M12 Step 4 Context packing
 
