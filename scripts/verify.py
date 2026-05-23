@@ -120,6 +120,11 @@ QEMU_COMMANDS = [
         ["make", "-s", "qemu-storage-smoke"],
         requires=("make", "qemu-system-x86_64"),
     ),
+    Command(
+        "qemu milestone stress",
+        ["make", "-s", "qemu-stress"],
+        requires=("make", "python3", "qemu-system-x86_64"),
+    ),
 ]
 
 

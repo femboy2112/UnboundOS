@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.33
+> **Catalog version:** v0.34
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -47,6 +47,13 @@ stale mission state. Completed campaigns are archived under
 
 ## Change log
 
+- **v0.34** — Added `make qemu-stress`, a repeated live-QEMU sweep across the
+  runtime milestone paths: boot heartbeat, no-serial fallback, SSOD forced
+  faults, M2 arena/memory dump, boot-time graph load, framebuffer rendering,
+  interactive serial shell coverage for graph/LLM/retrieval/assistant paths,
+  and storage marker reads. Aggregate gates and mission verification now run
+  this repeated stress pass so single-shot QEMU smoke success is not the only
+  dynamic evidence.
 - **v0.33** — Added real Multiboot2 framebuffer handoff handling in the GRUB
   smoke boot path. The Multiboot2 header now requests a 1024x768x32 framebuffer,
   the bootstrap identity map covers the first 4 GiB for QEMU's linear
