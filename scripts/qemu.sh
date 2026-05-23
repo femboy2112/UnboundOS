@@ -129,6 +129,12 @@ assert_ssod_record() {
         echo "[qemu] missing rip field in $log" >&2
         return 1
     }
+    if [ "$reason" = "page_fault" ]; then
+        grep -Eq '^error_code=0x[0-9a-fA-F]+$' "$log" || {
+            echo "[qemu] missing page-fault error_code field in $log" >&2
+            return 1
+        }
+    fi
     grep -q '^UNBOUNDOS_SSOD_END$' "$log" || {
         echo "[qemu] missing UNBOUNDOS_SSOD_END in $log" >&2
         return 1

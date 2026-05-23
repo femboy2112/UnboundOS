@@ -214,6 +214,8 @@ Commit and push.
 
 # Step 4 — Page-fault SSOD proof
 
+Status: Completed.
+
 Purpose:
   Prove the #PF path routes through SSOD and includes reason, RIP, and an error
   code in serial output.
@@ -270,6 +272,9 @@ Required work:
 
 Validation:
 ```
+make qemu-fault-de
+make qemu-fault-ud
+make qemu-fault-pf
 make gates
 make repo-state
 python3 scripts/verify.py --mission current

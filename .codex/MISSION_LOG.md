@@ -4,7 +4,18 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C2.M1 Step 4 Page-fault SSOD proof: ready.
+- C2.M1 Step 5 M1 completion audit: ready.
+
+## 2026-05-23T01:01:52Z - C2.M1 Step 4 Page-fault SSOD proof
+
+- Status: completed
+- Summary: Verified the #PF forced-fault path through the Step 1 harness and
+  tightened the QEMU SSOD assertion so `page_fault` records must include a hex
+  `error_code`.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `bash -n scripts/qemu.sh`, `make qemu-fault-pf`, `make
+  qemu-headless`, and `python3 scripts/verify.py --mission current`.
+- Blockers: none.
 
 ## 2026-05-23T00:59:23Z - C2.M1 Step 3 Invalid-opcode SSOD proof
 
