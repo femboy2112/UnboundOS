@@ -130,6 +130,10 @@ quantized-smoke:
 assistant-smoke:
 	python3 scripts/check_assistant_smoke.py
 
+.PHONY: retrieval-smoke
+retrieval-smoke:
+	python3 scripts/check_retrieval_smoke.py
+
 .PHONY: address-scan
 address-scan:
 	python3 scripts/address_scan.py tests/golden_graphs tests/golden_models

@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C13 M12 Local Retrieval
-Active mission: C13.M12 Step 6 Retrieval smoke evidence and gates
+Active mission: C13.M12 Step 7 M12 completion audit
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -29,8 +29,8 @@ See `.codex/CURRENT_MISSION.md`.
 3. C13.M12 Step 3 Deterministic retrieval ranking. Completed.
 4. C13.M12 Step 4 Context packing. Completed.
 5. C13.M12 Step 5 Assistant retrieval surface. Completed.
-6. C13.M12 Step 6 Retrieval smoke evidence and gates. Active.
-7. C13.M12 Step 7 M12 completion audit. Pending.
+6. C13.M12 Step 6 Retrieval smoke evidence and gates. Completed.
+7. C13.M12 Step 7 M12 completion audit. Active.
 
 ## Required Preflight For `go`
 

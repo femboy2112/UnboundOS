@@ -224,7 +224,7 @@ Commit and push.
 
 # Step 6 — Retrieval smoke evidence and gates
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Make local retrieval evidence reproducible from checkout.
@@ -258,6 +258,8 @@ Commit and push.
 ---
 
 # Step 7 — M12 completion audit
+
+Status: Active.
 
 Purpose:
   Close M12 after retrieval contracts, document snapshot, deterministic

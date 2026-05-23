@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C13.M12 Step 6 Retrieval smoke evidence and gates: ready.
+- C13.M12 Step 7 M12 completion audit: ready.
+
+## 2026-05-23T09:07:42Z - C13.M12 Step 6 Retrieval smoke evidence and gates
+
+- Status: completed
+- Summary: Added `make retrieval-smoke`, source-level retrieval evidence
+  checks, aggregate gates wiring, and mission verification wiring for M12
+  retrieval contracts, ranking, context packing, and assistant routing.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `make retrieval-smoke`, `make gates`, and
+  `python3 scripts/verify.py --mission current`.
+- Notes: Smoke evidence checks no host-path, direct graph mutation, hidden
+  execution, thread/queue, eval, or new unsafe retrieval/assistant path.
+- Blockers: none.
 
 ## 2026-05-23T09:05:18Z - C13.M12 Step 5 Assistant retrieval surface
 
