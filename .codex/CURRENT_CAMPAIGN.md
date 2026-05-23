@@ -1,8 +1,8 @@
 # Current Campaign
 
-Campaign: C5 M4 UMOD Loader
-Active mission: C5.M4 Step 7 M4 completion audit
-Status: completed
+Campaign: C6 M5 Minimal UI
+Active mission: C6.M5 Step 1 Framebuffer text surface primitives
+Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -11,14 +11,13 @@ mission state after each completed mission.
 Publish policy: commit and push the campaign branch after each completed
 mission.
 Main policy: never merge to main, never push main, or force-push.
-Campaign branch: campaign/m4-umod-loader
+Campaign branch: campaign/m5-minimal-ui
 
 ## Campaign Objective
 
-Close M4 by proving the spec §13.6 UMOD-loader exit criteria while preserving
-H2: persistent UMOD parses, all 22 verifier checks are non-vacuous, malformed
-UMODs return structured errors, and valid UMOD compiles through the verified
-graph path.
+Close M5 by proving the spec §13.7 Minimal UI exit criterion: framebuffer text
+output exists, boot diagnostics can surface without UART, and a minimal IDE
+display can show verified graph state.
 
 ## Active Mission
 
@@ -26,23 +25,16 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C5.M4 Step 1 UMOD parser header and resource refs. Completed.
-2. C5.M4 Step 2 Section table bounds and structural checks. Completed.
-3. C5.M4 Step 3 Node and wire semantic verifier checks. Completed.
-4. C5.M4 Step 4 Capabilities, resources, constants, and scheduling checks. Completed.
-5. C5.M4 Step 5 Persistent UMOD compile path. Completed.
-6. C5.M4 Step 6 Golden and malformed fixture coverage. Completed.
-7. C5.M4 Step 7 M4 completion audit. Completed.
-
-## Closeout
-
-M4 is complete. `/go` must stop here until the operator opens the final M4 PR
-or rotates the control files to M5.
+1. C6.M5 Step 1 Framebuffer text surface primitives. Active.
+2. C6.M5 Step 2 Boot diagnostic framebuffer fallback. Pending.
+3. C6.M5 Step 3 Minimal graph-state display model. Pending.
+4. C6.M5 Step 4 UI smoke evidence and gates. Pending.
+5. C6.M5 Step 5 M5 completion audit. Pending.
 
 ## Required Preflight For `go`
 
 1. Read `CLAUDE.md`.
-2. Read `docs/campaigns/m4-umod-loader.md`.
+2. Read `docs/campaigns/m5-minimal-ui.md`.
 3. Read `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf` or the
    extracted requirements in `.codex/PROJECT_PLAN.md`.
 4. Read `.codex/CURRENT_CAMPAIGN.md`.
@@ -59,6 +51,6 @@ unless the mission explicitly permits that skip.
 
 ## Campaign Source
 
-The detailed M4 step contract is `docs/campaigns/m4-umod-loader.md`.
+The detailed M5 step contract is `docs/campaigns/m5-minimal-ui.md`.
 Step allowed-file blocks are binding for implementation files; `.codex/*`
 files may be edited only for required mission-state closeout.

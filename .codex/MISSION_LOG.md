@@ -4,8 +4,15 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- No active mission. M4 is complete; next action is final M4 PR or M5
-  operator rotation.
+- C6.M5 Step 1 Framebuffer text surface primitives: ready.
+
+## 2026-05-23T06:55:00Z - C6.M5 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m5-minimal-ui`, marked M5 `IN-PROGRESS`, created
+  the M5 campaign plan, and rotated `.codex` state to Step 1.
+- Verification: pending below for the active Step 1 mission state.
+- Blockers: none.
 
 ## 2026-05-23T06:52:36Z - C5.M4 Step 7 M4 completion audit
 

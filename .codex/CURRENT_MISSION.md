@@ -1,45 +1,46 @@
 # Current Mission
 
-Mission: C5.M4 Step 7 M4 completion audit
-Campaign: C5 M4 UMOD Loader
-Status: completed
+Mission: C6.M5 Step 1 Framebuffer text surface primitives
+Campaign: C6 M5 Minimal UI
+Status: ready
 
 ## Objective
 
-Execute M4 campaign Step 7 from `docs/campaigns/m4-umod-loader.md`: close M4
-after persistent UMOD parsing, 22-check verification, compile-path execution,
-and fixture coverage are all reproducibly verified.
+Execute M5 campaign Step 1 from `docs/campaigns/m5-minimal-ui.md`: add a small
+framebuffer text surface with deterministic glyph-cell writes that can be built
+and tested without requiring bootloader framebuffer handoff.
 
 ## Scope
 
 Allowed changes:
 
-- `MILESTONE_CATALOG.md`
-- `docs/campaigns/m4-umod-loader.md`
+- `kernel/src/main.rs`
+- `kernel/src/framebuffer.rs`
+- `docs/campaigns/m5-minimal-ui.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- Implementation changes.
-- Fixture or verifier changes.
+- Boot framebuffer initialization.
+- Graph runtime or verifier changes.
+- Storage, LLM, or SIMD changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- M4 row in `MILESTONE_CATALOG.md` changes from `IN-PROGRESS` to `DONE`.
-- Catalog version banner is bumped.
-- `MILESTONE_CATALOG.md` change log records the M4 closeout.
-- `docs/campaigns/m4-umod-loader.md` has a `## Closeout` section naming the
-  Step 1-6 checkpoint commits.
-- `make gates`, `make repo-state`, and `python3 scripts/verify.py --mission
-  current` prove the closeout state.
+- `kernel/src/framebuffer.rs` provides fixed-size text-cell rendering
+  primitives over a caller-provided linear pixel buffer.
+- The module is boot-passive: no global framebuffer assumptions and no writes
+  before explicit initialization.
+- Cell placement, newline, and bounds clipping are covered by tests or
+  build-time assertions.
 
 ## Baseline to verify
 
 ```
-branch: campaign/m4-umod-loader
+branch: campaign/m5-minimal-ui
 status: IN-PROGRESS
 ```
 
@@ -48,17 +49,14 @@ status: IN-PROGRESS
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make gates
-make repo-state
+make fmt
+make clippy
+make kernel
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m4-umod-loader`. Step 6 registered the valid
-source -> transform -> sink golden fixture, added malformed UMOD corpus cases
-for the required failure families, and exercised the fixture set from graph
-crate tests in the verification bundle.
-
-Stop reason: M4 campaign complete. Await operator action to open the final M4
-PR or rotate mission state to M5.
+Campaign branch: `campaign/m5-minimal-ui`. M4 completed at `65d8ab3`; this
+mission starts the framebuffer UI surface without bootloader handoff
+assumptions.
