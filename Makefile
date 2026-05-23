@@ -33,6 +33,7 @@ help:
 	@echo "  make qemu-fault-ud   # assert invalid-opcode SSOD path"
 	@echo "  make qemu-fault-pf   # assert page-fault SSOD path"
 	@echo "  make qemu-m2-dump    # assert M2 memory/arena diagnostic dump"
+	@echo "  make qemu-graph-boot # assert initial graph loads during boot"
 	@echo "  make fidelity        # run scripts/fidelity_check.sh"
 	@echo "  make address-scan    # scan persistent fixtures"
 	@echo "  make fmt             # cargo fmt --check"
@@ -81,6 +82,10 @@ qemu-no-serial:
 .PHONY: qemu-m2-dump
 qemu-m2-dump: image
 	./scripts/qemu.sh --headless --assert-m2-dump
+
+.PHONY: qemu-graph-boot
+qemu-graph-boot: image
+	./scripts/qemu.sh --headless --assert-graph-boot
 
 .PHONY: qemu-storage-smoke
 qemu-storage-smoke:

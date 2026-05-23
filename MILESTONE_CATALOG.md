@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.31
+> **Catalog version:** v0.32
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -47,6 +47,13 @@ stale mission state. Completed campaigns are archived under
 
 ## Change log
 
+- **v0.32** — Moved the initial source-transform-sink graph load into the boot
+  path before `UNBOUNDOS_BOOT_OK`. The kernel now emits
+  `UNBOUNDOS_GRAPH_LOAD_BEGIN`, `UNBOUNDOS_GRAPH_OK`, graph id, node count,
+  wire count, and last-completed-node after routing the embedded UMOD bytes
+  through `graph_load_from_umod -> graph_compile_verified`. Added
+  `make qemu-graph-boot` and the aggregate gates now fail unless QEMU observes
+  the boot-time graph markers.
 - **v0.31** — Replaced the M10 tensor dispatch table's zero-argument `TBD`
   placeholders with typed scalar kernel entries for q4/q8 matvec, f32 vector
   math, normalization, RoPE, attention-score, softmax, embedding lookup,

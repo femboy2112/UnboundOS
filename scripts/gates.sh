@@ -17,7 +17,7 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-TOTAL=23
+TOTAL=24
 PASS=()
 FAILED=""
 
@@ -66,7 +66,8 @@ step 19 "qemu SSOD divide_error" make -s qemu-fault-de
 step 20 "qemu SSOD invalid_opcode" make -s qemu-fault-ud
 step 21 "qemu SSOD page_fault" make -s qemu-fault-pf
 step 22 "qemu M2 arena/memory dump" make -s qemu-m2-dump
-step 23 "qemu M6 storage marker" make -s qemu-storage-smoke
+step 23 "qemu initial graph boot" make -s qemu-graph-boot
+step 24 "qemu M6 storage marker" make -s qemu-storage-smoke
 
 rm -f /tmp/gates-$$.log
 

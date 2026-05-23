@@ -30,6 +30,7 @@ def main() -> int:
     graph_lib = read("crates/graph/src/lib.rs")
     graph_loader = read("crates/graph/src/loader.rs")
     qemu = read("scripts/qemu.sh")
+    boot = read("kernel/src/boot.rs")
 
     for label in (
         "GRAPH_ID=",
@@ -53,6 +54,10 @@ def main() -> int:
         require(graph_lib, getter, "graph display snapshot", failures)
     require(graph_lib, "pub(crate) const fn new(", "graph display constructor boundary", failures)
     require(graph_loader, "compiled_handle_exposes_read_only_display_state", "graph display test", failures)
+    require(boot, "UNBOUNDOS_GRAPH_LOAD_BEGIN", "boot graph load", failures)
+    require(boot, "UNBOUNDOS_GRAPH_OK", "boot graph load", failures)
+    require(boot, "graph_load_from_umod(SOURCE_TRANSFORM_SINK_UMOD)", "boot graph verifier gate", failures)
+    require(qemu, "assert_graph_boot", "graph boot QEMU assertion", failures)
 
     if graph_lib.count("pub fn graph_compile_verified") != 1:
         failures.append("graph compile gate: expected exactly one public compile function")

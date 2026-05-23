@@ -9,6 +9,7 @@
 #   ./scripts/qemu.sh --assert-heartbeat
 #   ./scripts/qemu.sh --assert-ssod reason
 #   ./scripts/qemu.sh --assert-m2-dump
+#   ./scripts/qemu.sh --assert-graph-boot
 #   ./scripts/qemu.sh --storage-image /tmp/sector0.bin --assert-storage-marker
 #
 # Environment overrides:
@@ -33,6 +34,7 @@ NO_SERIAL=0
 ASSERT_HEARTBEAT=0
 ASSERT_SSOD_REASON=""
 ASSERT_M2_DUMP=0
+ASSERT_GRAPH_BOOT=0
 ASSERT_STORAGE_MARKER=0
 
 while [[ $# -gt 0 ]]; do
@@ -42,6 +44,7 @@ while [[ $# -gt 0 ]]; do
         --assert-heartbeat)  ASSERT_HEARTBEAT=1; shift ;;
         --assert-ssod)       ASSERT_SSOD_REASON="$2"; shift 2 ;;
         --assert-m2-dump)    ASSERT_M2_DUMP=1; shift ;;
+        --assert-graph-boot) ASSERT_GRAPH_BOOT=1; shift ;;
         --assert-storage-marker) ASSERT_STORAGE_MARKER=1; shift ;;
         --storage-image)     STORAGE_IMAGE="$2"; shift 2 ;;
         --cpu)               QEMU_CPU="$2"; shift 2 ;;
@@ -72,6 +75,11 @@ fi
 
 if [ "$ASSERT_STORAGE_MARKER" -eq 1 ] && [ "$NO_SERIAL" -eq 1 ]; then
     echo "[qemu] --assert-storage-marker requires serial capture" >&2
+    exit 2
+fi
+
+if [ "$ASSERT_GRAPH_BOOT" -eq 1 ] && [ "$NO_SERIAL" -eq 1 ]; then
+    echo "[qemu] --assert-graph-boot requires serial capture" >&2
     exit 2
 fi
 
@@ -222,6 +230,26 @@ assert_m2_dump() {
     }
 }
 
+assert_graph_boot() {
+    local log="$1"
+    local expected=(
+        '^UNBOUNDOS_GRAPH_LOAD_BEGIN$'
+        '^UNBOUNDOS_GRAPH_OK$'
+        '^graph_id=0x0000000000535453$'
+        '^graph_nodes=0x0000000000000003$'
+        '^graph_wires=0x0000000000000002$'
+        '^graph_last_completed=0x0000000000000003$'
+    )
+    local marker
+
+    for marker in "${expected[@]}"; do
+        grep -Eq "$marker" "$log" || {
+            echo "[qemu] missing graph boot marker $marker in $log" >&2
+            return 1
+        }
+    done
+}
+
 assert_storage_marker() {
     local log="$1"
 
@@ -267,6 +295,9 @@ for _ in $(seq 1 600); do
         elif [ "$ASSERT_M2_DUMP" -eq 1 ]; then
             assert_m2_dump "$SERIAL_LOG"
             echo "[qemu] M2 dump assertion passed"
+        elif [ "$ASSERT_GRAPH_BOOT" -eq 1 ]; then
+            assert_graph_boot "$SERIAL_LOG"
+            echo "[qemu] graph boot assertion passed"
         elif [ "$ASSERT_STORAGE_MARKER" -eq 1 ]; then
             assert_storage_marker "$SERIAL_LOG"
             echo "[qemu] storage marker assertion passed"
@@ -292,6 +323,9 @@ if [ -n "$ASSERT_SSOD_REASON" ]; then
 fi
 if [ "$ASSERT_M2_DUMP" -eq 1 ]; then
     assert_m2_dump "$SERIAL_LOG"
+fi
+if [ "$ASSERT_GRAPH_BOOT" -eq 1 ]; then
+    assert_graph_boot "$SERIAL_LOG"
 fi
 if [ "$ASSERT_STORAGE_MARKER" -eq 1 ]; then
     assert_storage_marker "$SERIAL_LOG"

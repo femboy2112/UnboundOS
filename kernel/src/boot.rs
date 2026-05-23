@@ -7,6 +7,7 @@
 //! emitted in §1.6 order.
 
 use crate::{arena, cpu, heartbeat, idt, multiboot2, operator_shell, storage};
+use graph::{graph_compile_verified, graph_load_from_umod, SOURCE_TRANSFORM_SINK_UMOD};
 
 #[derive(Copy, Clone)]
 pub struct BootHandoff {
@@ -119,11 +120,11 @@ pub unsafe fn run(handoff: BootHandoff) -> ! {
     // TODO M3 (spec §4.4–§4.11): KernelArena, GraphArena,
     // ScratchArena, ModelWeightArena, registries.
 
-    // spec §3.2 step 13: load or embed initial graph.
-    // TODO M3 (spec §5.7): bytes → graph_load_from_umod →
-    // graph_compile_verified → GraphRuntimeHandle. The single
-    // verifier gate is enforced by crates/graph/src/loader.rs.
     run_m6_storage_smoke_from_env();
+
+    // spec §3.2 step 13: load or embed initial graph.
+    // The initial graph enters through the only legal verifier/compile gate.
+    initialize_initial_graph();
 
     // spec §3.2 step 14: enter orchestrator or IDE shell.
     // The initial interactive surface is a polling serial operator shell. It
@@ -183,6 +184,27 @@ fn run_m6_storage_smoke_from_env() {
             heartbeat::emit_kv_hex("storage_status", u64::from(diagnostic.status_register));
             heartbeat::emit_kv_hex("storage_timeout_count", u64::from(diagnostic.timeout_count));
         }
+    }
+}
+
+fn initialize_initial_graph() {
+    heartbeat::emit("UNBOUNDOS_GRAPH_LOAD_BEGIN");
+    match graph_load_from_umod(SOURCE_TRANSFORM_SINK_UMOD).and_then(|verified| {
+        graph_compile_verified(verified).map_err(|_| graph::GraphLoadError::BadSectionTable)
+    }) {
+        Ok(handle) => {
+            let state = handle.display_state();
+            heartbeat::emit("UNBOUNDOS_GRAPH_OK");
+            heartbeat::emit_kv_hex("graph_id", state.graph_id());
+            heartbeat::emit_kv_hex("graph_nodes", u64::from(state.node_count()));
+            heartbeat::emit_kv_hex("graph_wires", u64::from(state.wire_count()));
+            if let Some(last_completed) = state.last_completed_node() {
+                heartbeat::emit_kv_hex("graph_last_completed", u64::from(last_completed));
+            } else {
+                heartbeat::emit_kv_str("graph_last_completed", "none");
+            }
+        }
+        Err(_) => heartbeat::emit("UNBOUNDOS_GRAPH_LOAD_ERROR"),
     }
 }
 

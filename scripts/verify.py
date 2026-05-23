@@ -106,6 +106,11 @@ QEMU_COMMANDS = [
         requires=("make", "qemu-system-x86_64"),
     ),
     Command(
+        "qemu initial graph boot",
+        ["make", "-s", "qemu-graph-boot"],
+        requires=("make", "qemu-system-x86_64"),
+    ),
+    Command(
         "qemu M6 storage marker",
         ["make", "-s", "qemu-storage-smoke"],
         requires=("make", "qemu-system-x86_64"),
