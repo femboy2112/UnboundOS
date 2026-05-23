@@ -4,7 +4,22 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C7.M6 Step 2 ATA PIO sector-read primitive: ready.
+- C7.M6 Step 3 QEMU raw-sector smoke fixture: ready.
+
+## 2026-05-23T07:19:46Z - C7.M6 Step 2 ATA PIO sector-read primitive
+
+- Status: completed
+- Summary: Added a spec §7.3 ATA PIO read-sector command sequence, a
+  caller-provided 512-byte sector buffer type, an unsafe hardware entry point,
+  and a testable port-I/O backend that proves command ordering, one-sector
+  reads, and no data-port reads after device errors.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `rustc --test kernel/src/storage.rs`,
+  and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: the real port backend uses local unsafe `in`/`out`
+  blocks with safety comments; all status polling still routes through the
+  finite timeout/error contract, so unsafe access is bounded and inspectable.
+- Blockers: none.
 
 ## 2026-05-23T07:17:28Z - C7.M6 Step 1 Storage contracts and timeout model
 

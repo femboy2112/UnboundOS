@@ -107,6 +107,8 @@ Commit and push.
 
 # Step 2 — ATA PIO sector-read primitive
 
+Status: Completed.
+
 Purpose:
   Implement the spec §7.3 ATA PIO read sequence behind an explicit unsafe port
   boundary.
