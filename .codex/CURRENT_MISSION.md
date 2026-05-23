@@ -2,7 +2,7 @@
 
 Mission: C7.M6 Step 5 M6 completion audit
 Campaign: C7 M6 Storage Stage 1
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -60,3 +60,6 @@ python3 scripts/verify.py --mission current
 Campaign branch: `campaign/m6-storage-stage-1`. Step 4 added an aggregate
 storage namespace guard and broadened UMOD resource tests so path-shaped
 storage refs remain rejected above the storage adapter boundary.
+
+Stop reason: M6 campaign complete. Await operator action to open the final M6
+PR or rotate mission state to M7.

@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.13
+> **Catalog version:** v0.14
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** M6 Storage stage 1
+> **Active milestone:** none
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -31,7 +31,7 @@ archived under `docs/campaigns/` and never edited again.
 | M3  | Embedded graph | §5.7, §5.9, §13.5 | DONE | Hardcoded graph source -> transform -> sink executes through the verified graph path; epoch readiness works; fan-out test passes; active node diagnostics work; `make gates` PROCEED | docs/campaigns/m3-embedded-graph.md |
 | M4  | UMOD loader | §6, §13.6 | DONE | Persistent graph verifies and executes through `graph_load_from_umod -> graph_compile_verified`; malformed UMODs return structured errors; `make gates` PROCEED | docs/campaigns/m4-umod-loader.md |
 | M5  | Minimal UI | §3.7, §8, §13.7 | DONE | Framebuffer text primitives render boot diagnostics and graph state; `make gates` PROCEED | docs/campaigns/m5-minimal-ui.md |
-| M6  | Storage stage 1 | §7, §13.8 | IN-PROGRESS | Raw sector read works with timeout; graph-visible storage refs remain opaque; `make gates` PROCEED | docs/campaigns/m6-storage-stage-1.md |
+| M6  | Storage stage 1 | §7, §13.8 | DONE | Raw sector read works with timeout; graph-visible storage refs remain opaque; `make gates` PROCEED | docs/campaigns/m6-storage-stage-1.md |
 | M7  | Tokenizer | §10.6, §13.9 | TODO | Bare-metal tokenizer runs | docs/campaigns/m7-tokenizer.md *(not yet written)* |
 | M8  | Toy transformer | §10, §13.10 | TODO | Hardcoded tiny model generates text | docs/campaigns/m8-toy-transformer.md *(not yet written)* |
 | M9  | UMDL loader | §10, §13.11 | TODO | Model package validates and loads | docs/campaigns/m9-umdl-loader.md *(not yet written)* |
@@ -45,6 +45,12 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.14** — M6 completed on `campaign/m6-storage-stage-1`: raw-sector
+  read works through an ATA PIO backend with finite timeout diagnostics, QEMU
+  proves sector 0 marker reads from a deterministic primary-disk fixture, and
+  aggregate verification preserves the opaque storage-resource namespace above
+  the adapter boundary. The milestone intentionally uses bounded unsafe port
+  I/O where hardware access requires it.
 - **v0.13** — Opened M6 Storage stage 1 on
   `campaign/m6-storage-stage-1`. The campaign owns raw-sector read bring-up
   with finite polling, storage diagnostics, and the graph/resource namespace

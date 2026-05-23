@@ -2,7 +2,7 @@
 
 Campaign: C7 M6 Storage Stage 1
 Active mission: C7.M6 Step 5 M6 completion audit
-Status: ready
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -28,7 +28,12 @@ See `.codex/CURRENT_MISSION.md`.
 2. C7.M6 Step 2 ATA PIO sector-read primitive. Completed.
 3. C7.M6 Step 3 QEMU raw-sector smoke fixture. Completed.
 4. C7.M6 Step 4 Resource namespace guard evidence. Completed.
-5. C7.M6 Step 5 M6 completion audit. Active.
+5. C7.M6 Step 5 M6 completion audit. Completed.
+
+## Closeout
+
+M6 is complete. `/go` must stop here until the operator opens the final M6 PR
+or rotates the control files to M7.
 
 ## Required Preflight For `go`
 

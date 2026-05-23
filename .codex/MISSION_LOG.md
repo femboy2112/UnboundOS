@@ -4,7 +4,22 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C7.M6 Step 5 M6 completion audit: ready.
+- none.
+
+## 2026-05-23T07:27:16Z - C7.M6 Step 5 M6 completion audit
+
+- Status: completed
+- Summary: Marked M6 `DONE`, bumped the milestone catalog to `v0.14`,
+  recorded Step 1-4 checkpoint commits in the campaign closeout, and documented
+  that M6's unsafe ATA PIO boundary is allowed because it is bounded by finite
+  timeout polling, fixed-size caller-provided sector memory, structured
+  diagnostics, and namespace guard evidence.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make gates`, `make repo-state`, and `python3 scripts/verify.py
+  --mission current`.
+- Repo-state: expected STOP because no milestone is `IN-PROGRESS` after M6
+  closeout.
+- Blockers: none for M6; next action is final M6 PR or M7 rotation.
 
 ## 2026-05-23T07:25:21Z - C7.M6 Step 4 Resource namespace guard evidence
 

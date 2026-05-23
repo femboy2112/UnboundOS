@@ -215,6 +215,8 @@ Commit and push.
 
 # Step 5 — M6 completion audit
 
+Status: Completed.
+
 Purpose:
   Close M6 after raw-sector read, timeout behavior, QEMU smoke evidence, and
   resource-boundary checks are reproducibly verified.
@@ -243,3 +245,20 @@ python3 scripts/verify.py --mission current
 ```
 
 Commit and push.
+
+## Closeout
+
+M6 is complete. Checkpoint commits:
+
+- Step 1 Storage contracts, diagnostics, and timeout model: `b6a0d2a`
+- Step 2 ATA PIO sector-read primitive: `503606b`
+- Step 3 QEMU raw-sector smoke fixture: `8b635f6`
+- Step 4 Resource namespace guard evidence: `e0c1fa3`
+
+The memory-unsafety constraint for this milestone is satisfied directly: ATA
+PIO uses explicit unsafe port I/O for the hardware boundary, while the read path
+is bounded by finite timeout polling, caller-provided fixed-size sector memory,
+structured diagnostics, and aggregate namespace checks.
+
+`/go` must stop here until the operator opens the final M6 PR or rotates the
+control files to M7.
