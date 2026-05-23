@@ -240,6 +240,8 @@ Commit and push.
 
 # Step 6 — M9 completion audit
 
+Status: Completed.
+
 Purpose:
   Close M9 after UMDL parsing, validation, load-view, arena reservation, and
   smoke evidence are reproducibly verified.
@@ -268,3 +270,23 @@ python3 scripts/verify.py --mission current
 ```
 
 Commit and push.
+
+## Closeout
+
+M9 is complete. Checkpoint commits:
+
+- Step 1 UMDL header parse and fixed-width contract: `7fb72fd`
+- Step 2 Section bounds and checksum validation: `238ca07`
+- Step 3 Tokenizer and tensor descriptor validation: `3a9e03c`
+- Step 4 Model load view and arena reservation contract: `6a8a21c`
+- Step 5 UMDL smoke fixtures and gates: `df8ddb4`
+
+No new unsafe blocks or functions were required for M9. The UMDL loader path
+uses fixed-width little-endian parsing, explicit byte ranges, deterministic
+checksums, structured errors, read-only metadata views, and explicit arena
+reservation accounting. Memory-unsafe Rust remains allowed by project identity,
+but M9 keeps persistent-format loading safe, bounded, inspectable, and
+non-executing.
+
+`/go` must stop here until the operator opens the final M9 PR or rotates the
+control files to M10.

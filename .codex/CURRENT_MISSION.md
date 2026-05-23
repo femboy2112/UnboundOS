@@ -2,7 +2,7 @@
 
 Mission: C10.M9 Step 6 M9 completion audit
 Campaign: C10 M9 UMDL Loader
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -40,7 +40,7 @@ Out of scope:
 
 ```
 branch: campaign/m9-umdl-loader
-status: IN-PROGRESS
+status: DONE
 ```
 
 ## Verification Commands

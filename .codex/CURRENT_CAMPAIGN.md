@@ -2,7 +2,7 @@
 
 Campaign: C10 M9 UMDL Loader
 Active mission: C10.M9 Step 6 M9 completion audit
-Status: ready
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -29,7 +29,7 @@ See `.codex/CURRENT_MISSION.md`.
 3. C10.M9 Step 3 Tokenizer and tensor descriptor validation. Completed.
 4. C10.M9 Step 4 Model load view and arena reservation contract. Completed.
 5. C10.M9 Step 5 UMDL smoke fixtures and gates. Completed.
-6. C10.M9 Step 6 M9 completion audit. Active.
+6. C10.M9 Step 6 M9 completion audit. Completed.
 
 ## Required Preflight For `go`
 

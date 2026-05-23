@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.19
+> **Catalog version:** v0.20
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** M9 UMDL loader
+> **Active milestone:** none
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -34,7 +34,7 @@ archived under `docs/campaigns/` and never edited again.
 | M6  | Storage stage 1 | §7, §13.8 | DONE | Raw sector read works with timeout; graph-visible storage refs remain opaque; `make gates` PROCEED | docs/campaigns/m6-storage-stage-1.md |
 | M7  | Tokenizer | §10.7, §13.7 | DONE | Bare-metal tokenizer round trip works for the initially supported tokenizer family; `make gates` PROCEED | docs/campaigns/m7-tokenizer.md |
 | M8  | Toy transformer | §10.8, §13.7 | DONE | Hardcoded tiny model generates deterministic token output; `make gates` PROCEED | docs/campaigns/m8-toy-transformer.md |
-| M9  | UMDL loader | §10, §13.11 | IN-PROGRESS | Model package validates and loads; `make gates` PROCEED | docs/campaigns/m9-umdl-loader.md |
+| M9  | UMDL loader | §10, §13.11 | DONE | Model package validates and loads; `make gates` PROCEED | docs/campaigns/m9-umdl-loader.md |
 | M10 | Quantized inference | §10, §11, §13.12 | TODO | Small quantized model streams tokens | docs/campaigns/m10-quantized-inference.md *(not yet written)* |
 | M11 | IDE assistant | §10, §13.1 | TODO | Local assistant explains graph and SSOD | docs/campaigns/m11-ide-assistant.md *(not yet written)* |
 | M12 | Local retrieval | §10, §13.1 | TODO | Assistant searches local docs | docs/campaigns/m12-local-retrieval.md *(not yet written)* |
@@ -45,6 +45,12 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.20** — M9 completed on `campaign/m9-umdl-loader`: UMDL headers,
+  sections, checksums, tokenizer metadata, tensor descriptors, loaded-model
+  views, arena reservations, SIMD requirements, and profile RAM budgets now
+  validate through fixed-width deterministic parsing. `make umdl-smoke` keeps
+  fixture-generation and malformed-corpus evidence in aggregate verification.
+  M9 added no unsafe blocks or functions.
 - **v0.19** — Opened M9 UMDL loader on `campaign/m9-umdl-loader`.
   The campaign owns fixed-width UMDL parsing, section/tensor/checksum
   validation, tokenizer/model metadata extraction, and explicit arena

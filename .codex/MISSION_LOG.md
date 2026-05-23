@@ -4,7 +4,24 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C10.M9 Step 6 M9 completion audit: ready.
+*(none)*
+
+## 2026-05-23T08:10:57Z - C10.M9 Step 6 M9 completion audit
+
+- Status: completed
+- Summary: Marked M9 `DONE`, bumped the milestone catalog to `v0.20`, recorded
+  Step 1-5 checkpoint commits in the M9 campaign closeout, and documented that
+  UMDL loading validates through fixed-width parsing, deterministic checksums,
+  structured errors, read-only metadata views, and explicit arena accounting.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make gates`, `make repo-state`, and
+  `python3 scripts/verify.py --mission current`.
+- Repo-state: expected STOP because no milestone is `IN-PROGRESS` after M9
+  closeout.
+- Memory-unsafety audit: no new unsafe blocks or functions; memory-unsafe Rust
+  remains allowed by project identity but M9 persistent-format loading did not
+  require it.
+- Blockers: none for M9; next action is final M9 PR or M10 rotation.
 
 ## 2026-05-23T08:10:11Z - C10.M9 Step 5 UMDL smoke fixtures and gates
 
