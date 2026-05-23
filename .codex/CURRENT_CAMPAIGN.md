@@ -1,8 +1,8 @@
 # Current Campaign
 
-Campaign: C2 M1 Diagnostics Core
-Active mission: C2.M1 Step 5 M1 completion audit
-Status: completed
+Campaign: C3 M2 Arena Memory
+Active mission: C3.M2 Step 1 Bounded arena core and alignment checks
+Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -11,13 +11,13 @@ mission state after each completed mission.
 Publish policy: commit and push the campaign branch after each completed
 mission.
 Main policy: never merge to main, never push main, or force-push.
-Campaign branch: campaign/m1-diagnostics-core
+Campaign branch: campaign/m2-arena-memory
 
 ## Campaign Objective
 
-Close M1 by proving the spec §13.3 diagnostics exit criteria in QEMU:
-IDT installed, divide-by-zero handled, page fault handled, invalid opcode
-handled, and SSOD serial output includes RIP and reason.
+Close M2 by proving the spec §13.4 arena-memory exit criteria: BootArena,
+KernelArena, GraphArena, and ScratchArena exist; alignment tests pass; arena
+exhaustion is deterministic; and a memory-map dump is available.
 
 ## Active Mission
 
@@ -25,21 +25,16 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C2.M1 Step 1 Forced-fault smoke harness. Completed.
-2. C2.M1 Step 2 Divide-by-zero SSOD proof. Completed.
-3. C2.M1 Step 3 Invalid-opcode SSOD proof. Completed.
-4. C2.M1 Step 4 Page-fault SSOD proof. Completed.
-5. C2.M1 Step 5 M1 completion audit. Completed.
-
-## Closeout
-
-M1 is complete. `/go` must stop here until the operator opens the final M1 PR
-or rotates the control files to M2.
+1. C3.M2 Step 1 Bounded arena core and alignment checks. Active.
+2. C3.M2 Step 2 Named M2 arena set. Pending.
+3. C3.M2 Step 3 Deterministic exhaustion diagnostics. Pending.
+4. C3.M2 Step 4 Memory-map and arena dump. Pending.
+5. C3.M2 Step 5 M2 completion audit. Pending.
 
 ## Required Preflight For `go`
 
 1. Read `CLAUDE.md`.
-2. Read `docs/campaigns/m1-diagnostics-core.md`.
+2. Read `docs/campaigns/m2-arena-memory.md`.
 3. Read `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf` or the
    extracted requirements in `.codex/PROJECT_PLAN.md`.
 4. Read `.codex/CURRENT_CAMPAIGN.md`.
@@ -56,6 +51,6 @@ unless the mission explicitly permits that skip.
 
 ## Campaign Source
 
-The detailed M1 step contract is `docs/campaigns/m1-diagnostics-core.md`.
+The detailed M2 step contract is `docs/campaigns/m2-arena-memory.md`.
 Step allowed-file blocks are binding for implementation files; `.codex/*`
 files may be edited only for required mission-state closeout.

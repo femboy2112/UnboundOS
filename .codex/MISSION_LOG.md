@@ -4,8 +4,15 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- M1 campaign complete. Await operator action to open the final M1 PR or rotate
-  mission state to M2.
+- C3.M2 Step 1 Bounded arena core and alignment checks: ready.
+
+## 2026-05-23T01:06:00Z - C3.M2 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m2-arena-memory`, marked M2 `IN-PROGRESS`,
+  created the M2 campaign plan, and rotated `.codex` state to Step 1.
+- Verification: pending below for the active Step 1 mission state.
+- Blockers: none.
 
 ## 2026-05-23T01:03:14Z - C2.M1 Step 5 M1 completion audit
 

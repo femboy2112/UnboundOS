@@ -1,46 +1,45 @@
 # Current Mission
 
-Mission: C2.M1 Step 5 M1 completion audit
-Campaign: C2 M1 Diagnostics Core
-Status: completed
+Mission: C3.M2 Step 1 Bounded arena core and alignment checks
+Campaign: C3 M2 Arena Memory
+Status: ready
 
 ## Objective
 
-Execute M1 campaign Step 5 from `docs/campaigns/m1-diagnostics-core.md`:
-close M1 only after the forced-fault gates prove all spec §13.3 exit criteria.
+Execute M2 campaign Step 1 from `docs/campaigns/m2-arena-memory.md`: implement
+the reusable bounded arena cursor contract with explicit alignment rejection
+and overflow/exhaustion errors.
 
 ## Scope
 
 Allowed changes:
 
-- `MILESTONE_CATALOG.md`
-- `docs/campaigns/m1-diagnostics-core.md`
+- `kernel/src/arena.rs`
+- `scripts/verify.py`
+- `docs/campaigns/m2-arena-memory.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- Implementation changes.
-- Allocator, memory-map, framebuffer, graph, storage, or LLM behavior.
+- Boot integration, memory-map ingestion, graph, storage, UI, or LLM behavior.
+- Persistent artifact format changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- M1 is marked `DONE` in `MILESTONE_CATALOG.md`.
-- The catalog version and change log record M1 completion.
-- `docs/campaigns/m1-diagnostics-core.md` has a closeout section with Step 1-4
-  commit SHAs.
-- `make qemu-fault-de`, `make qemu-fault-ud`, and `make qemu-fault-pf` all
-  pass.
-- `make repo-state` reports the campaign is complete or otherwise clearly
-  directs the next mission-state refresh.
-- No implementation files are edited in this audit mission.
+- `kernel/src/arena.rs` defines a bounded `Arena` cursor contract.
+- `alloc_aligned(size, alignment)` rejects non-power-of-two alignments.
+- Overflow and exhaustion return deterministic `AllocError` values with arena
+  identity and request context.
+- Verification covers alignment success, alignment rejection, overflow, and
+  exhaustion.
 
 ## Baseline to verify
 
 ```
-branch: campaign/m1-diagnostics-core
+branch: campaign/m2-arena-memory
 status: IN-PROGRESS
 ```
 
@@ -49,18 +48,12 @@ status: IN-PROGRESS
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make qemu-fault-de
-make qemu-fault-ud
-make qemu-fault-pf
-make gates
-make repo-state
+make fmt
+make clippy
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m1-diagnostics-core`. M1 completion proves
-Diagnostics Core per spec §13.3. The next milestone is M2 Arena Memory.
-
-Stop reason: M1 campaign complete. Await operator action to open the final M1
-PR or rotate mission state to M2.
+Campaign branch: `campaign/m2-arena-memory`. Step 1 is an arena contract step
+only; named arena boot integration starts in Step 2.
