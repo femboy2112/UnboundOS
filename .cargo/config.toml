@@ -1,0 +1,2 @@
+[target.x86_64-unboundos]
+rustflags = ["-C", "link-arg=-Tkernel/linker.ld"]

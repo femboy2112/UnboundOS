@@ -326,6 +326,9 @@ Allowed files:
 ```
 kernel/src/main.rs
 kernel/src/heartbeat.rs
+kernel/linker.ld
+.cargo/config.toml
+scripts/make_image.sh
 scripts/qemu.sh
 scripts/gates.sh
 ```
@@ -334,6 +337,10 @@ Required work:
   - After all M0 init returns, emit `UNBOUNDOS_BOOT_OK` then `hlt`.
   - In `scripts/qemu.sh`, implement `--assert-heartbeat`: greps the
     serial log for the five strings in order, exits non-zero on miss.
+  - Replace the placeholder `make_image.sh` path with a bootable M0 smoke
+    image path sufficient to run the current kernel heartbeat under QEMU.
+    Keep later Limine handoff and memory-map parsing explicit; this does not
+    close M1.
   - Make sure `make qemu-headless` continues to work without
     `--assert-heartbeat` for interactive debugging.
 

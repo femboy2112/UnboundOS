@@ -1,63 +1,52 @@
 # Current Mission
 
-Mission: C1.M0 Step 7 QEMU smoke headless assertion
+Mission: C1.M0 Step 8 M0 completion audit
 Campaign: C1 M0 Boot Heartbeat
-Status: blocked
+Status: ready
 
 ## Objective
 
-Execute M0 campaign Step 7 from `docs/campaigns/m0-boot-heartbeat.md`: make
-the headless QEMU smoke path assert the canonical boot heartbeat sequence.
+Execute M0 campaign Step 8 from `docs/campaigns/m0-boot-heartbeat.md`: audit
+M0 completion, update the milestone catalog, and close the campaign state.
 
 ## Scope
 
 Allowed changes:
 
-- `kernel/src/main.rs`
-- `kernel/src/heartbeat.rs`
-- `scripts/qemu.sh`
-- `scripts/gates.sh`
+- `MILESTONE_CATALOG.md`
+- `docs/campaigns/m0-boot-heartbeat.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- SSOD record changes beyond the Step 6 checkpoint.
-- M1+ allocator, graph, storage, or LLM behavior.
-- M0 completion audit/catalog closeout.
+- Implementation changes.
+- M1 Limine handoff, memory-map parsing, allocator work, graph, storage, or LLM
+  behavior.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- The boot path emits `UNBOUNDOS_BOOT_OK` after all M0 init.
-- `scripts/qemu.sh --assert-heartbeat` verifies the canonical heartbeat order
-  in the serial log, allowing key/value suffixes for CPU profile and memory map
-  lines.
-- The assertion path clears stale serial logs before boot and fails if the
-  heartbeat is missing or out of order.
-- `make qemu-headless` remains available without assertion mode.
-- If real image generation is still unavailable, the mission records a blocker
-  rather than claiming QEMU smoke success.
+- M0 is marked `DONE` in `MILESTONE_CATALOG.md`.
+- The catalog version and change log record M0 completion.
+- `docs/campaigns/m0-boot-heartbeat.md` has a closeout section with Step 1-7
+  commit SHAs.
+- `make repo-state` reports the campaign is complete or otherwise clearly
+  directs the next mission-state refresh.
+- No implementation files are edited in this audit mission.
 
 ## Verification Commands
 
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make fmt
-make clippy
-make kernel
-python3 scripts/verify.py --mission current
-make qemu-headless
 make gates
+make repo-state
+python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m0-boot-heartbeat`. Stop reason: qemu-image-blocker.
-
-`scripts/qemu.sh --assert-heartbeat` now implements ordered heartbeat checking,
-but runtime QEMU smoke is blocked because `scripts/make_image.sh` still writes
-the deliberate placeholder image instead of a bootable image. Step 8 must not
-run until a real boot image path lets `make gates` pass.
+Campaign branch: `campaign/m0-boot-heartbeat`. Step 7 used an M0-only
+Multiboot2 smoke image path; Limine handoff remains later milestone work.

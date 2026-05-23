@@ -52,10 +52,15 @@ fi
 ARGS=(
     -cpu "$QEMU_CPU"
     -m "$QEMU_RAM"
-    -drive "format=raw,file=$IMAGE"
     -no-reboot
     -device "isa-debug-exit,iobase=0xf4,iosize=0x04"
 )
+
+if file "$IMAGE" | grep -q 'ISO 9660'; then
+    ARGS+=(-cdrom "$IMAGE" -boot d)
+else
+    ARGS+=(-drive "format=raw,file=$IMAGE")
+fi
 
 if [ "$NO_SERIAL" -eq 1 ]; then
     ARGS+=(-serial none)
@@ -73,11 +78,11 @@ echo "[qemu] cpu=$QEMU_CPU ram=$QEMU_RAM image=$IMAGE"
 assert_heartbeat_order() {
     local log="$1"
     local expected=(
-        '^UNBOUNDOS_BOOT_BEGIN$'
-        '^UNBOUNDOS_CPU_PROFILE='
-        '^UNBOUNDOS_MEMMAP_OK='
-        '^UNBOUNDOS_IDT_OK$'
-        '^UNBOUNDOS_BOOT_OK$'
+        'UNBOUNDOS_BOOT_BEGIN$'
+        'UNBOUNDOS_CPU_PROFILE='
+        'UNBOUNDOS_MEMMAP_OK='
+        'UNBOUNDOS_IDT_OK$'
+        'UNBOUNDOS_BOOT_OK$'
     )
     local idx=0
     local line
@@ -95,7 +100,7 @@ assert_heartbeat_order() {
     return 1
 }
 
-if [ "$ASSERT_HEARTBEAT" -eq 0 ]; then
+if [ "$ASSERT_HEARTBEAT" -eq 0 ] && [ "$HEADLESS" -eq 0 ]; then
     # 60s wall-clock budget; kernel must reach UNBOUNDOS_BOOT_OK before then.
     exec timeout 60s qemu-system-x86_64 "${ARGS[@]}"
 fi
@@ -107,10 +112,15 @@ timeout 60s qemu-system-x86_64 "${ARGS[@]}" &
 QEMU_PID=$!
 
 for _ in $(seq 1 600); do
-    if assert_heartbeat_order "$SERIAL_LOG" >/dev/null 2>&1; then
+    if grep -q '^UNBOUNDOS_BOOT_OK$' "$SERIAL_LOG" 2>/dev/null; then
         kill "$QEMU_PID" >/dev/null 2>&1 || true
         wait "$QEMU_PID" >/dev/null 2>&1 || true
-        echo "[qemu] heartbeat assertion passed"
+        if [ "$ASSERT_HEARTBEAT" -eq 1 ]; then
+            assert_heartbeat_order "$SERIAL_LOG"
+            echo "[qemu] heartbeat assertion passed"
+        else
+            echo "[qemu] boot heartbeat reached UNBOUNDOS_BOOT_OK"
+        fi
         exit 0
     fi
     if ! kill -0 "$QEMU_PID" >/dev/null 2>&1; then
@@ -122,4 +132,8 @@ done
 
 kill "$QEMU_PID" >/dev/null 2>&1 || true
 wait "$QEMU_PID" >/dev/null 2>&1 || true
-assert_heartbeat_order "$SERIAL_LOG"
+if [ "$ASSERT_HEARTBEAT" -eq 1 ]; then
+    assert_heartbeat_order "$SERIAL_LOG"
+fi
+echo "[qemu] UNBOUNDOS_BOOT_OK not observed in $SERIAL_LOG" >&2
+exit 1

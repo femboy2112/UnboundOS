@@ -4,8 +4,24 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C1.M0 Step 7 QEMU smoke headless assertion: blocked on bootable image
-  generation.
+- C1.M0 Step 8 M0 completion audit: ready.
+
+## 2026-05-23T00:34:26Z - C1.M0 Step 7 QEMU smoke headless assertion
+
+- Status: completed
+- Summary: Replaced the placeholder image with an M0-only GRUB Multiboot2 ISO
+  smoke path, added a small 32-bit bootstrap that enters long mode before
+  calling the existing Rust `_start`, taught QEMU to boot ISO images and stop
+  headless runs after `UNBOUNDOS_BOOT_OK`, and made the gates pipeline rebuild
+  the image before asserting heartbeat order.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `bash -n scripts/qemu.sh
+  scripts/gates.sh scripts/make_image.sh`, `make fmt`, `make clippy`,
+  `make kernel`, `make qemu-headless`, and `make gates`.
+- Notes: this is an M0 smoke boot path only. Limine handoff, bootloader
+  information parsing, real memory-map ingestion, and allocator setup remain
+  later milestones.
+- Blockers: none.
 
 ## 2026-05-23T00:20:05Z - C1.M0 Step 7 QEMU smoke headless assertion
 
@@ -22,8 +38,9 @@ Append one entry per completed mission. Keep entries concise and factual.
   placeholder image path. `make gates` passed 5/6 gates and failed only at
   `qemu-smoke heartbeat` because no serial heartbeat was observed from the
   placeholder image.
-- Blockers: replace `scripts/make_image.sh` placeholder output with a real
-  bootable image path before Step 7 can pass and M0 can proceed to Step 8.
+- Resolution: replaced the placeholder with the M0 Multiboot2 smoke ISO path
+  in the completed Step 7 entry above.
+- Blockers: none after the Step 7 completion pass.
 
 ## 2026-05-23T00:13:59Z - C1.M0 Step 6 Panic path routed through SSOD
 

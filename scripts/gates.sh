@@ -41,6 +41,11 @@ step() {
     fi
 }
 
+qemu_smoke() {
+    make -s image
+    bash scripts/qemu.sh --headless --assert-heartbeat
+}
+
 step 1 "cargo fmt --check" cargo fmt --check
 step 2 "cargo clippy -D warnings" \
     cargo clippy --workspace --all-targets -- -D warnings
@@ -49,7 +54,7 @@ step 3 "cargo test --workspace --exclude kernel" \
 step 4 "address-scan persistent fixtures" \
     python3 scripts/address_scan.py tests/golden_graphs tests/golden_models
 step 5 "fidelity matrix" bash scripts/fidelity_check.sh
-step 6 "qemu-smoke heartbeat" bash scripts/qemu.sh --headless --assert-heartbeat
+step 6 "qemu-smoke heartbeat" qemu_smoke
 
 rm -f /tmp/gates-$$.log
 

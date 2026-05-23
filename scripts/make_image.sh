@@ -3,19 +3,9 @@
 #
 # Usage: ./scripts/make_image.sh <kernel-elf> <output-img>
 #
-# This script is intentionally a stub. The final implementation
-# depends on which bootloader the project commits to (Limine is the
-# baseline per spec §3.1). Two paths are common:
-#
-#   1) Limine: copy a pre-built limine.bin + the kernel ELF into a
-#      FAT32 partition on a raw image, then `limine bios-install`
-#      against it.
-#   2) Multiboot2/GRUB: build an ISO with grub-mkrescue.
-#
-# Until the bootloader is committed, this script just verifies the
-# input ELF exists and prints a clear message. The /qemu-smoke skill
-# will fail the gate until make_image.sh is implemented; this is by
-# design — boot without a real image is a fiction we don't ship.
+# M0 builds a minimal GRUB/Multiboot2 ISO so the heartbeat can be
+# tested under QEMU. This is a smoke-test boot path only; the
+# spec-primary Limine handoff and real memory-map parsing remain M1.
 
 set -euo pipefail
 
@@ -40,16 +30,38 @@ fi
 
 echo "[make-image] kernel ELF OK: $KERNEL_ELF"
 echo "[make-image] target image:  $OUT_IMG"
-echo
-echo "[make-image] STUB — bootloader integration not yet committed."
-echo "[make-image] To proceed, choose one of:"
-echo "  1. Limine: install limine bios files, build a FAT32 image with"
-echo "     limine.cfg + kernel ELF, then run 'limine bios-install \$OUT_IMG'."
-echo "  2. Multiboot2: build an ISO via 'grub-mkrescue -o \$OUT_IMG iso/'."
-echo
-echo "[make-image] writing placeholder image so /qemu-smoke can fail loudly..."
-# Write a tiny image so qemu launch fails cleanly with an obvious
-# 'no bootable disk' error rather than 'file not found'. The kernel
-# ELF is appended for inspection convenience.
-truncate -s 1M "$OUT_IMG"
-exit 0
+
+if ! grub-file --is-x86-multiboot2 "$KERNEL_ELF"; then
+    echo "[make-image] $KERNEL_ELF is not Multiboot2 bootable" >&2
+    exit 1
+fi
+
+if ! command -v grub-mkrescue >/dev/null 2>&1; then
+    echo "[make-image] grub-mkrescue missing" >&2
+    exit 1
+fi
+
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR"' EXIT
+
+mkdir -p "$TMPDIR/iso/boot/grub"
+cp "$KERNEL_ELF" "$TMPDIR/iso/boot/kernel"
+cat >"$TMPDIR/iso/boot/grub/grub.cfg" <<'GRUB'
+set timeout=0
+set default=0
+serial --unit=0 --speed=115200 --word=8 --parity=no --stop=1
+terminal_output serial
+
+menuentry "UnboundOS M0 heartbeat" {
+    multiboot2 /boot/kernel
+    boot
+}
+GRUB
+
+grub-mkrescue -o "$OUT_IMG" "$TMPDIR/iso" >/tmp/unboundos-grub-mkrescue.log 2>&1 || {
+    echo "[make-image] grub-mkrescue failed" >&2
+    cat /tmp/unboundos-grub-mkrescue.log >&2
+    exit 1
+}
+
+echo "[make-image] wrote bootable Multiboot2 ISO: $OUT_IMG"
