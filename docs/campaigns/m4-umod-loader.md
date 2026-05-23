@@ -103,6 +103,8 @@ Step 7 — M4 completion audit
 
 # Step 1 — UMOD parser header and resource refs
 
+Status: Completed.
+
 Purpose:
   Add bounded parser primitives for UMOD headers and opaque resource
   references, replacing parser stubs with typed errors.

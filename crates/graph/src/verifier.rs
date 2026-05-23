@@ -8,6 +8,7 @@
 //! after node/wire resolution; etc.).
 
 use crate::{GraphLoadError, VerifiedGraph, BUILTIN_SOURCE_TRANSFORM_SINK_UMOD};
+use umod::{parse_header, UmodParseError};
 
 /// Public entry point. Runs all 22 checks. Returns the verified
 /// graph or the first failing check.
@@ -54,13 +55,13 @@ fn check_magic(bytes: &[u8]) -> Result<(), GraphLoadError> {
     Ok(())
 }
 
-fn check_version(_bytes: &[u8]) -> Result<(), GraphLoadError> {
-    // Read major/minor at offsets 4..6, 6..8 LE; reject if outside
-    // supported range.
+fn check_version(bytes: &[u8]) -> Result<(), GraphLoadError> {
+    parse_header(bytes).map_err(map_parse_error)?;
     Ok(())
 }
 
-fn check_header_length(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+fn check_header_length(bytes: &[u8]) -> Result<(), GraphLoadError> {
+    parse_header(bytes).map_err(map_parse_error)?;
     Ok(())
 }
 fn check_section_table(_bytes: &[u8]) -> Result<(), GraphLoadError> {
@@ -130,9 +131,39 @@ fn check_opaque_resource_syntax(_bytes: &[u8]) -> Result<(), GraphLoadError> {
     Ok(())
 }
 
+const fn map_parse_error(error: UmodParseError) -> GraphLoadError {
+    match error {
+        UmodParseError::BadMagic => GraphLoadError::BadMagic,
+        UmodParseError::UnsupportedVersion { .. } => GraphLoadError::UnsupportedVersion,
+        UmodParseError::HeaderTooShort => GraphLoadError::ParseTruncated,
+        UmodParseError::BadHeaderLength { .. } => GraphLoadError::BadHeaderLength,
+        UmodParseError::SectionTableOutOfBounds | UmodParseError::SectionOutOfBounds { .. } => {
+            GraphLoadError::BadSectionTable
+        }
+        UmodParseError::NodeCountOverflow => GraphLoadError::NodeCountExceedsLimit,
+        UmodParseError::WireCountOverflow => GraphLoadError::WireCountExceedsLimit,
+        UmodParseError::HeaderChecksumMismatch => GraphLoadError::ParseHeaderChecksumMismatch,
+        UmodParseError::SectionChecksumMismatch { index } => GraphLoadError::ChecksumMismatch {
+            section_index: index,
+        },
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use umod::{UMOD_FORMAT_MAJOR, UMOD_FORMAT_MINOR, UMOD_HEADER_LEN, UMOD_HEADER_LEN_U32};
+
+    fn minimal_header() -> [u8; UMOD_HEADER_LEN] {
+        let mut bytes = [0; UMOD_HEADER_LEN];
+        bytes[0..4].copy_from_slice(b"UMOD");
+        bytes[0x04..0x06].copy_from_slice(&UMOD_FORMAT_MAJOR.to_le_bytes());
+        bytes[0x06..0x08].copy_from_slice(&UMOD_FORMAT_MINOR.to_le_bytes());
+        bytes[0x08..0x0C].copy_from_slice(&UMOD_HEADER_LEN_U32.to_le_bytes());
+        bytes[0x20..0x28].copy_from_slice(&(UMOD_HEADER_LEN as u64).to_le_bytes());
+        bytes[0x28..0x30].copy_from_slice(&(UMOD_HEADER_LEN as u64).to_le_bytes());
+        bytes
+    }
 
     #[test]
     fn empty_bytes_fail_magic() {
@@ -150,5 +181,31 @@ mod tests {
     fn builtin_source_transform_sink_payload_verifies() {
         let r = verify_umod(BUILTIN_SOURCE_TRANSFORM_SINK_UMOD);
         assert!(r.is_ok());
+    }
+
+    #[test]
+    fn short_umod_header_fails_structurally() {
+        let r = verify_umod(b"UMOD");
+        assert_eq!(r.unwrap_err(), GraphLoadError::ParseTruncated);
+    }
+
+    #[test]
+    fn unsupported_umod_version_fails_structurally() {
+        let mut bytes = minimal_header();
+        bytes[0x04..0x06].copy_from_slice(&2_u16.to_le_bytes());
+
+        let r = verify_umod(&bytes);
+
+        assert_eq!(r.unwrap_err(), GraphLoadError::UnsupportedVersion);
+    }
+
+    #[test]
+    fn bad_umod_header_length_fails_structurally() {
+        let mut bytes = minimal_header();
+        bytes[0x08..0x0C].copy_from_slice(&0x30_u32.to_le_bytes());
+
+        let r = verify_umod(&bytes);
+
+        assert_eq!(r.unwrap_err(), GraphLoadError::BadHeaderLength);
     }
 }

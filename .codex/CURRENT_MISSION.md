@@ -1,21 +1,23 @@
 # Current Mission
 
-Mission: C5.M4 Step 1 UMOD parser header and resource refs
+Mission: C5.M4 Step 2 Section table bounds and structural checks
 Campaign: C5 M4 UMOD Loader
 Status: ready
 
 ## Objective
 
-Execute M4 campaign Step 1 from `docs/campaigns/m4-umod-loader.md`: add
-bounded parser primitives for UMOD headers and opaque resource references,
-replacing parser stubs with typed errors.
+Execute M4 campaign Step 2 from `docs/campaigns/m4-umod-loader.md`: parse
+section descriptors and make section-table, file-length, count-limit, and
+overflow checks non-vacuous.
 
 ## Scope
 
 Allowed changes:
 
 - `crates/umod/src/lib.rs`
+- `crates/graph/src/lib.rs`
 - `crates/graph/src/verifier.rs`
+- `tests/fuzz_corpus/umod/**`
 - `docs/campaigns/m4-umod-loader.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -24,17 +26,18 @@ Allowed changes:
 Out of scope:
 
 - Runtime graph construction changes.
-- Fixture, fuzz corpus, UI, storage, LLM, or boot changes.
+- UI, storage, LLM, or boot changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- UMOD header decode uses fixed-width little-endian reads, not pointer casts.
-- Bad magic, unsupported version, short header, and bad header length return
-  structured parser or graph-load errors.
-- `parse_resource_ref` accepts only approved opaque resource syntax and rejects
-  path-shaped references.
-- Existing `graph_load_from_umod -> graph_compile_verified` gate remains intact.
+- Section descriptors decode through fixed-width little-endian reads, not
+  pointer casts.
+- Section table offsets, lengths, overflows, out-of-file sections, and illegal
+  overlaps return structured errors.
+- Configured node and wire count limits are enforced before semantic checks.
+- Existing `graph_load_from_umod -> graph_compile_verified` gate remains
+  intact.
 
 ## Baseline to verify
 
@@ -55,5 +58,5 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m4-umod-loader`. M4 must not add a developer-mode
-or test-only graph runtime constructor.
+Campaign branch: `campaign/m4-umod-loader`. Step 1 added fixed-width UMOD
+header parsing and opaque resource reference validation.

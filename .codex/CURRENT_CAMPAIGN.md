@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C5 M4 UMOD Loader
-Active mission: C5.M4 Step 1 UMOD parser header and resource refs
+Active mission: C5.M4 Step 2 Section table bounds and structural checks
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -26,8 +26,8 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C5.M4 Step 1 UMOD parser header and resource refs. Active.
-2. C5.M4 Step 2 Section table bounds and structural checks. Pending.
+1. C5.M4 Step 1 UMOD parser header and resource refs. Completed.
+2. C5.M4 Step 2 Section table bounds and structural checks. Active.
 3. C5.M4 Step 3 Node and wire semantic verifier checks. Pending.
 4. C5.M4 Step 4 Capabilities, resources, constants, and scheduling checks. Pending.
 5. C5.M4 Step 5 Persistent UMOD compile path. Pending.

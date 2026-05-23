@@ -4,7 +4,19 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C5.M4 Step 1 UMOD parser header and resource refs: ready.
+- C5.M4 Step 2 Section table bounds and structural checks: ready.
+
+## 2026-05-23T02:15:38Z - C5.M4 Step 1 UMOD parser header and resource refs
+
+- Status: completed
+- Summary: Added fixed-width little-endian UMOD header parsing, structured
+  parser errors for bad magic/version/short header/bad length, real opaque
+  resource reference validation, and graph verifier mapping for those parser
+  failures.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p umod`, `cargo test -p
+  graph`, and `python3 scripts/verify.py --mission current`.
+- Blockers: none.
 
 ## 2026-05-23T02:06:17Z - C5.M4 campaign activation
 
