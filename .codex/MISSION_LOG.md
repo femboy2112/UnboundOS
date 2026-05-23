@@ -4,7 +4,20 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C4.M3 Step 5 M3 completion audit: ready.
+*(none; M3 campaign complete)*
+
+## 2026-05-23T01:57:15Z - C4.M3 Step 5 M3 completion audit
+
+- Status: completed
+- Summary: Marked M3 `DONE` in `MILESTONE_CATALOG.md`, bumped the catalog to
+  `v0.8`, recorded the Step 1-4 checkpoint commits in the campaign closeout,
+  and left M4 for operator rotation.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make gates`, `make repo-state`, and `python3 scripts/verify.py
+  --mission current`.
+- Repo-state: STOP because no milestone is `IN-PROGRESS`, which is the
+  expected closed-M3 state.
+- Blockers: none for M3; next action is M4 rotation.
 
 ## 2026-05-23T01:54:40Z - C4.M3 Step 4 Active node diagnostics
 

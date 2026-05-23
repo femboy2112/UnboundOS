@@ -2,7 +2,7 @@
 
 Campaign: C4 M3 Embedded Graph
 Active mission: C4.M3 Step 5 M3 completion audit
-Status: ready
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -29,7 +29,12 @@ See `.codex/CURRENT_MISSION.md`.
 2. C4.M3 Step 2 Private hardcoded graph runtime. Completed.
 3. C4.M3 Step 3 Fan-out execution proof. Completed.
 4. C4.M3 Step 4 Active node diagnostics. Completed.
-5. C4.M3 Step 5 M3 completion audit. Active.
+5. C4.M3 Step 5 M3 completion audit. Completed.
+
+## Closeout
+
+M3 is complete. `/go` must stop here until the operator opens the final M3 PR
+or rotates the control files to M4.
 
 ## Required Preflight For `go`
 

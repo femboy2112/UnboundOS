@@ -225,6 +225,8 @@ Commit and push.
 
 # Step 5 — M3 completion audit
 
+Status: Completed.
+
 Purpose:
   Close M3 after source -> transform -> sink, epoch readiness, fan-out, and
   active-node diagnostics are all verified.
@@ -253,3 +255,29 @@ python3 scripts/verify.py --mission current
 ```
 
 Commit and push.
+
+## Closeout
+
+M3 completed on branch `campaign/m3-embedded-graph`.
+
+Step commits:
+
+- Step 1 — Runtime epoch readiness primitives: `46d415c`
+- Step 2 — Private hardcoded graph runtime: `f2c150f`
+- Step 3 — Fan-out execution proof: `9c5cb77`
+- Step 4 — Active node diagnostics: `e74bd2f`
+
+Final gates:
+
+- `python3 scripts/verify.py --mission current`: ran graph crate tests covering
+  built-in graph verification, verified compile path execution, source ->
+  transform -> sink execution, epoch readiness, fan-out independence, and
+  active-node clearing.
+- `make gates`: PROCEED.
+- `make repo-state`: STOP because no milestone remains `IN-PROGRESS`, which is
+  the expected closed-M3 state.
+
+Boundary note: M3 proves the embedded built-in graph runtime path while keeping
+runtime graph internals private to the loader. It does not claim the M4 UMOD
+parser, malformed UMOD structured errors, storage, UI, LLM, or persistent graph
+fixture coverage.

@@ -2,7 +2,7 @@
 
 Mission: C4.M3 Step 5 M3 completion audit
 Campaign: C4 M3 Embedded Graph
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -55,3 +55,6 @@ python3 scripts/verify.py --mission current
 
 Campaign branch: `campaign/m3-embedded-graph`. Step 4 added private active-node
 diagnostics and verified that active node state clears after execution.
+
+Stop reason: M3 campaign complete. Await operator action to open the final M3
+PR or rotate mission state to M4.
