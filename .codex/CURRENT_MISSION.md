@@ -2,7 +2,7 @@
 
 Mission: C2.M1 Step 5 M1 completion audit
 Campaign: C2 M1 Diagnostics Core
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -61,3 +61,6 @@ python3 scripts/verify.py --mission current
 
 Campaign branch: `campaign/m1-diagnostics-core`. M1 completion proves
 Diagnostics Core per spec §13.3. The next milestone is M2 Arena Memory.
+
+Stop reason: M1 campaign complete. Await operator action to open the final M1
+PR or rotate mission state to M2.

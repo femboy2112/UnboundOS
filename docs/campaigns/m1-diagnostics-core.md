@@ -139,6 +139,29 @@ python3 scripts/verify.py --mission current
 
 Commit and push.
 
+## Closeout
+
+M1 completed on branch `campaign/m1-diagnostics-core`.
+
+Step commits:
+
+- Step 1 — Forced-fault smoke harness: `0ae3508`
+- Step 2 — Divide-by-zero SSOD proof: `6bfec2c`
+- Step 3 — Invalid-opcode SSOD proof: `c8307cf`
+- Step 4 — Page-fault SSOD proof: `1013b28`
+
+Final gates:
+
+- `make qemu-fault-de`: asserted `reason=divide_error` and `rip=...`.
+- `make qemu-fault-ud`: asserted `reason=invalid_opcode` and `rip=...`.
+- `make qemu-fault-pf`: asserted `reason=page_fault`, `rip=...`, and
+  `error_code=...`.
+- `make gates`: PROCEED.
+
+Boundary note: M1 proves diagnostics core only. Arena memory, allocator
+exhaustion semantics, memory-map dumping, graph execution, storage, UI, and LLM
+work remain later milestones.
+
 ---
 
 # Step 2 — Divide-by-zero SSOD proof

@@ -2,7 +2,7 @@
 
 Campaign: C2 M1 Diagnostics Core
 Active mission: C2.M1 Step 5 M1 completion audit
-Status: ready
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -29,7 +29,12 @@ See `.codex/CURRENT_MISSION.md`.
 2. C2.M1 Step 2 Divide-by-zero SSOD proof. Completed.
 3. C2.M1 Step 3 Invalid-opcode SSOD proof. Completed.
 4. C2.M1 Step 4 Page-fault SSOD proof. Completed.
-5. C2.M1 Step 5 M1 completion audit. Active.
+5. C2.M1 Step 5 M1 completion audit. Completed.
+
+## Closeout
+
+M1 is complete. `/go` must stop here until the operator opens the final M1 PR
+or rotates the control files to M2.
 
 ## Required Preflight For `go`
 
