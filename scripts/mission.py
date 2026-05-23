@@ -16,6 +16,8 @@ CODEX = ROOT / ".codex"
 MISSION = CODEX / "CURRENT_MISSION.md"
 CAMPAIGN = CODEX / "CURRENT_CAMPAIGN.md"
 LOG = CODEX / "MISSION_LOG.md"
+ROOT_MISSION = ROOT / "CURRENT_MISSION.md"
+ROOT_CAMPAIGN = ROOT / "CURRENT_CAMPAIGN.md"
 
 
 REQUIRED_MISSION_KEYS = ("Mission:", "Campaign:", "Status:")
@@ -103,6 +105,8 @@ def validate() -> int:
         errors.append("CURRENT_MISSION.md missing Acceptance Criteria section")
     if "## Verification Commands" not in mission_text:
         errors.append("CURRENT_MISSION.md missing Verification Commands section")
+    validate_top_level_pointer(ROOT_MISSION, ".codex/CURRENT_MISSION.md", mission_name, errors)
+    validate_top_level_pointer(ROOT_CAMPAIGN, ".codex/CURRENT_CAMPAIGN.md", active, errors)
     if errors:
         for error in errors:
             print(f"[mission] FAIL: {error}", file=sys.stderr)
@@ -110,6 +114,21 @@ def validate() -> int:
 
     print(f"[mission] OK: {mission_name}")
     return 0
+
+
+def validate_top_level_pointer(
+    path: Path, target: str, expected_name: str, errors: list[str]
+) -> None:
+    if not path.exists():
+        errors.append(f"{path.name} compatibility pointer missing")
+        return
+    text = path.read_text(encoding="utf-8")
+    if target not in text:
+        errors.append(f"{path.name} must point to {target}")
+    if expected_name and expected_name not in text:
+        errors.append(f"{path.name} snapshot missing current name {expected_name!r}")
+    if "M0 Boot Heartbeat" in text or "campaign/m0-boot-heartbeat" in text:
+        errors.append(f"{path.name} still contains stale M0 mission state")
 
 
 def complete(args: argparse.Namespace) -> int:

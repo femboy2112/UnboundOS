@@ -17,7 +17,7 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-TOTAL=22
+TOTAL=23
 PASS=()
 FAILED=""
 
@@ -41,31 +41,32 @@ step() {
     fi
 }
 
-step 1 "cargo fmt --check" cargo fmt --check
-step 2 "cargo clippy -D warnings" \
+step 1 "mission state" python3 scripts/mission.py validate
+step 2 "cargo fmt --check" cargo fmt --check
+step 3 "cargo clippy -D warnings" \
     cargo clippy --workspace --all-targets -- -D warnings
-step 3 "cargo test --workspace --exclude kernel" \
+step 4 "cargo test --workspace --exclude kernel" \
     cargo test --workspace --exclude kernel
-step 4 "kernel host module tests" python3 scripts/check_kernel_host_tests.py
-step 5 "kernel custom-target release build" make -s kernel
-step 6 "address-scan persistent fixtures" \
+step 5 "kernel host module tests" python3 scripts/check_kernel_host_tests.py
+step 6 "kernel custom-target release build" make -s kernel
+step 7 "address-scan persistent fixtures" \
     python3 scripts/address_scan.py tests/golden_graphs tests/golden_models
-step 7 "fidelity matrix" bash scripts/fidelity_check.sh
-step 8 "ui-smoke" python3 scripts/check_ui_smoke.py
-step 9 "tokenizer-smoke" python3 scripts/check_tokenizer_smoke.py
-step 10 "toy-transformer-smoke" python3 scripts/check_toy_transformer_smoke.py
-step 11 "umdl-smoke" python3 scripts/check_umdl_smoke.py
-step 12 "quantized-smoke" python3 scripts/check_quantized_smoke.py
-step 13 "assistant-smoke" python3 scripts/check_assistant_smoke.py
-step 14 "retrieval-smoke" python3 scripts/check_retrieval_smoke.py
-step 15 "qemu heartbeat" make -s qemu-headless
-step 16 "qemu interactive serial shell" make -s qemu-interactive-smoke
-step 17 "qemu no-serial fallback" make -s qemu-no-serial
-step 18 "qemu SSOD divide_error" make -s qemu-fault-de
-step 19 "qemu SSOD invalid_opcode" make -s qemu-fault-ud
-step 20 "qemu SSOD page_fault" make -s qemu-fault-pf
-step 21 "qemu M2 arena/memory dump" make -s qemu-m2-dump
-step 22 "qemu M6 storage marker" make -s qemu-storage-smoke
+step 8 "fidelity matrix" bash scripts/fidelity_check.sh
+step 9 "ui-smoke" python3 scripts/check_ui_smoke.py
+step 10 "tokenizer-smoke" python3 scripts/check_tokenizer_smoke.py
+step 11 "toy-transformer-smoke" python3 scripts/check_toy_transformer_smoke.py
+step 12 "umdl-smoke" python3 scripts/check_umdl_smoke.py
+step 13 "quantized-smoke" python3 scripts/check_quantized_smoke.py
+step 14 "assistant-smoke" python3 scripts/check_assistant_smoke.py
+step 15 "retrieval-smoke" python3 scripts/check_retrieval_smoke.py
+step 16 "qemu heartbeat" make -s qemu-headless
+step 17 "qemu interactive serial shell" make -s qemu-interactive-smoke
+step 18 "qemu no-serial fallback" make -s qemu-no-serial
+step 19 "qemu SSOD divide_error" make -s qemu-fault-de
+step 20 "qemu SSOD invalid_opcode" make -s qemu-fault-ud
+step 21 "qemu SSOD page_fault" make -s qemu-fault-pf
+step 22 "qemu M2 arena/memory dump" make -s qemu-m2-dump
+step 23 "qemu M6 storage marker" make -s qemu-storage-smoke
 
 rm -f /tmp/gates-$$.log
 

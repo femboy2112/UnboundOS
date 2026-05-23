@@ -1,13 +1,15 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.29
+> **Catalog version:** v0.30
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
 Every milestone owns exactly one campaign file under
-`docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
-copy of the active milestone's campaign file. Completed campaigns are
-archived under `docs/campaigns/` and never edited again.
+`docs/campaigns/`. The authoritative active control-plane files live
+under `.codex/`; the top-level `CURRENT_MISSION.md` and
+`CURRENT_CAMPAIGN.md` are compatibility pointers that must not carry
+stale mission state. Completed campaigns are archived under
+`docs/campaigns/` and never edited again.
 
 ## Rules
 
@@ -45,6 +47,13 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.30** — Removed stale top-level M0 mission/campaign state by converting
+  `CURRENT_MISSION.md` and `CURRENT_CAMPAIGN.md` into explicit pointers to the
+  authoritative `.codex/` control-plane files. `scripts/mission.py validate`
+  now rejects missing top-level pointers, stale M0 text, and snapshots that do
+  not name the active `.codex` mission/campaign. `make gates` now starts with
+  mission-state validation, so stale control-plane drift cannot pass a clean
+  aggregate gate.
 - **v0.29** — Replaced the unconditional `Scalar` CPU profile stub with a
   CPUID-backed SSE2 detector and boot-time CR0/CR4 math-state setup for the
   detected tier. The live QEMU serial shell gate now expects `cpu` to report
