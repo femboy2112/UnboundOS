@@ -1,22 +1,22 @@
 # Current Mission
 
-Mission: C2.M1 Step 1 Forced-fault smoke harness
+Mission: C2.M1 Step 2 Divide-by-zero SSOD proof
 Campaign: C2 M1 Diagnostics Core
 Status: ready
 
 ## Objective
 
-Execute M1 campaign Step 1 from `docs/campaigns/m1-diagnostics-core.md`: add
-an explicit QEMU-only forced-fault selection harness without changing normal
-M0 heartbeat boot behavior.
+Execute M1 campaign Step 2 from `docs/campaigns/m1-diagnostics-core.md`: prove
+the #DE path routes through SSOD and includes reason and RIP in serial output.
 
 ## Scope
 
 Allowed changes:
 
-- `kernel/src/boot.rs`
 - `kernel/src/idt.rs`
+- `kernel/src/ssod.rs`
 - `scripts/qemu.sh`
+- `scripts/gates.sh`
 - `Makefile`
 - `docs/campaigns/m1-diagnostics-core.md`
 - `.codex/CURRENT_MISSION.md`
@@ -31,13 +31,10 @@ Out of scope:
 
 ## Acceptance Criteria
 
+- `make qemu-fault-de` passes.
+- Serial output includes `UNBOUNDOS_SSOD_BEGIN`, `reason=divide_error`, a
+  non-empty `rip=...`, and `UNBOUNDOS_SSOD_END`.
 - Normal `make qemu-headless` still reaches `UNBOUNDOS_BOOT_OK`.
-- Forced-fault mode can request `divide_error`, `invalid_opcode`, and
-  `page_fault` after `UNBOUNDOS_IDT_OK`.
-- Forced-fault assertions check `UNBOUNDOS_SSOD_BEGIN`, `reason=<fault>`,
-  `rip=...`, and `UNBOUNDOS_SSOD_END`.
-- The forced-fault path is explicit test plumbing and cannot trigger during
-  normal boot.
 
 ## Baseline to verify
 
@@ -55,11 +52,11 @@ make fmt
 make clippy
 make kernel
 make qemu-headless
+make qemu-fault-de
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m1-diagnostics-core`. M1 proves Diagnostics Core
-per spec §13.3. Limine handoff, memory-map ingestion, and allocator completion
-remain later milestone work.
+Campaign branch: `campaign/m1-diagnostics-core`. Step 1 already installed the
+explicit forced-fault selector and QEMU SSOD assertion plumbing.

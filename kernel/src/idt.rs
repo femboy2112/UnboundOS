@@ -214,3 +214,49 @@ pub unsafe fn install() {
 pub fn is_installed() -> bool {
     IDT_INSTALLED.load(Ordering::Acquire)
 }
+
+/// M1 QEMU smoke selector for forced diagnostics faults.
+///
+/// Normal builds do nothing. Dedicated Makefile targets set
+/// `UNBOUNDOS_FORCE_FAULT` while compiling the kernel image so QEMU can prove
+/// the installed IDT routes the selected vector through SSOD.
+pub fn trigger_forced_fault_from_env() {
+    match option_env!("UNBOUNDOS_FORCE_FAULT") {
+        Some("divide_error") => trigger_divide_error(),
+        Some("invalid_opcode") => trigger_invalid_opcode(),
+        Some("page_fault") => trigger_page_fault(),
+        _ => {}
+    }
+}
+
+fn trigger_divide_error() {
+    // SAFETY: intentional M1 forced-fault smoke. Dividing by zero raises #DE
+    // after the IDT is installed; the handler must route to SSOD.
+    unsafe {
+        core::arch::asm!(
+            "xor edx, edx",
+            "mov eax, 1",
+            "xor ecx, ecx",
+            "div ecx",
+            options(nomem, nostack),
+        );
+    }
+}
+
+fn trigger_invalid_opcode() {
+    // SAFETY: intentional M1 forced-fault smoke. `ud2` raises #UD and must be
+    // caught by the installed invalid-opcode handler.
+    unsafe {
+        core::arch::asm!("ud2", options(nomem, nostack));
+    }
+}
+
+fn trigger_page_fault() {
+    const UNMAPPED_TEST_ADDRESS: usize = 0x4000_0000;
+    // SAFETY: intentional M1 forced-fault smoke. The M0 Multiboot2 bootstrap
+    // maps the first GiB only, so this read crosses into an unmapped page and
+    // must route through #PF.
+    unsafe {
+        core::ptr::read_volatile(UNMAPPED_TEST_ADDRESS as *const u64);
+    }
+}

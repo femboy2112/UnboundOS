@@ -82,6 +82,9 @@ pub unsafe fn run() -> ! {
         idt::install();
     }
     heartbeat::emit("UNBOUNDOS_IDT_OK");
+    // M1 forced-fault smoke harness. This is compile-time test plumbing
+    // selected by Makefile targets, never normal boot behavior.
+    idt::trigger_forced_fault_from_env();
 
     // spec §3.2 step 8: initialize boot allocator.
     // TODO M1 (spec §4.3): bitmap or stack frame allocator over

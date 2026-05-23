@@ -99,6 +99,8 @@ Step 5 — M1 completion audit
 
 # Step 1 — Forced-fault smoke harness
 
+Status: Completed.
+
 Purpose:
   Add a QEMU-only forced-fault selection path that can intentionally trigger
   one diagnostic vector after the M0 heartbeat is live. Normal boot must remain
@@ -129,6 +131,9 @@ make fmt
 make clippy
 make kernel
 make qemu-headless
+make qemu-fault-de
+make qemu-fault-ud
+make qemu-fault-pf
 python3 scripts/verify.py --mission current
 ```
 

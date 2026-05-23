@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C2.M1 Step 1 Forced-fault smoke harness: ready.
+- C2.M1 Step 2 Divide-by-zero SSOD proof: ready.
+
+## 2026-05-23T00:55:45Z - C2.M1 Step 1 Forced-fault smoke harness
+
+- Status: completed
+- Summary: Added explicit compile-time forced-fault selectors for
+  `divide_error`, `invalid_opcode`, and `page_fault`, wired QEMU SSOD
+  assertions for reason/RIP/end markers, and added dedicated Makefile targets
+  while preserving normal heartbeat boot.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `bash -n scripts/qemu.sh`, `make fmt`, `make clippy`,
+  `make kernel`, `make qemu-headless`, `make qemu-fault-de`,
+  `make qemu-fault-ud`, `make qemu-fault-pf`, `make repo-state`,
+  `python3 scripts/verify.py --mission current`, and `make gates`.
+- Blockers: none.
 
 ## 2026-05-23T00:49:00Z - C2.M1 campaign activation
 

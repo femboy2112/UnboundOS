@@ -7,6 +7,7 @@ CARGO       ?= cargo
 KERNEL      := target/x86_64-unboundos/release/kernel
 IMAGE       := /tmp/unboundos.img
 SERIAL_LOG  := /tmp/unboundos-serial.log
+FORCE_IMAGE := /tmp/unboundos-forced-fault.img
 
 .PHONY: help
 help:
@@ -17,6 +18,9 @@ help:
 	@echo "  make qemu            # build + boot under QEMU (with display)"
 	@echo "  make qemu-headless   # build + boot under QEMU, headless"
 	@echo "  make qemu-no-serial  # exercise no-UART boot fallback"
+	@echo "  make qemu-fault-de   # assert divide-by-zero SSOD path"
+	@echo "  make qemu-fault-ud   # assert invalid-opcode SSOD path"
+	@echo "  make qemu-fault-pf   # assert page-fault SSOD path"
 	@echo "  make fidelity        # run scripts/fidelity_check.sh"
 	@echo "  make address-scan    # scan persistent fixtures"
 	@echo "  make fmt             # cargo fmt --check"
@@ -56,6 +60,21 @@ qemu-headless: image
 .PHONY: qemu-no-serial
 qemu-no-serial: image
 	./scripts/qemu.sh --headless --no-serial
+
+.PHONY: qemu-fault-de
+qemu-fault-de:
+	UNBOUNDOS_FORCE_FAULT=divide_error $(MAKE) image IMAGE=$(FORCE_IMAGE)
+	./scripts/qemu.sh --headless --image $(FORCE_IMAGE) --assert-ssod divide_error
+
+.PHONY: qemu-fault-ud
+qemu-fault-ud:
+	UNBOUNDOS_FORCE_FAULT=invalid_opcode $(MAKE) image IMAGE=$(FORCE_IMAGE)
+	./scripts/qemu.sh --headless --image $(FORCE_IMAGE) --assert-ssod invalid_opcode
+
+.PHONY: qemu-fault-pf
+qemu-fault-pf:
+	UNBOUNDOS_FORCE_FAULT=page_fault $(MAKE) image IMAGE=$(FORCE_IMAGE)
+	./scripts/qemu.sh --headless --image $(FORCE_IMAGE) --assert-ssod page_fault
 
 .PHONY: test
 test:

@@ -7,6 +7,7 @@
 #   ./scripts/qemu.sh --cpu Skylake-Client
 #   ./scripts/qemu.sh --no-serial      # exercise the no-UART fallback
 #   ./scripts/qemu.sh --assert-heartbeat
+#   ./scripts/qemu.sh --assert-ssod reason
 #
 # Environment overrides:
 #   QEMU_CPU      override CPU model (default: qemu64)
@@ -26,12 +27,14 @@ SERIAL_LOG="${SERIAL_LOG:-/tmp/unboundos-serial.log}"
 HEADLESS=0
 NO_SERIAL=0
 ASSERT_HEARTBEAT=0
+ASSERT_SSOD_REASON=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --headless)          HEADLESS=1; shift ;;
         --no-serial)         NO_SERIAL=1; shift ;;
         --assert-heartbeat)  ASSERT_HEARTBEAT=1; shift ;;
+        --assert-ssod)       ASSERT_SSOD_REASON="$2"; shift 2 ;;
         --cpu)               QEMU_CPU="$2"; shift 2 ;;
         --image)             IMAGE="$2"; shift 2 ;;
         *)                   echo "[qemu] unknown arg: $1" >&2; exit 2 ;;
@@ -40,6 +43,16 @@ done
 
 if [ "$ASSERT_HEARTBEAT" -eq 1 ] && [ "$NO_SERIAL" -eq 1 ]; then
     echo "[qemu] --assert-heartbeat requires serial capture" >&2
+    exit 2
+fi
+
+if [ -n "$ASSERT_SSOD_REASON" ] && [ "$NO_SERIAL" -eq 1 ]; then
+    echo "[qemu] --assert-ssod requires serial capture" >&2
+    exit 2
+fi
+
+if [ "$ASSERT_HEARTBEAT" -eq 1 ] && [ -n "$ASSERT_SSOD_REASON" ]; then
+    echo "[qemu] choose only one assertion mode" >&2
     exit 2
 fi
 
@@ -100,7 +113,29 @@ assert_heartbeat_order() {
     return 1
 }
 
-if [ "$ASSERT_HEARTBEAT" -eq 0 ] && [ "$HEADLESS" -eq 0 ]; then
+assert_ssod_record() {
+    local log="$1"
+    local reason="$2"
+
+    grep -q '^UNBOUNDOS_SSOD_BEGIN$' "$log" || {
+        echo "[qemu] missing UNBOUNDOS_SSOD_BEGIN in $log" >&2
+        return 1
+    }
+    grep -q "^reason=${reason}$" "$log" || {
+        echo "[qemu] missing reason=${reason} in $log" >&2
+        return 1
+    }
+    grep -Eq '^rip=0x[0-9a-fA-F]+$' "$log" || {
+        echo "[qemu] missing rip field in $log" >&2
+        return 1
+    }
+    grep -q '^UNBOUNDOS_SSOD_END$' "$log" || {
+        echo "[qemu] missing UNBOUNDOS_SSOD_END in $log" >&2
+        return 1
+    }
+}
+
+if [ "$ASSERT_HEARTBEAT" -eq 0 ] && [ -z "$ASSERT_SSOD_REASON" ] && [ "$HEADLESS" -eq 0 ]; then
     # 60s wall-clock budget; kernel must reach UNBOUNDOS_BOOT_OK before then.
     exec timeout 60s qemu-system-x86_64 "${ARGS[@]}"
 fi
@@ -112,9 +147,20 @@ timeout 60s qemu-system-x86_64 "${ARGS[@]}" &
 QEMU_PID=$!
 
 for _ in $(seq 1 600); do
+    if [ -n "$ASSERT_SSOD_REASON" ] && grep -q '^UNBOUNDOS_SSOD_END$' "$SERIAL_LOG" 2>/dev/null; then
+        kill "$QEMU_PID" >/dev/null 2>&1 || true
+        wait "$QEMU_PID" >/dev/null 2>&1 || true
+        assert_ssod_record "$SERIAL_LOG" "$ASSERT_SSOD_REASON"
+        echo "[qemu] SSOD assertion passed for $ASSERT_SSOD_REASON"
+        exit 0
+    fi
     if grep -q '^UNBOUNDOS_BOOT_OK$' "$SERIAL_LOG" 2>/dev/null; then
         kill "$QEMU_PID" >/dev/null 2>&1 || true
         wait "$QEMU_PID" >/dev/null 2>&1 || true
+        if [ -n "$ASSERT_SSOD_REASON" ]; then
+            echo "[qemu] observed UNBOUNDOS_BOOT_OK while waiting for SSOD" >&2
+            exit 1
+        fi
         if [ "$ASSERT_HEARTBEAT" -eq 1 ]; then
             assert_heartbeat_order "$SERIAL_LOG"
             echo "[qemu] heartbeat assertion passed"
@@ -134,6 +180,9 @@ kill "$QEMU_PID" >/dev/null 2>&1 || true
 wait "$QEMU_PID" >/dev/null 2>&1 || true
 if [ "$ASSERT_HEARTBEAT" -eq 1 ]; then
     assert_heartbeat_order "$SERIAL_LOG"
+fi
+if [ -n "$ASSERT_SSOD_REASON" ]; then
+    assert_ssod_record "$SERIAL_LOG" "$ASSERT_SSOD_REASON"
 fi
 echo "[qemu] UNBOUNDOS_BOOT_OK not observed in $SERIAL_LOG" >&2
 exit 1
