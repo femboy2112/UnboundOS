@@ -1,13 +1,13 @@
 # Current Mission
 
-Mission: C2.M1 Step 2 Divide-by-zero SSOD proof
+Mission: C2.M1 Step 3 Invalid-opcode SSOD proof
 Campaign: C2 M1 Diagnostics Core
 Status: ready
 
 ## Objective
 
-Execute M1 campaign Step 2 from `docs/campaigns/m1-diagnostics-core.md`: prove
-the #DE path routes through SSOD and includes reason and RIP in serial output.
+Execute M1 campaign Step 3 from `docs/campaigns/m1-diagnostics-core.md`: prove
+the #UD path routes through SSOD and includes reason and RIP in serial output.
 
 ## Scope
 
@@ -31,8 +31,8 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- `make qemu-fault-de` passes.
-- Serial output includes `UNBOUNDOS_SSOD_BEGIN`, `reason=divide_error`, a
+- `make qemu-fault-ud` passes.
+- Serial output includes `UNBOUNDOS_SSOD_BEGIN`, `reason=invalid_opcode`, a
   non-empty `rip=...`, and `UNBOUNDOS_SSOD_END`.
 - Normal `make qemu-headless` still reaches `UNBOUNDOS_BOOT_OK`.
 
@@ -52,7 +52,7 @@ make fmt
 make clippy
 make kernel
 make qemu-headless
-make qemu-fault-de
+make qemu-fault-ud
 python3 scripts/verify.py --mission current
 ```
 

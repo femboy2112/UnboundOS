@@ -4,7 +4,19 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C2.M1 Step 2 Divide-by-zero SSOD proof: ready.
+- C2.M1 Step 3 Invalid-opcode SSOD proof: ready.
+
+## 2026-05-23T00:57:47Z - C2.M1 Step 2 Divide-by-zero SSOD proof
+
+- Status: completed
+- Summary: Verified the #DE forced-fault path through the Step 1 harness.
+  `make qemu-fault-de` asserted the SSOD begin marker, `reason=divide_error`,
+  RIP field, and SSOD end marker while normal boot still reached
+  `UNBOUNDOS_BOOT_OK`.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make qemu-fault-de`, `make qemu-headless`, and `python3
+  scripts/verify.py --mission current`.
+- Blockers: none.
 
 ## 2026-05-23T00:55:45Z - C2.M1 Step 1 Forced-fault smoke harness
 

@@ -143,6 +143,8 @@ Commit and push.
 
 # Step 2 — Divide-by-zero SSOD proof
 
+Status: Completed.
+
 Purpose:
   Prove the #DE path routes through SSOD and includes reason and RIP in serial
   output.

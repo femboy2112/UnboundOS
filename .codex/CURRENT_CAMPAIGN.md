@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C2 M1 Diagnostics Core
-Active mission: C2.M1 Step 2 Divide-by-zero SSOD proof
+Active mission: C2.M1 Step 3 Invalid-opcode SSOD proof
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -26,8 +26,8 @@ See `.codex/CURRENT_MISSION.md`.
 ## Macro Sequence
 
 1. C2.M1 Step 1 Forced-fault smoke harness. Completed.
-2. C2.M1 Step 2 Divide-by-zero SSOD proof. Active.
-3. C2.M1 Step 3 Invalid-opcode SSOD proof. Pending.
+2. C2.M1 Step 2 Divide-by-zero SSOD proof. Completed.
+3. C2.M1 Step 3 Invalid-opcode SSOD proof. Active.
 4. C2.M1 Step 4 Page-fault SSOD proof. Pending.
 5. C2.M1 Step 5 M1 completion audit. Pending.
 
