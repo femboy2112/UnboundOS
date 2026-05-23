@@ -20,10 +20,11 @@ pub const UMDL_CHECKSUM_PRIME: u64 = 0x0000_0100_0000_01b3;
 pub const TOKENIZER_METADATA_LENGTH: u64 = 72;
 pub const TENSOR_DESC_LENGTH: u64 = 48;
 pub const TENSOR_DESC_LENGTH_USIZE: usize = 48;
+pub const M9_SUPPORTED_ARCHITECTURE_ID: u32 = 1;
 
 /// Header at file offset 0. Spec §10.5.
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct UmdlHeader {
     pub magic: [u8; 4],
     pub format_major: u16,
@@ -677,6 +678,107 @@ pub fn validate_tensor_descriptors(
     Ok(())
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct UmdlArenaReservations {
+    pub model_weight_bytes: u64,
+    pub scratch_bytes: u64,
+    pub kv_cache_bytes_per_token: u64,
+    pub max_context_tokens: u32,
+}
+
+impl UmdlArenaReservations {
+    fn validate_against_profile(self, profile_ram_bytes: u64) -> Result<(), UmdlLoadError> {
+        let Some(kv_total) = self
+            .kv_cache_bytes_per_token
+            .checked_mul(u64::from(self.max_context_tokens))
+        else {
+            return Err(UmdlLoadError::ProfileRamBudgetExceeded {
+                required: u64::MAX,
+                available: profile_ram_bytes,
+            });
+        };
+        let Some(required) = self
+            .model_weight_bytes
+            .checked_add(self.scratch_bytes)
+            .and_then(|value| value.checked_add(kv_total))
+        else {
+            return Err(UmdlLoadError::ProfileRamBudgetExceeded {
+                required: u64::MAX,
+                available: profile_ram_bytes,
+            });
+        };
+        if required > profile_ram_bytes {
+            return Err(UmdlLoadError::ProfileRamBudgetExceeded {
+                required,
+                available: profile_ram_bytes,
+            });
+        }
+        Ok(())
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct LoadedUmdlModel {
+    pub header: UmdlHeader,
+    pub tokenizer: TokenizerMetadata,
+    pub tensor_count: u32,
+    pub ranges: UmdlSectionRanges,
+    pub reservations: UmdlArenaReservations,
+    pub active_simd_tier: SimdTier,
+}
+
+/// Validate a UMDL byte package and return a read-only loaded model view.
+///
+/// # Errors
+///
+/// Returns `UmdlLoadError` when header, section, tokenizer, tensor, SIMD, or
+/// arena-reservation validation fails.
+pub fn load_model_view(
+    bytes: &[u8],
+    checksums: UmdlSectionChecksums,
+    available_simd_tier: SimdTier,
+    profile_ram_bytes: u64,
+) -> Result<LoadedUmdlModel, UmdlLoadError> {
+    let header = UmdlHeader::parse(bytes)?;
+    if header.architecture_id != M9_SUPPORTED_ARCHITECTURE_ID {
+        return Err(UmdlLoadError::UnknownArchitectureId(header.architecture_id));
+    }
+    let required_simd =
+        SimdTier::from_id(header.minimum_simd_tier).ok_or(UmdlLoadError::SimdRequirementUnmet {
+            required: header.minimum_simd_tier,
+            available: available_simd_tier as u32,
+        })?;
+    if required_simd > available_simd_tier {
+        return Err(UmdlLoadError::SimdRequirementUnmet {
+            required: header.minimum_simd_tier,
+            available: available_simd_tier as u32,
+        });
+    }
+    let ranges = header.validate_sections(bytes, checksums)?;
+    let tokenizer = TokenizerMetadata::parse_umdl(bytes, ranges.tokenizer)?;
+    validate_tensor_descriptors(
+        bytes,
+        ranges.tensor,
+        ranges.weight_blob,
+        header.tensor_count,
+    )?;
+    let reservations = UmdlArenaReservations {
+        model_weight_bytes: header.required_memory_bytes,
+        scratch_bytes: header.required_scratch_bytes,
+        kv_cache_bytes_per_token: header.required_kv_cache_bytes_per_token,
+        max_context_tokens: header.max_context_tokens,
+    };
+    reservations.validate_against_profile(profile_ram_bytes)?;
+    Ok(LoadedUmdlModel {
+        header,
+        tokenizer,
+        tensor_count: header.tensor_count,
+        ranges,
+        reservations,
+        active_simd_tier: available_simd_tier,
+    })
+}
+
 /// SIMD tier the runtime advertises and the loader compares against
 /// the model's `minimum_simd_tier`. Numerical ordering is meaningful:
 /// higher = more capable. Mirrors `cpu::SimdTier` in the kernel.
@@ -688,6 +790,20 @@ pub enum SimdTier {
     Avx = 2,
     Avx2 = 3,
     Avx512 = 4,
+}
+
+impl SimdTier {
+    #[must_use]
+    pub const fn from_id(id: u32) -> Option<Self> {
+        match id {
+            0 => Some(Self::Scalar),
+            1 => Some(Self::Sse2),
+            2 => Some(Self::Avx),
+            3 => Some(Self::Avx2),
+            4 => Some(Self::Avx512),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -832,6 +948,9 @@ mod tests {
         write_u64(&mut bytes, 64, 16);
         write_u64(&mut bytes, 72, 400);
         write_u64(&mut bytes, 80, 24);
+        write_u64(&mut bytes, 88, 16);
+        write_u64(&mut bytes, 96, 8);
+        write_u64(&mut bytes, 104, 2);
 
         write_u32(&mut bytes, 160, TokenizerType::RawByteToToken as u32);
         write_u32(&mut bytes, 164, RAW_BYTE_TO_TOKEN_VOCAB_SIZE);
@@ -1075,6 +1194,51 @@ mod tests {
         assert_eq!(
             validate_tensor_descriptors(&bytes, ranges.tensor, ranges.weight_blob, 1).unwrap_err(),
             UmdlLoadError::TensorOutOfBounds { tensor_id: 7 }
+        );
+    }
+
+    #[test]
+    fn loads_read_only_model_view_and_arena_reservations() {
+        let (bytes, checksums) = described_umdl_bytes();
+        let view =
+            load_model_view(&bytes, checksums, SimdTier::Scalar, 128).expect("loaded model view");
+
+        assert_eq!(view.header.architecture_id, M9_SUPPORTED_ARCHITECTURE_ID);
+        assert_eq!(view.tokenizer, TokenizerMetadata::raw_byte_to_token());
+        assert_eq!(view.tensor_count, 1);
+        assert_eq!(view.active_simd_tier, SimdTier::Scalar);
+        assert_eq!(
+            view.reservations,
+            UmdlArenaReservations {
+                model_weight_bytes: 16,
+                scratch_bytes: 8,
+                kv_cache_bytes_per_token: 2,
+                max_context_tokens: 32,
+            }
+        );
+    }
+
+    #[test]
+    fn load_model_view_rejects_simd_and_profile_budget_mismatch() {
+        let (mut bytes, _) = described_umdl_bytes();
+        write_u32(&mut bytes, 132, SimdTier::Avx2 as u32);
+        refresh_header_checksum(&mut bytes);
+        let checksums = checksums_for_described(&bytes);
+        assert_eq!(
+            load_model_view(&bytes, checksums, SimdTier::Sse2, 128).unwrap_err(),
+            UmdlLoadError::SimdRequirementUnmet {
+                required: SimdTier::Avx2 as u32,
+                available: SimdTier::Sse2 as u32,
+            }
+        );
+
+        let (bytes, checksums) = described_umdl_bytes();
+        assert_eq!(
+            load_model_view(&bytes, checksums, SimdTier::Scalar, 87).unwrap_err(),
+            UmdlLoadError::ProfileRamBudgetExceeded {
+                required: 88,
+                available: 87,
+            }
         );
     }
 

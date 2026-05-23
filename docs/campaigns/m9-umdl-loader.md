@@ -169,6 +169,8 @@ Commit and push.
 
 # Step 4 — Model load view and arena reservation contract
 
+Status: Completed.
+
 Purpose:
   Expose a read-only loaded model view and explicit arena requirements without
   allocating hidden storage.

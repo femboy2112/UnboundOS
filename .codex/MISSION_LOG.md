@@ -4,7 +4,22 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C10.M9 Step 4 Model load view and arena reservation contract: ready.
+- C10.M9 Step 5 UMDL smoke fixtures and gates: ready.
+
+## 2026-05-23T08:07:56Z - C10.M9 Step 4 Model load view and arena reservation contract
+
+- Status: completed
+- Summary: Added `load_model_view` with validated header/section/tokenizer/tensor
+  flow, read-only metadata/range output, explicit model/scratch/KV reservation
+  accounting, supported architecture checks, SIMD tier gating, and profile RAM
+  budget errors.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p umdl`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; the loaded model view stores
+  fixed-width metadata, ranges, and byte counts only, with no allocation,
+  graph mutation, host path, or backend kernel execution.
+- Blockers: none.
 
 ## 2026-05-23T08:05:55Z - C10.M9 Step 3 Tokenizer and tensor descriptor validation
 

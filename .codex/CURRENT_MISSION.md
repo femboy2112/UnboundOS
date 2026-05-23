@@ -1,21 +1,24 @@
 # Current Mission
 
-Mission: C10.M9 Step 4 Model load view and arena reservation contract
+Mission: C10.M9 Step 5 UMDL smoke fixtures and gates
 Campaign: C10 M9 UMDL Loader
 Status: ready
 
 ## Objective
 
-Execute M9 campaign Step 4 from `docs/campaigns/m9-umdl-loader.md`: expose a
-read-only loaded model view and explicit arena requirements without allocating
-hidden storage.
+Execute M9 campaign Step 5 from `docs/campaigns/m9-umdl-loader.md`: make UMDL
+loader evidence reproducible from checkout.
 
 ## Scope
 
 Allowed changes:
 
+- `Makefile`
+- `scripts/**`
 - `crates/umdl/src/lib.rs`
-- `crates/llm/src/lib.rs`
+- `crates/umdl/src/**`
+- `tests/golden_models/**`
+- `tests/fuzz_corpus/umdl/**`
 - `docs/campaigns/m9-umdl-loader.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -23,18 +26,17 @@ Allowed changes:
 
 Out of scope:
 
-- Smoke target, fixture, sampler, tensor kernel, or graph mutation work.
+- Sampler, tensor kernel, graph mutation, storage, or QEMU harness changes.
 - LLM sampler, SIMD kernels, storage, QEMU harness, or graph mutation changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- A loaded-model view carries validated header, tokenizer, tensor-count, and
-  byte-range metadata without copying hidden storage.
-- Required model, scratch, and KV-cache reservation bytes are explicit.
-- Minimum SIMD tier validates against an available tier argument.
-- No tensor kernels are called and no graph mutation surface is introduced.
-- No new unsafe code, allocation, host paths, or pointer fields are introduced.
+- Deterministic golden `.UMDL` fixture or fixture generator exists.
+- Malformed corpus entry exists for a rejected UMDL package.
+- `make umdl-smoke` proves loader source and fixture evidence are reachable.
+- Aggregate mission verification runs UMDL smoke and `make gates` remains
+  green.
 
 ## Baseline to verify
 
@@ -48,9 +50,8 @@ status: IN-PROGRESS
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make fmt
-make clippy
-cargo test -p umdl
+make umdl-smoke
+make gates
 python3 scripts/verify.py --mission current
 ```
 
@@ -62,4 +63,5 @@ fixed-width, deterministic, and free of host paths or raw pointers. Step 1
 added little-endian header parsing and malformed-header tests. Step 2 added
 overflow-safe section bounds, non-overlap checks, and deterministic checksum
 validation. Step 3 added tokenizer metadata and tensor descriptor parsing and
-validation.
+validation. Step 4 added a read-only loaded model view, explicit arena
+reservation accounting, and SIMD/profile budget validation.
