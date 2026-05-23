@@ -2,7 +2,7 @@
 
 Mission: C8.M7 Step 5 M7 completion audit
 Campaign: C8 M7 Tokenizer
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -58,3 +58,6 @@ python3 scripts/verify.py --mission current
 
 Campaign branch: `campaign/m7-tokenizer`. Step 4 added `make tokenizer-smoke`
 and wired tokenizer smoke into aggregate mission verification.
+
+Stop reason: M7 campaign complete. Await operator action to open the final M7
+PR or rotate mission state to M8.

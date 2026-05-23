@@ -203,6 +203,8 @@ Commit and push.
 
 # Step 5 — M7 completion audit
 
+Status: Completed.
+
 Purpose:
   Close M7 after tokenizer metadata, encode/decode, round-trip tests, and smoke
   evidence are reproducibly verified.
@@ -231,3 +233,18 @@ python3 scripts/verify.py --mission current
 ```
 
 Commit and push.
+
+## Closeout
+
+M7 is complete. Checkpoint commits:
+
+- Step 1 Tokenizer registry and metadata contract: `0f9a984`
+- Step 2 Raw-byte tokenizer encode path: `00da6bc`
+- Step 3 Raw-byte detokenizer round trip: `6dfc375`
+- Step 4 Tokenizer smoke evidence and gates: `bb776f3`
+
+No new unsafe code was required for M7. The tokenizer path uses fixed-width
+metadata and caller-provided buffers for encode/decode.
+
+`/go` must stop here until the operator opens the final M7 PR or rotates the
+control files to M8.

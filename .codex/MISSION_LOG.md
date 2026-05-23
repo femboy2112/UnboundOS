@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C8.M7 Step 5 M7 completion audit: ready.
+- none.
+
+## 2026-05-23T07:37:59Z - C8.M7 Step 5 M7 completion audit
+
+- Status: completed
+- Summary: Marked M7 `DONE`, bumped the milestone catalog to `v0.16`,
+  recorded Step 1-4 checkpoint commits in the campaign closeout, and documented
+  that M7 required no new unsafe code because tokenizer encode/decode uses
+  fixed-width metadata and caller-provided buffers.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make gates`, `make repo-state`, and `python3 scripts/verify.py
+  --mission current`.
+- Repo-state: expected STOP because no milestone is `IN-PROGRESS` after M7
+  closeout.
+- Blockers: none for M7; next action is final M7 PR or M8 rotation.
 
 ## 2026-05-23T07:37:04Z - C8.M7 Step 4 Tokenizer smoke evidence and gates
 

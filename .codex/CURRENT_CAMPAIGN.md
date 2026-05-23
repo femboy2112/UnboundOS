@@ -2,7 +2,7 @@
 
 Campaign: C8 M7 Tokenizer
 Active mission: C8.M7 Step 5 M7 completion audit
-Status: ready
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -28,7 +28,12 @@ See `.codex/CURRENT_MISSION.md`.
 2. C8.M7 Step 2 Raw-byte tokenizer encode path. Completed.
 3. C8.M7 Step 3 Raw-byte detokenizer round trip. Completed.
 4. C8.M7 Step 4 Tokenizer smoke evidence and gates. Completed.
-5. C8.M7 Step 5 M7 completion audit. Active.
+5. C8.M7 Step 5 M7 completion audit. Completed.
+
+## Closeout
+
+M7 is complete. `/go` must stop here until the operator opens the final M7 PR
+or rotates the control files to M8.
 
 ## Required Preflight For `go`
 
