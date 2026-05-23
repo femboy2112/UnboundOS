@@ -1,14 +1,15 @@
 # Current Mission
 
-Mission: C5.M4 Step 3 Node and wire semantic verifier checks
+Mission: C5.M4 Step 4 Capabilities, resources, constants, and scheduling checks
 Campaign: C5 M4 UMOD Loader
 Status: ready
 
 ## Objective
 
-Execute M4 campaign Step 3 from `docs/campaigns/m4-umod-loader.md`: implement
-graph topology checks for node resolution, wire endpoints, pin indices, wire
-type compatibility, node type registration, and cycle rules.
+Execute M4 campaign Step 4 from `docs/campaigns/m4-umod-loader.md`: complete
+checks 12 and 14-22 for capabilities, payload bounds, GraphArena budget,
+model/resource references, checksums, UI layout, constants, and deterministic
+scheduling requirements.
 
 ## Scope
 
@@ -31,12 +32,10 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- Node and wire descriptors needed for topology verification decode through
-  fixed-width little-endian reads.
-- Checks 7-13 return typed `GraphLoadError` variants for unresolved nodes,
-  unresolved endpoints, out-of-range pins, type mismatch, unknown node type,
-  undeclared capability, and unbroken cycles.
-- The verifier performs no runtime allocation before all checks pass.
+- Checks 14-22 are non-vacuous and return typed `GraphLoadError` variants.
+- External references delegate to the approved opaque resource grammar.
+- Malformed payload sizes, resource refs, constants, UI layout, checksums, and
+  deterministic scheduling requirements do not panic.
 - Existing `graph_load_from_umod -> graph_compile_verified` gate remains intact.
 
 ## Baseline to verify
@@ -58,6 +57,5 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m4-umod-loader`. Step 2 added section descriptor
-parsing, section-table bounds checks, overlap rejection, and node/wire count
-limits.
+Campaign branch: `campaign/m4-umod-loader`. Step 3 added node/wire descriptor
+parsing plus topology, pin, type, node-type, capability, and cycle checks.

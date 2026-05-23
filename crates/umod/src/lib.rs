@@ -19,8 +19,18 @@ pub const UMOD_HEADER_LEN: usize = 0x40;
 pub const UMOD_HEADER_LEN_U32: u32 = 0x40;
 pub const UMOD_SECTION_DESCRIPTOR_LEN: usize = 0x20;
 pub const UMOD_SECTION_DESCRIPTOR_LEN_U64: u64 = 0x20;
+pub const UMOD_NODE_DESCRIPTOR_LEN: usize = 0x38;
+pub const UMOD_NODE_DESCRIPTOR_LEN_U64: u64 = 0x38;
+pub const UMOD_WIRE_DESCRIPTOR_LEN: usize = 0x30;
+pub const UMOD_WIRE_DESCRIPTOR_LEN_U64: u64 = 0x30;
+pub const UMOD_PIN_TYPE_LEN: usize = 0x08;
+pub const UMOD_PIN_TYPE_LEN_U64: u64 = 0x08;
 pub const UMOD_MAX_NODE_COUNT: u32 = 4096;
 pub const UMOD_MAX_WIRE_COUNT: u32 = 16_384;
+
+pub const SECTION_KIND_NODE_DESCRIPTORS: u32 = 1;
+pub const SECTION_KIND_WIRE_DESCRIPTORS: u32 = 2;
+pub const SECTION_KIND_PIN_TYPES: u32 = 3;
 
 /// Header at file offset 0. Spec §6.3, exact byte offsets.
 #[repr(C)]
@@ -113,6 +123,23 @@ pub struct NodeDescriptor {
 
 const _: () = assert!(core::mem::size_of::<NodeDescriptor>() == 0x38);
 
+/// Decoded node descriptor from the Node Descriptor Section.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct ParsedNodeDescriptor {
+    pub node_id: u32,
+    pub node_type_id: u64,
+    pub input_pin_base: u32,
+    pub input_pin_count: u16,
+    pub output_pin_base: u32,
+    pub output_pin_count: u16,
+    pub capability_base: u32,
+    pub capability_count: u16,
+    pub ui_x: i32,
+    pub ui_y: i32,
+    pub label_offset: u32,
+    pub constant_ref: u32,
+}
+
 /// Wire descriptor — spec §6.6. Fields are in spec order:
 /// `wire_id, src_node_id, src_pin_index, dst_node_id, dst_pin_index,
 /// type_id, payload_size, alignment, flags`. `type_id` and
@@ -136,6 +163,20 @@ pub struct WireDescriptor {
 }
 
 const _: () = assert!(core::mem::size_of::<WireDescriptor>() == 0x30);
+
+/// Decoded wire descriptor from the Wire Descriptor Section.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct ParsedWireDescriptor {
+    pub wire_id: u32,
+    pub src_node_id: u32,
+    pub src_pin_index: u16,
+    pub dst_node_id: u32,
+    pub dst_pin_index: u16,
+    pub type_id: u64,
+    pub payload_size: u64,
+    pub alignment: u32,
+    pub flags: u32,
+}
 
 /// Approved opaque-resource grammar (spec §6.8):
 /// `resource_ref = resource_type ":" opaque_id`
@@ -321,6 +362,142 @@ pub fn parse_section_descriptor(
     })
 }
 
+/// Find the first section with a given kind.
+///
+/// # Errors
+///
+/// Returns a structural parser error if the section table cannot be decoded.
+pub fn find_section(
+    bytes: &[u8],
+    header: ParsedUmodHeader,
+    kind: u32,
+) -> Result<Option<ParsedSectionDescriptor>, UmodParseError> {
+    let mut index = 0;
+    while index < header.section_count {
+        let section = parse_section_descriptor(bytes, header, index)?;
+        if section.kind == kind {
+            return Ok(Some(section));
+        }
+        index = index.saturating_add(1);
+    }
+    Ok(None)
+}
+
+/// Decode one node descriptor by index.
+///
+/// # Errors
+///
+/// Returns `SectionOutOfBounds` if the node section is missing or too short.
+pub fn parse_node_descriptor(
+    bytes: &[u8],
+    header: ParsedUmodHeader,
+    index: u32,
+) -> Result<ParsedNodeDescriptor, UmodParseError> {
+    let section = find_section(bytes, header, SECTION_KIND_NODE_DESCRIPTORS)?
+        .ok_or(UmodParseError::SectionOutOfBounds { index })?;
+    let offset = descriptor_offset(section, index, UMOD_NODE_DESCRIPTOR_LEN)?;
+    Ok(ParsedNodeDescriptor {
+        node_id: read_u32_le(bytes, offset).ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        node_type_id: read_u64_le(bytes, offset + 0x08)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        input_pin_base: read_u32_le(bytes, offset + 0x10)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        input_pin_count: read_u16_le(bytes, offset + 0x14)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        output_pin_base: read_u32_le(bytes, offset + 0x18)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        output_pin_count: read_u16_le(bytes, offset + 0x1C)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        capability_base: read_u32_le(bytes, offset + 0x20)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        capability_count: read_u16_le(bytes, offset + 0x24)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        ui_x: read_i32_le(bytes, offset + 0x28)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        ui_y: read_i32_le(bytes, offset + 0x2C)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        label_offset: read_u32_le(bytes, offset + 0x30)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        constant_ref: read_u32_le(bytes, offset + 0x34)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+    })
+}
+
+/// Decode one wire descriptor by index.
+///
+/// # Errors
+///
+/// Returns `SectionOutOfBounds` if the wire section is missing or too short.
+pub fn parse_wire_descriptor(
+    bytes: &[u8],
+    header: ParsedUmodHeader,
+    index: u32,
+) -> Result<ParsedWireDescriptor, UmodParseError> {
+    let section = find_section(bytes, header, SECTION_KIND_WIRE_DESCRIPTORS)?
+        .ok_or(UmodParseError::SectionOutOfBounds { index })?;
+    let offset = descriptor_offset(section, index, UMOD_WIRE_DESCRIPTOR_LEN)?;
+    Ok(ParsedWireDescriptor {
+        wire_id: read_u32_le(bytes, offset).ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        src_node_id: read_u32_le(bytes, offset + 0x04)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        src_pin_index: read_u16_le(bytes, offset + 0x08)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        dst_node_id: read_u32_le(bytes, offset + 0x0C)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        dst_pin_index: read_u16_le(bytes, offset + 0x10)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        type_id: read_u64_le(bytes, offset + 0x18)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        payload_size: read_u64_le(bytes, offset + 0x20)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        alignment: read_u32_le(bytes, offset + 0x28)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+        flags: read_u32_le(bytes, offset + 0x2C)
+            .ok_or(UmodParseError::SectionOutOfBounds { index })?,
+    })
+}
+
+/// Decode a pin type entry by zero-based pin-type index.
+///
+/// # Errors
+///
+/// Returns `SectionOutOfBounds` if the pin type section is missing or too
+/// short.
+pub fn parse_pin_type(
+    bytes: &[u8],
+    header: ParsedUmodHeader,
+    index: u32,
+) -> Result<u64, UmodParseError> {
+    let section = find_section(bytes, header, SECTION_KIND_PIN_TYPES)?
+        .ok_or(UmodParseError::SectionOutOfBounds { index })?;
+    let offset = descriptor_offset(section, index, UMOD_PIN_TYPE_LEN)?;
+    read_u64_le(bytes, offset).ok_or(UmodParseError::SectionOutOfBounds { index })
+}
+
+fn descriptor_offset(
+    section: ParsedSectionDescriptor,
+    index: u32,
+    descriptor_len: usize,
+) -> Result<usize, UmodParseError> {
+    let relative = usize::try_from(index)
+        .ok()
+        .and_then(|idx| idx.checked_mul(descriptor_len))
+        .ok_or(UmodParseError::SectionTableOutOfBounds)?;
+    let section_len =
+        usize::try_from(section.length).map_err(|_| UmodParseError::SectionTableOutOfBounds)?;
+    let end = relative
+        .checked_add(descriptor_len)
+        .ok_or(UmodParseError::SectionTableOutOfBounds)?;
+    if end > section_len {
+        return Err(UmodParseError::SectionOutOfBounds { index });
+    }
+    let section_offset =
+        usize::try_from(section.offset).map_err(|_| UmodParseError::SectionTableOutOfBounds)?;
+    section_offset
+        .checked_add(relative)
+        .ok_or(UmodParseError::SectionTableOutOfBounds)
+}
+
 fn validate_file_length(bytes: &[u8], header: ParsedUmodHeader) -> Result<(), UmodParseError> {
     let actual = u64::try_from(bytes.len()).map_err(|_| UmodParseError::FileLengthOutOfBounds {
         declared: header.file_length_bytes,
@@ -436,6 +613,10 @@ fn read_u16_le(bytes: &[u8], offset: usize) -> Option<u16> {
 
 fn read_u32_le(bytes: &[u8], offset: usize) -> Option<u32> {
     Some(u32::from_le_bytes(read_array(bytes, offset)?))
+}
+
+fn read_i32_le(bytes: &[u8], offset: usize) -> Option<i32> {
+    Some(i32::from_le_bytes(read_array(bytes, offset)?))
 }
 
 fn read_u64_le(bytes: &[u8], offset: usize) -> Option<u64> {

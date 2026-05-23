@@ -175,6 +175,8 @@ Commit and push.
 
 # Step 3 — Node and wire semantic verifier checks
 
+Status: Completed.
+
 Purpose:
   Implement graph topology checks for node resolution, wire endpoints, pin
   indices, wire type compatibility, node type registration, and cycle rules.
