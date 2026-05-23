@@ -1,21 +1,21 @@
 # Current Mission
 
-Mission: C3.M2 Step 2 Named M2 arena set
+Mission: C3.M2 Step 3 Deterministic exhaustion diagnostics
 Campaign: C3 M2 Arena Memory
 Status: ready
 
 ## Objective
 
-Execute M2 campaign Step 2 from `docs/campaigns/m2-arena-memory.md`:
-materialize BootArena, KernelArena, GraphArena, and ScratchArena as named
-bounded arenas with declared lifetime/phase comments.
+Execute M2 campaign Step 3 from `docs/campaigns/m2-arena-memory.md`: ensure
+arena exhaustion returns structured context and fatal boot/kernel exhaustion
+can route through SSOD with arena identity.
 
 ## Scope
 
 Allowed changes:
 
 - `kernel/src/arena.rs`
-- `kernel/src/boot.rs`
+- `kernel/src/ssod.rs`
 - `docs/campaigns/m2-arena-memory.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -29,10 +29,11 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- Boot, Kernel, Graph, and Scratch arena descriptors exist.
-- Direct allocation remains behind named arena APIs or guard helpers.
-- Arena lifetime/phase rules are documented in code.
-- Normal `make qemu-headless` still reaches `UNBOUNDOS_BOOT_OK`.
+- Exhaustion diagnostics include arena id, requested size, alignment, base,
+  cursor, and limit.
+- Fatal arena diagnostics can be serialized through SSOD with explicit absent
+  graph/model/node context while those systems do not exist.
+- Existing M0 heartbeat and M1 forced-fault behavior remain intact.
 
 ## Baseline to verify
 
@@ -48,13 +49,10 @@ python3 scripts/status.py
 python3 scripts/mission.py validate
 make fmt
 make clippy
-make kernel
-make qemu-headless
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m2-arena-memory`. Step 1 established the bounded
-arena cursor contract and host-tested alignment, overflow, exhaustion, and
-reset behavior.
+Campaign branch: `campaign/m2-arena-memory`. Step 2 materialized the M2 named
+arena set and guard-style allocation methods.

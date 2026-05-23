@@ -126,6 +126,8 @@ Commit and push.
 
 # Step 2 — Named M2 arena set
 
+Status: Completed.
+
 Purpose:
   Materialize BootArena, KernelArena, GraphArena, and ScratchArena as named
   bounded arenas with declared lifetime/phase comments.

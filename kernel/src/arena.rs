@@ -17,6 +17,49 @@ pub enum ArenaId {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[allow(dead_code)]
+pub enum ArenaPhase {
+    BootOnly,
+    WholeBootSession,
+    VerifiedGraphCompilation,
+    ScratchPhase,
+    LoadedModel,
+    ActiveInference,
+    ActiveChat,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct ArenaDescriptor {
+    pub id: ArenaId,
+    pub name: &'static str,
+    pub phase: ArenaPhase,
+}
+
+pub const BOOT_ARENA: ArenaDescriptor = ArenaDescriptor {
+    id: ArenaId::Boot,
+    name: "BootArena",
+    phase: ArenaPhase::BootOnly,
+};
+
+pub const KERNEL_ARENA: ArenaDescriptor = ArenaDescriptor {
+    id: ArenaId::Kernel,
+    name: "KernelArena",
+    phase: ArenaPhase::WholeBootSession,
+};
+
+pub const GRAPH_ARENA: ArenaDescriptor = ArenaDescriptor {
+    id: ArenaId::Graph,
+    name: "GraphArena",
+    phase: ArenaPhase::VerifiedGraphCompilation,
+};
+
+pub const SCRATCH_ARENA: ArenaDescriptor = ArenaDescriptor {
+    id: ArenaId::Scratch,
+    name: "ScratchArena",
+    phase: ArenaPhase::ScratchPhase,
+};
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[allow(dead_code)]
 pub enum AllocError {
     InvalidAlignment {
         arena: ArenaId,
@@ -50,7 +93,36 @@ pub struct Arena {
     limit: usize,
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct ArenaRange {
+    pub base: usize,
+    pub size: usize,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct M2ArenaRegions {
+    pub boot: ArenaRange,
+    pub kernel: ArenaRange,
+    pub graph: ArenaRange,
+    pub scratch: ArenaRange,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct M2ArenaSet {
+    boot: Arena,
+    kernel: Arena,
+    graph: Arena,
+    scratch: Arena,
+}
+
 impl Arena {
+    pub const fn from_descriptor(
+        descriptor: ArenaDescriptor,
+        range: ArenaRange,
+    ) -> Result<Self, AllocError> {
+        Self::new(descriptor.id, range.base, range.size)
+    }
+
     pub const fn new(id: ArenaId, base: usize, size: usize) -> Result<Self, AllocError> {
         let Some(limit) = base.checked_add(size) else {
             return Err(AllocError::Overflow {
@@ -133,6 +205,53 @@ impl Arena {
     }
 }
 
+impl M2ArenaSet {
+    pub fn new(regions: M2ArenaRegions) -> Result<Self, AllocError> {
+        Ok(Self {
+            boot: Arena::from_descriptor(BOOT_ARENA, regions.boot)?,
+            kernel: Arena::from_descriptor(KERNEL_ARENA, regions.kernel)?,
+            graph: Arena::from_descriptor(GRAPH_ARENA, regions.graph)?,
+            scratch: Arena::from_descriptor(SCRATCH_ARENA, regions.scratch)?,
+        })
+    }
+
+    pub const fn boot(&self) -> &Arena {
+        &self.boot
+    }
+
+    pub const fn kernel(&self) -> &Arena {
+        &self.kernel
+    }
+
+    pub const fn graph(&self) -> &Arena {
+        &self.graph
+    }
+
+    pub const fn scratch(&self) -> &Arena {
+        &self.scratch
+    }
+
+    /// `BootArena` may allocate only before permanent kernel init completes.
+    pub fn with_boot_arena<R>(&mut self, f: impl FnOnce(&mut Arena) -> R) -> R {
+        f(&mut self.boot)
+    }
+
+    /// `KernelArena` owns permanent kernel structures for the whole boot session.
+    pub fn with_kernel_arena<R>(&mut self, f: impl FnOnce(&mut Arena) -> R) -> R {
+        f(&mut self.kernel)
+    }
+
+    /// `GraphArena` allocation is reserved for verified graph compilation.
+    pub fn with_graph_arena<R>(&mut self, f: impl FnOnce(&mut Arena) -> R) -> R {
+        f(&mut self.graph)
+    }
+
+    /// `ScratchArena` may allocate only during a declared scratch phase.
+    pub fn with_scratch_arena<R>(&mut self, f: impl FnOnce(&mut Arena) -> R) -> R {
+        f(&mut self.scratch)
+    }
+}
+
 fn align_up(value: usize, alignment: usize) -> Option<usize> {
     debug_assert!(alignment.is_power_of_two());
     let mask = alignment - 1;
@@ -141,7 +260,10 @@ fn align_up(value: usize, alignment: usize) -> Option<usize> {
 
 #[cfg(test)]
 mod tests {
-    use super::{AllocError, Arena, ArenaId};
+    use super::{
+        AllocError, Arena, ArenaId, ArenaPhase, ArenaRange, M2ArenaRegions, M2ArenaSet, BOOT_ARENA,
+        GRAPH_ARENA, KERNEL_ARENA, SCRATCH_ARENA,
+    };
 
     #[test]
     fn aligned_alloc_advances_cursor() {
@@ -224,5 +346,61 @@ mod tests {
 
         assert_eq!(arena.cursor(), 0x4000);
         assert_eq!(arena.remaining(), 0x40);
+    }
+
+    #[test]
+    fn m2_descriptors_name_required_arenas_and_phases() {
+        assert_eq!(BOOT_ARENA.name, "BootArena");
+        assert_eq!(BOOT_ARENA.phase, ArenaPhase::BootOnly);
+        assert_eq!(KERNEL_ARENA.name, "KernelArena");
+        assert_eq!(KERNEL_ARENA.phase, ArenaPhase::WholeBootSession);
+        assert_eq!(GRAPH_ARENA.name, "GraphArena");
+        assert_eq!(GRAPH_ARENA.phase, ArenaPhase::VerifiedGraphCompilation);
+        assert_eq!(SCRATCH_ARENA.name, "ScratchArena");
+        assert_eq!(SCRATCH_ARENA.phase, ArenaPhase::ScratchPhase);
+    }
+
+    #[test]
+    fn m2_arena_set_uses_named_guard_methods() {
+        let mut arenas = M2ArenaSet::new(M2ArenaRegions {
+            boot: ArenaRange {
+                base: 0x1000,
+                size: 0x100,
+            },
+            kernel: ArenaRange {
+                base: 0x2000,
+                size: 0x100,
+            },
+            graph: ArenaRange {
+                base: 0x3000,
+                size: 0x100,
+            },
+            scratch: ArenaRange {
+                base: 0x4000,
+                size: 0x100,
+            },
+        })
+        .unwrap();
+
+        assert_eq!(arenas.boot().id(), ArenaId::Boot);
+        assert_eq!(arenas.kernel().id(), ArenaId::Kernel);
+        assert_eq!(arenas.graph().id(), ArenaId::Graph);
+        assert_eq!(arenas.scratch().id(), ArenaId::Scratch);
+        assert_eq!(
+            arenas.with_boot_arena(|a| a.alloc_aligned(8, 8)),
+            Ok(0x1000)
+        );
+        assert_eq!(
+            arenas.with_kernel_arena(|a| a.alloc_aligned(8, 8)),
+            Ok(0x2000)
+        );
+        assert_eq!(
+            arenas.with_graph_arena(|a| a.alloc_aligned(8, 8)),
+            Ok(0x3000)
+        );
+        assert_eq!(
+            arenas.with_scratch_arena(|a| a.alloc_aligned(8, 8)),
+            Ok(0x4000)
+        );
     }
 }

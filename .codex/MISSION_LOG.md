@@ -4,7 +4,18 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C3.M2 Step 2 Named M2 arena set: ready.
+- C3.M2 Step 3 Deterministic exhaustion diagnostics: ready.
+
+## 2026-05-23T01:22:57Z - C3.M2 Step 2 Named M2 arena set
+
+- Status: completed
+- Summary: Added BootArena, KernelArena, GraphArena, and ScratchArena
+  descriptors with declared phases, plus an `M2ArenaSet` whose allocation
+  surface goes through named guard-style methods.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `make kernel`, `make qemu-headless`,
+  `python3 scripts/verify.py --mission current`, and `make gates`.
+- Blockers: none.
 
 ## 2026-05-23T01:18:28Z - C3.M2 Step 1 Bounded arena core and alignment checks
 
