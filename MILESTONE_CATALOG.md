@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.17
+> **Catalog version:** v0.18
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** M8 Toy transformer
+> **Active milestone:** none
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -33,7 +33,7 @@ archived under `docs/campaigns/` and never edited again.
 | M5  | Minimal UI | §3.7, §8, §13.7 | DONE | Framebuffer text primitives render boot diagnostics and graph state; `make gates` PROCEED | docs/campaigns/m5-minimal-ui.md |
 | M6  | Storage stage 1 | §7, §13.8 | DONE | Raw sector read works with timeout; graph-visible storage refs remain opaque; `make gates` PROCEED | docs/campaigns/m6-storage-stage-1.md |
 | M7  | Tokenizer | §10.7, §13.7 | DONE | Bare-metal tokenizer round trip works for the initially supported tokenizer family; `make gates` PROCEED | docs/campaigns/m7-tokenizer.md |
-| M8  | Toy transformer | §10.8, §13.7 | IN-PROGRESS | Hardcoded tiny model generates deterministic token output; `make gates` PROCEED | docs/campaigns/m8-toy-transformer.md |
+| M8  | Toy transformer | §10.8, §13.7 | DONE | Hardcoded tiny model generates deterministic token output; `make gates` PROCEED | docs/campaigns/m8-toy-transformer.md |
 | M9  | UMDL loader | §10, §13.11 | TODO | Model package validates and loads | docs/campaigns/m9-umdl-loader.md *(not yet written)* |
 | M10 | Quantized inference | §10, §11, §13.12 | TODO | Small quantized model streams tokens | docs/campaigns/m10-quantized-inference.md *(not yet written)* |
 | M11 | IDE assistant | §10, §13.1 | TODO | Local assistant explains graph and SSOD | docs/campaigns/m11-ide-assistant.md *(not yet written)* |
@@ -45,6 +45,13 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.18** — M8 completed on `campaign/m8-toy-transformer`: fixed-width toy
+  model metadata validates exactly one hardcoded architecture, deterministic
+  generation emits stable raw-byte token IDs into caller-provided buffers,
+  prompt-to-text inference routes through the M7 tokenizer, and
+  `make toy-transformer-smoke` is part of aggregate mission verification. M8
+  added no unsafe code; memory-unsafe Rust remains allowed only where bounded,
+  inspectable OS/model-kernel boundaries require it.
 - **v0.17** — Opened M8 Toy transformer on `campaign/m8-toy-transformer`.
   The campaign owns a single tiny deterministic decoder-only model path,
   caller-provided inference buffers, and smoke evidence for deterministic token

@@ -2,7 +2,7 @@
 
 Mission: C9.M8 Step 5 M8 completion audit
 Campaign: C9 M8 Toy Transformer
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -37,7 +37,7 @@ Out of scope:
 
 ```
 branch: campaign/m8-toy-transformer
-status: IN-PROGRESS
+status: DONE
 ```
 
 ## Verification Commands

@@ -201,6 +201,8 @@ Commit and push.
 
 # Step 5 — M8 completion audit
 
+Status: Completed.
+
 Purpose:
   Close M8 after toy-model metadata, deterministic generation, prompt-to-text
   inference, and smoke evidence are reproducibly verified.
@@ -229,3 +231,21 @@ python3 scripts/verify.py --mission current
 ```
 
 Commit and push.
+
+## Closeout
+
+M8 is complete. Checkpoint commits:
+
+- Step 1 Toy model architecture contract: `3de3250`
+- Step 2 Deterministic token generation: `daa5bfb`
+- Step 3 Prompt-to-text toy inference path: `871ff6d`
+- Step 4 Toy transformer smoke evidence and gates: `a091611`
+
+No new unsafe code was required for M8. The toy transformer path uses
+fixed-width metadata, deterministic scalar generation, tokenizer-mediated text
+conversion, and caller-provided buffers. Memory-unsafe Rust remains allowed by
+project identity, but the M8 evidence keeps that permission out of this safe
+toy inference path.
+
+`/go` must stop here until the operator opens the final M8 PR or rotates the
+control files to M9.
