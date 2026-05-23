@@ -29,9 +29,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+CODEX = ROOT / ".codex"
 CATALOG = ROOT / "MILESTONE_CATALOG.md"
-MISSION = ROOT / "CURRENT_MISSION.md"
-CAMPAIGN = ROOT / "CURRENT_CAMPAIGN.md"
+MISSION = CODEX / "CURRENT_MISSION.md"
+CAMPAIGN = CODEX / "CURRENT_CAMPAIGN.md"
 
 
 def _run(cmd: list[str]) -> str:

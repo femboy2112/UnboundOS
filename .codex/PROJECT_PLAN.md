@@ -59,9 +59,9 @@ and the kernel intentionally reaches halt/idle.
 
 Exit criterion: IDT and SSOD handle forced faults with structured serial output.
 
-- Implement CPUID/XCR0 probing and guarded SIMD/FPU enablement.
 - Install IDT handlers for #DE, #UD, #DF, #GP, #PF, and debug trap.
 - Emit SSOD records with RIP, reason, and fault-family identity.
+- Add QEMU forced-fault assertions for #DE, #UD, and #PF.
 
 ### C3 M2 Arena Memory
 

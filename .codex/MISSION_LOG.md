@@ -4,8 +4,16 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- M0 campaign complete. Await operator action to open the final M0 PR or rotate
-  mission state to M1.
+- C2.M1 Step 1 Forced-fault smoke harness: ready.
+
+## 2026-05-23T00:49:00Z - C2.M1 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m1-diagnostics-core`, corrected the stale catalog
+  drift so M1 matches spec §13.3 Diagnostics Core, created the M1 campaign
+  plan, and rotated `.codex` state to Step 1.
+- Verification: pending below for the active Step 1 mission state.
+- Blockers: none.
 
 ## 2026-05-23T00:41:41Z - C1.M0 Step 8 M0 completion audit
 

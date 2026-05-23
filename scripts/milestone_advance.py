@@ -21,7 +21,15 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CAMPAIGN = ROOT / "CURRENT_CAMPAIGN.md"
+CAMPAIGN = ROOT / ".codex" / "CURRENT_CAMPAIGN.md"
+
+
+def campaign_source(text: str) -> Path | None:
+    match = re.search(r"`(docs/campaigns/[^`]+\.md)`", text)
+    if not match:
+        return None
+    path = ROOT / match.group(1)
+    return path if path.exists() else None
 
 
 def find_step(text: str, step_n: int) -> tuple[str, str] | None:
@@ -56,8 +64,13 @@ def main() -> int:
     text = CAMPAIGN.read_text()
     info = find_step(text, args.step)
     if info is None:
+        source = campaign_source(text)
+        if source is not None:
+            text = source.read_text()
+            info = find_step(text, args.step)
+    if info is None:
         print(
-            f"error: Step {args.step} not found in CURRENT_CAMPAIGN.md",
+            f"error: Step {args.step} not found in CURRENT_CAMPAIGN.md or campaign source",
             file=sys.stderr,
         )
         return 1

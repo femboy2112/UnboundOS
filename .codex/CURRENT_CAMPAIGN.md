@@ -1,8 +1,8 @@
 # Current Campaign
 
-Campaign: C1 M0 Boot Heartbeat
-Active mission: C1.M0 Step 8 M0 completion audit
-Status: completed
+Campaign: C2 M1 Diagnostics Core
+Active mission: C2.M1 Step 1 Forced-fault smoke harness
+Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -11,14 +11,13 @@ mission state after each completed mission.
 Publish policy: commit and push the campaign branch after each completed
 mission.
 Main policy: never merge to main, never push main, or force-push.
-Campaign branch: campaign/m0-boot-heartbeat
+Campaign branch: campaign/m1-diagnostics-core
 
 ## Campaign Objective
 
-Close M0 by making boot visible and reproducible. A clean checkout must be able
-to run `make qemu-headless` and observe the required heartbeat sequence:
-`UNBOUNDOS_BOOT_BEGIN`, `UNBOUNDOS_CPU_PROFILE`, `UNBOUNDOS_MEMMAP_OK`,
-`UNBOUNDOS_IDT_OK`, and `UNBOUNDOS_BOOT_OK`.
+Close M1 by proving the spec §13.3 diagnostics exit criteria in QEMU:
+IDT installed, divide-by-zero handled, page fault handled, invalid opcode
+handled, and SSOD serial output includes RIP and reason.
 
 ## Active Mission
 
@@ -26,24 +25,16 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C1.M0 Step 1 Boot-order assertion vs spec §3.2. Completed.
-2. C1.M0 Step 2 Serial UART probe and heartbeat string emission. Completed.
-3. C1.M0 Step 3 IDT install and `UNBOUNDOS_IDT_OK`. Completed.
-4. C1.M0 Step 4 Boot-diagnostic-buffer fallback. Completed.
-5. C1.M0 Step 5 Review gate. Approved to continue by operator.
-6. C1.M0 Step 6 Panic path routed through SSOD. Completed.
-7. C1.M0 Step 7 QEMU smoke headless assertion. Completed.
-8. C1.M0 Step 8 M0 completion audit. Completed.
-
-## Closeout
-
-M0 is complete. `/go` must stop here until the operator either opens the final
-M0 PR or rotates the control files to M1 via the `spec-refresher` workflow.
+1. C2.M1 Step 1 Forced-fault smoke harness. Active.
+2. C2.M1 Step 2 Divide-by-zero SSOD proof. Pending.
+3. C2.M1 Step 3 Invalid-opcode SSOD proof. Pending.
+4. C2.M1 Step 4 Page-fault SSOD proof. Pending.
+5. C2.M1 Step 5 M1 completion audit. Pending.
 
 ## Required Preflight For `go`
 
 1. Read `CLAUDE.md`.
-2. Read `docs/campaigns/m0-boot-heartbeat.md`.
+2. Read `docs/campaigns/m1-diagnostics-core.md`.
 3. Read `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf` or the
    extracted requirements in `.codex/PROJECT_PLAN.md`.
 4. Read `.codex/CURRENT_CAMPAIGN.md`.
@@ -60,6 +51,6 @@ unless the mission explicitly permits that skip.
 
 ## Campaign Source
 
-The detailed M0 step contract is `docs/campaigns/m0-boot-heartbeat.md`. Step
-allowed-file blocks are binding for implementation files; `.codex/*` files may
-be edited only for required mission-state closeout.
+The detailed M1 step contract is `docs/campaigns/m1-diagnostics-core.md`.
+Step allowed-file blocks are binding for implementation files; `.codex/*`
+files may be edited only for required mission-state closeout.
