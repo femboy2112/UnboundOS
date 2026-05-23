@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C1.M0 Step 8 M0 completion audit: ready.
+- M0 campaign complete. Await operator action to open the final M0 PR or rotate
+  mission state to M1.
+
+## 2026-05-23T00:41:41Z - C1.M0 Step 8 M0 completion audit
+
+- Status: completed
+- Summary: Marked M0 `DONE` in `MILESTONE_CATALOG.md`, bumped the catalog to
+  `v0.2`, recorded the M0 closeout and Step 1-7 commit SHAs in the campaign
+  file, and left M1 as operator-rotated future work.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make gates`, `make repo-state`, and `python3
+  scripts/verify.py --mission current`.
+- Repo-state: STOP because no milestone is `IN-PROGRESS`, which is the expected
+  closed-M0 state.
+- Blockers: none for M0; next action is operator PR/mission rotation.
 
 ## 2026-05-23T00:34:26Z - C1.M0 Step 7 QEMU smoke headless assertion
 

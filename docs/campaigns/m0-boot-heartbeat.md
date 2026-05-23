@@ -388,4 +388,30 @@ Commit and push.
 
 After this commit, `/go` will refuse to advance further until the
 operator either opens the final PR for M0 or rotates the mission to
-M1 via the `spec-refresher` agent.
+M1.
+
+## Closeout
+
+M0 completed on branch `campaign/m0-boot-heartbeat`.
+
+Step commits:
+
+- Step 1 — Boot-order assertion vs spec §3.2: `1b7bdb4`
+- Step 2 — Serial UART probe + heartbeat string emission: `ebf90f1`
+- Step 3 — IDT install + `UNBOUNDOS_IDT_OK`: `f3a6b0d`
+- Step 4 — Boot-diagnostic-buffer fallback: `579ba83`
+- Step 5 — Review gate stop: `2a93f08`
+- Step 6 — Panic path routed through SSOD: `763f88d`
+- Step 7 — QEMU smoke headless assertion: `9d5c51a`
+
+Final gates:
+
+- `make qemu-headless`: observed `UNBOUNDOS_BOOT_BEGIN`,
+  `UNBOUNDOS_CPU_PROFILE`, `UNBOUNDOS_MEMMAP_OK`, `UNBOUNDOS_IDT_OK`, and
+  `UNBOUNDOS_BOOT_OK`.
+- `make gates`: PROCEED.
+
+Boundary note: the Step 7 boot image is an M0-only GRUB Multiboot2 smoke path
+for heartbeat verification. It does not claim M1 Limine handoff, memory-map
+ingestion, GDT ownership, or allocator completion. M1 opens via the
+`spec-refresher` agent.

@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.1
+> **Catalog version:** v0.2
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** M0 (one at a time — see Rules below)
+> **Active milestone:** none (M0 complete; next milestone opens by operator rotation)
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -25,7 +25,7 @@ archived under `docs/campaigns/` and never edited again.
 
 | ID  | Title | Spec § | Status | Gate criteria (operator-verifiable) | Owning campaign file |
 |-----|-------|--------|--------|--------------------------------------|----------------------|
-| M0  | Boot heartbeat | §3.2, §1.6, §3.9 | IN-PROGRESS | `make qemu-headless` serial log contains `UNBOUNDOS_BOOT_BEGIN`, `UNBOUNDOS_CPU_PROFILE`, `UNBOUNDOS_MEMMAP_OK`, `UNBOUNDOS_IDT_OK`, `UNBOUNDOS_BOOT_OK` in that order; `make gates` PROCEED | docs/campaigns/m0-boot-heartbeat.md |
+| M0  | Boot heartbeat | §3.2, §1.6, §3.9 | DONE | `make qemu-headless` serial log contains `UNBOUNDOS_BOOT_BEGIN`, `UNBOUNDOS_CPU_PROFILE`, `UNBOUNDOS_MEMMAP_OK`, `UNBOUNDOS_IDT_OK`, `UNBOUNDOS_BOOT_OK` in that order; `make gates` PROCEED | docs/campaigns/m0-boot-heartbeat.md |
 | M1  | Limine handoff + GDT + memory map + frame allocator *(operator: fill from spec §13.1; code TODO M1 markers exist in kernel/src/boot.rs)* | §3.1, §3.6, §4.2, §4.3 | TODO | *(operator: fill — likely Limine info parsed, GDT installed, frame allocator returns a frame, `cargo test -p kernel-mem`)* | docs/campaigns/m1-limine-handoff.md *(not yet written)* |
 | M2  | Framebuffer + boot-diagnostic-buffer fallback *(operator: fill from spec §13.2; code TODO M2 markers in kernel/src/heartbeat.rs, kernel/src/boot_diag.rs)* | §3.7, §3.9 | TODO | *(operator: fill — likely `make qemu` displays heartbeat on framebuffer; no-serial fallback dumps boot-diagnostic-buffer)* | docs/campaigns/m2-framebuffer.md *(not yet written)* |
 | M3  | Arenas + graph_load + scheduler *(operator: fill from spec §13.3; code TODO M3 markers in kernel/src/boot.rs)* | §4.4–§4.11, §5.7, §5.9 | TODO | *(operator: fill — likely `cargo test -p graph` green for first golden graph; `/verify-graph` PASS; cooperative scheduler runs one tick)* | docs/campaigns/m3-arenas-and-scheduler.md *(not yet written)* |
@@ -45,6 +45,11 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.2** — M0 completed on `campaign/m0-boot-heartbeat`: source-level
+  boot-order assertions, serial heartbeat, boot-diagnostic-buffer fallback,
+  early IDT/SSOD routing, M0 SSOD records, and QEMU heartbeat smoke now pass
+  `make gates`. The M0 smoke image uses a GRUB Multiboot2 bridge only for
+  heartbeat verification; Limine handoff and real memory-map parsing remain M1.
 - **v0.1** — Initial catalog. M0 seeded with the boot heartbeat work
   already partly landed (commit `78f7ad5`). M1–M3 row outlines pulled
   from existing `// TODO M<N>` markers in `kernel/src/boot.rs`,

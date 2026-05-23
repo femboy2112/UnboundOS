@@ -2,7 +2,7 @@
 
 Mission: C1.M0 Step 8 M0 completion audit
 Campaign: C1 M0 Boot Heartbeat
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -50,3 +50,6 @@ python3 scripts/verify.py --mission current
 
 Campaign branch: `campaign/m0-boot-heartbeat`. Step 7 used an M0-only
 Multiboot2 smoke image path; Limine handoff remains later milestone work.
+
+Stop reason: M0 campaign complete. Await operator action to open the final M0
+PR or rotate mission state to M1.

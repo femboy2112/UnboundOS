@@ -2,7 +2,7 @@
 
 Campaign: C1 M0 Boot Heartbeat
 Active mission: C1.M0 Step 8 M0 completion audit
-Status: ready
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -33,7 +33,12 @@ See `.codex/CURRENT_MISSION.md`.
 5. C1.M0 Step 5 Review gate. Approved to continue by operator.
 6. C1.M0 Step 6 Panic path routed through SSOD. Completed.
 7. C1.M0 Step 7 QEMU smoke headless assertion. Completed.
-8. C1.M0 Step 8 M0 completion audit. Active.
+8. C1.M0 Step 8 M0 completion audit. Completed.
+
+## Closeout
+
+M0 is complete. `/go` must stop here until the operator either opens the final
+M0 PR or rotates the control files to M1 via the `spec-refresher` workflow.
 
 ## Required Preflight For `go`
 
