@@ -217,6 +217,8 @@ Commit and push.
 
 # Step 5 — M5 completion audit
 
+Status: Completed.
+
 Purpose:
   Close M5 after framebuffer text output, boot-diagnostic fallback, graph-state
   display, and smoke evidence are reproducibly verified.
@@ -245,3 +247,20 @@ python3 scripts/verify.py --mission current
 ```
 
 Commit and push.
+
+## Closeout
+
+M5 is complete. Checkpoint commits:
+
+- Step 1 Framebuffer text surface primitives: `a205292`
+- Step 2 Boot diagnostic framebuffer fallback: `fdc8694`
+- Step 3 Minimal graph-state display model: `91e4c27`
+- Step 4 UI smoke evidence and gates: `4417c09`
+
+The memory-unsafety constraint for this milestone remains the campaign rule:
+unsafe Rust is allowed and expected at hardware boundaries, while M5 evidence
+keeps framebuffer access bounded, inspectable, deterministic, and not undefined
+by design.
+
+`/go` must stop here until the operator opens the final M5 PR or rotates the
+control files to M6.

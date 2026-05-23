@@ -2,7 +2,7 @@
 
 Mission: C6.M5 Step 5 M5 completion audit
 Campaign: C6 M5 Minimal UI
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -58,3 +58,6 @@ python3 scripts/verify.py --mission current
 Campaign branch: `campaign/m5-minimal-ui`. Step 4 added `make ui-smoke` and
 `scripts/check_ui_smoke.py`, then wired the UI smoke into the aggregate mission
 verifier without requiring graphical CI.
+
+Stop reason: M5 campaign complete. Await operator action to open the final M5
+PR or rotate mission state to M6.

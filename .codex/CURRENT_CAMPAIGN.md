@@ -2,7 +2,7 @@
 
 Campaign: C6 M5 Minimal UI
 Active mission: C6.M5 Step 5 M5 completion audit
-Status: ready
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -29,7 +29,12 @@ See `.codex/CURRENT_MISSION.md`.
 2. C6.M5 Step 2 Boot diagnostic framebuffer fallback. Completed.
 3. C6.M5 Step 3 Minimal graph-state display model. Completed.
 4. C6.M5 Step 4 UI smoke evidence and gates. Completed.
-5. C6.M5 Step 5 M5 completion audit. Active.
+5. C6.M5 Step 5 M5 completion audit. Completed.
+
+## Closeout
+
+M5 is complete. `/go` must stop here until the operator opens the final M5 PR
+or rotates the control files to M6.
 
 ## Required Preflight For `go`
 

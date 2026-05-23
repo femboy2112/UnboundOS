@@ -4,7 +4,22 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C6.M5 Step 5 M5 completion audit: ready.
+- none.
+
+## 2026-05-23T07:12:42Z - C6.M5 Step 5 M5 completion audit
+
+- Status: completed
+- Summary: Marked M5 `DONE`, bumped the milestone catalog to `v0.12`,
+  recorded the Step 1-4 checkpoint commits in the campaign closeout, and
+  preserved the campaign constraint that memory-unsafe Rust is allowed at
+  hardware boundaries when bounded, inspectable, deterministic, and not
+  undefined by design.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make gates`, `make repo-state`, and `python3 scripts/verify.py
+  --mission current`.
+- Repo-state: expected STOP because no milestone is `IN-PROGRESS` after M5
+  closeout.
+- Blockers: none for M5; next action is final M5 PR or M6 rotation.
 
 ## 2026-05-23T07:10:27Z - C6.M5 Step 4 UI smoke evidence and gates
 
