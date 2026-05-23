@@ -104,6 +104,8 @@ Commit and push.
 
 # Step 2 — Section bounds and checksum validation
 
+Status: Completed.
+
 Purpose:
   Prove UMDL section ranges are finite, non-overlapping where required, and
   covered by deterministic checksums.

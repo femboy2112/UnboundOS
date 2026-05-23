@@ -4,7 +4,22 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C10.M9 Step 2 Section bounds and checksum validation: ready.
+- C10.M9 Step 3 Tokenizer and tensor descriptor validation: ready.
+
+## 2026-05-23T08:01:37Z - C10.M9 Step 2 Section bounds and checksum validation
+
+- Status: completed
+- Summary: Added deterministic UMDL checksum helpers, section range structs,
+  overflow-safe bounds checks for tokenizer/tensor/weight/checksum sections,
+  non-overlap validation, and structured header/tokenizer/tensor/weight
+  checksum mismatch errors.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p umdl`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; section validation uses explicit
+  ranges over caller-provided bytes and introduces no allocation, host path,
+  pointer, or backend execution surface.
+- Blockers: none.
 
 ## 2026-05-23T07:58:14Z - C10.M9 Step 1 UMDL header parse and fixed-width contract
 

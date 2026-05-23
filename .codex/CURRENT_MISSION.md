@@ -1,14 +1,14 @@
 # Current Mission
 
-Mission: C10.M9 Step 2 Section bounds and checksum validation
+Mission: C10.M9 Step 3 Tokenizer and tensor descriptor validation
 Campaign: C10 M9 UMDL Loader
 Status: ready
 
 ## Objective
 
-Execute M9 campaign Step 2 from `docs/campaigns/m9-umdl-loader.md`: prove UMDL
-section ranges are finite, non-overlapping where required, and covered by
-deterministic checksums.
+Execute M9 campaign Step 3 from `docs/campaigns/m9-umdl-loader.md`: validate
+tokenizer metadata and tensor descriptor tables without loading executable code
+or backend-specific kernels.
 
 ## Scope
 
@@ -22,17 +22,18 @@ Allowed changes:
 
 Out of scope:
 
-- Tensor descriptor parsing, tokenizer metadata parsing, arena reservation,
-  smoke target, or fixture work.
+- Arena reservation, smoke target, fixture, sampler, or kernel work.
 - LLM sampler, SIMD kernels, storage, QEMU harness, or graph mutation changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- Tokenizer, tensor, weight, and checksum section ranges are checked against
-  input byte length with overflow-safe arithmetic.
-- Header and section checksum mismatches return structured errors.
-- Section validation tests cover out-of-bounds and checksum failure cases.
+- `TokenizerMetadata` and `TensorDesc` entries parse from UMDL sections using
+  fixed-width little-endian fields.
+- Supported tokenizer metadata validates through the existing raw-byte
+  contract.
+- Tensor scalar/quant IDs, rank/dim shape, alignment, and weight-blob bounds
+  return structured errors.
 - No new unsafe code, allocation, host paths, or pointer fields are introduced.
 
 ## Baseline to verify
@@ -58,4 +59,6 @@ python3 scripts/verify.py --mission current
 Campaign branch: `campaign/m9-umdl-loader`. Memory-unsafe Rust remains allowed
 by project identity, but UMDL persistent-format parsing should be safe,
 fixed-width, deterministic, and free of host paths or raw pointers. Step 1
-added little-endian header parsing and malformed-header tests.
+added little-endian header parsing and malformed-header tests. Step 2 added
+overflow-safe section bounds, non-overlap checks, and deterministic checksum
+validation.

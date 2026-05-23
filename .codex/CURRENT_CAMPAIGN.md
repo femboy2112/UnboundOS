@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C10 M9 UMDL Loader
-Active mission: C10.M9 Step 2 Section bounds and checksum validation
+Active mission: C10.M9 Step 3 Tokenizer and tensor descriptor validation
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -25,8 +25,8 @@ See `.codex/CURRENT_MISSION.md`.
 ## Macro Sequence
 
 1. C10.M9 Step 1 UMDL header parse and fixed-width contract. Completed.
-2. C10.M9 Step 2 Section bounds and checksum validation. Active.
-3. C10.M9 Step 3 Tokenizer and tensor descriptor validation. Pending.
+2. C10.M9 Step 2 Section bounds and checksum validation. Completed.
+3. C10.M9 Step 3 Tokenizer and tensor descriptor validation. Active.
 4. C10.M9 Step 4 Model load view and arena reservation contract. Pending.
 5. C10.M9 Step 5 UMDL smoke fixtures and gates. Pending.
 6. C10.M9 Step 6 M9 completion audit. Pending.

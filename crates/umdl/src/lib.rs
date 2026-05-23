@@ -8,11 +8,15 @@
 #![no_std]
 #![forbid(unsafe_op_in_unsafe_fn)]
 
+use core::ops::Range;
+
 pub const UMDL_MAGIC: [u8; 4] = *b"UMDL";
 
 pub const UMDL_FORMAT_MAJOR: u16 = 1;
 pub const UMDL_FORMAT_MINOR: u16 = 0;
 pub const UMDL_HEADER_LENGTH: u32 = 152;
+pub const UMDL_CHECKSUM_SEED: u64 = 0xcbf2_9ce4_8422_2325;
+pub const UMDL_CHECKSUM_PRIME: u64 = 0x0000_0100_0000_01b3;
 
 /// Header at file offset 0. Spec §10.5.
 #[repr(C)]
@@ -106,6 +110,159 @@ impl UmdlHeader {
         }
         Ok(())
     }
+
+    /// Validate declared section ranges and deterministic checksums.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UmdlLoadError` when a section range is out of bounds,
+    /// overlapping, or its computed checksum does not match the expected
+    /// checksum supplied by the checksum-section parser.
+    pub fn validate_sections(
+        self,
+        bytes: &[u8],
+        checksums: UmdlSectionChecksums,
+    ) -> Result<UmdlSectionRanges, UmdlLoadError> {
+        self.validate_header_prefix(bytes.len())?;
+        if checksum_header(bytes, self.header_length) != self.header_checksum {
+            return Err(UmdlLoadError::HeaderChecksumMismatch);
+        }
+
+        let ranges = UmdlSectionRanges {
+            tokenizer: UmdlSectionRange::new(
+                self.tokenizer_section_offset,
+                self.tokenizer_section_length,
+                bytes.len(),
+            )?,
+            tensor: UmdlSectionRange::new(
+                self.tensor_section_offset,
+                self.tensor_section_length,
+                bytes.len(),
+            )?,
+            weight_blob: UmdlSectionRange::new(
+                self.weight_blob_offset,
+                self.weight_blob_length,
+                bytes.len(),
+            )?,
+            checksum: UmdlSectionRange::new(
+                self.checksum_section_offset,
+                self.checksum_section_length,
+                bytes.len(),
+            )?,
+        };
+        ranges.validate_non_overlapping()?;
+
+        if checksum64(ranges.tokenizer.slice(bytes)) != checksums.tokenizer {
+            return Err(UmdlLoadError::TokenizerSectionChecksumMismatch);
+        }
+        if checksum64(ranges.tensor.slice(bytes)) != checksums.tensor {
+            return Err(UmdlLoadError::TensorSectionChecksumMismatch);
+        }
+        if checksum64(ranges.weight_blob.slice(bytes)) != checksums.weight_blob {
+            return Err(UmdlLoadError::WeightBlobChecksumMismatch);
+        }
+        Ok(ranges)
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct UmdlSectionChecksums {
+    pub tokenizer: u64,
+    pub tensor: u64,
+    pub weight_blob: u64,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct UmdlSectionRanges {
+    pub tokenizer: UmdlSectionRange,
+    pub tensor: UmdlSectionRange,
+    pub weight_blob: UmdlSectionRange,
+    pub checksum: UmdlSectionRange,
+}
+
+impl UmdlSectionRanges {
+    fn validate_non_overlapping(self) -> Result<(), UmdlLoadError> {
+        let ranges = [self.tokenizer, self.tensor, self.weight_blob, self.checksum];
+        for left_index in 0..ranges.len() {
+            for right in &ranges[left_index + 1..] {
+                if ranges[left_index].overlaps(*right) {
+                    return Err(UmdlLoadError::SectionOverlap);
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct UmdlSectionRange {
+    pub offset: u64,
+    pub length: u64,
+}
+
+impl UmdlSectionRange {
+    fn new(offset: u64, length: u64, input_len: usize) -> Result<Self, UmdlLoadError> {
+        let Some(end) = offset.checked_add(length) else {
+            return Err(UmdlLoadError::SectionOutOfBounds {
+                offset,
+                length,
+                input_len: len_to_u64(input_len),
+            });
+        };
+        if end > len_to_u64(input_len) {
+            return Err(UmdlLoadError::SectionOutOfBounds {
+                offset,
+                length,
+                input_len: len_to_u64(input_len),
+            });
+        }
+        Ok(Self { offset, length })
+    }
+
+    fn as_range(self) -> Range<usize> {
+        let start = usize::try_from(self.offset).expect("validated section offset");
+        let length = usize::try_from(self.length).expect("validated section length");
+        start..start + length
+    }
+
+    fn slice(self, bytes: &[u8]) -> &[u8] {
+        &bytes[self.as_range()]
+    }
+
+    fn overlaps(self, other: Self) -> bool {
+        if self.length == 0 || other.length == 0 {
+            return false;
+        }
+        let self_end = self.offset + self.length;
+        let other_end = other.offset + other.length;
+        self.offset < other_end && other.offset < self_end
+    }
+}
+
+#[must_use]
+pub fn checksum64(bytes: &[u8]) -> u64 {
+    let mut hash = UMDL_CHECKSUM_SEED;
+    for byte in bytes {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(UMDL_CHECKSUM_PRIME);
+    }
+    hash
+}
+
+#[must_use]
+pub fn checksum_header(bytes: &[u8], header_length: u32) -> u64 {
+    let header_len = core::cmp::min(header_length as usize, bytes.len());
+    let mut hash = UMDL_CHECKSUM_SEED;
+    for (offset, byte) in bytes[..header_len].iter().copied().enumerate() {
+        let value = if (144..152).contains(&offset) {
+            0
+        } else {
+            byte
+        };
+        hash ^= u64::from(value);
+        hash = hash.wrapping_mul(UMDL_CHECKSUM_PRIME);
+    }
+    hash
 }
 
 fn read_magic(bytes: &[u8]) -> [u8; 4] {
@@ -338,18 +495,39 @@ pub enum SimdTier {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum UmdlLoadError {
     BadMagic,
-    UnsupportedVersion { major: u16, minor: u16 },
+    UnsupportedVersion {
+        major: u16,
+        minor: u16,
+    },
     HeaderTooShort,
     HeaderChecksumMismatch,
     TokenizerSectionChecksumMismatch,
     TensorSectionChecksumMismatch,
     WeightBlobChecksumMismatch,
-    TensorOutOfBounds { tensor_id: u32 },
+    SectionOutOfBounds {
+        offset: u64,
+        length: u64,
+        input_len: u64,
+    },
+    SectionOverlap,
+    TensorOutOfBounds {
+        tensor_id: u32,
+    },
     UnknownQuantizationId(u32),
     UnknownTokenizerType(u32),
     UnknownArchitectureId(u32),
-    SimdRequirementUnmet { required: u32, available: u32 },
-    ProfileRamBudgetExceeded { required: u64, available: u64 },
+    SimdRequirementUnmet {
+        required: u32,
+        available: u32,
+    },
+    ProfileRamBudgetExceeded {
+        required: u64,
+        available: u64,
+    },
+}
+
+fn len_to_u64(len: usize) -> u64 {
+    u64::try_from(len).unwrap_or(u64::MAX)
 }
 
 #[cfg(test)]
@@ -373,6 +551,41 @@ mod tests {
         bytes[132..136].copy_from_slice(&(SimdTier::Scalar as u32).to_le_bytes());
         bytes[136..144].copy_from_slice(&0x0000_0000_0009_0001u64.to_le_bytes());
         bytes
+    }
+
+    fn write_u64(bytes: &mut [u8], offset: usize, value: u64) {
+        bytes[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    fn sectioned_umdl_bytes() -> ([u8; 256], UmdlSectionChecksums) {
+        let mut bytes = [0u8; 256];
+        bytes[..UMDL_HEADER_LENGTH as usize].copy_from_slice(&minimal_header_bytes());
+        bytes[160..164].copy_from_slice(b"tokn");
+        bytes[176..184].copy_from_slice(b"tensor!!");
+        bytes[192..200].copy_from_slice(b"weights!");
+
+        write_u64(&mut bytes, 24, 160);
+        write_u64(&mut bytes, 32, 4);
+        write_u64(&mut bytes, 40, 176);
+        write_u64(&mut bytes, 48, 8);
+        write_u64(&mut bytes, 56, 192);
+        write_u64(&mut bytes, 64, 8);
+        write_u64(&mut bytes, 72, 224);
+        write_u64(&mut bytes, 80, 24);
+
+        let checksums = UmdlSectionChecksums {
+            tokenizer: checksum64(&bytes[160..164]),
+            tensor: checksum64(&bytes[176..184]),
+            weight_blob: checksum64(&bytes[192..200]),
+        };
+        let header_checksum = checksum_header(&bytes, UMDL_HEADER_LENGTH);
+        write_u64(&mut bytes, 144, header_checksum);
+        (bytes, checksums)
+    }
+
+    fn refresh_header_checksum(bytes: &mut [u8]) {
+        write_u64(bytes, 144, 0);
+        write_u64(bytes, 144, checksum_header(bytes, UMDL_HEADER_LENGTH));
     }
 
     #[test]
@@ -429,6 +642,86 @@ mod tests {
         assert_eq!(
             UmdlHeader::parse(&bytes).unwrap_err(),
             UmdlLoadError::HeaderTooShort
+        );
+    }
+
+    #[test]
+    fn validates_section_ranges_and_checksums() {
+        let (bytes, checksums) = sectioned_umdl_bytes();
+        let header = UmdlHeader::parse(&bytes).expect("header");
+        let ranges = header
+            .validate_sections(&bytes, checksums)
+            .expect("valid sections");
+
+        assert_eq!(
+            ranges.tokenizer,
+            UmdlSectionRange {
+                offset: 160,
+                length: 4
+            }
+        );
+        assert_eq!(
+            ranges.tensor,
+            UmdlSectionRange {
+                offset: 176,
+                length: 8
+            }
+        );
+        assert_eq!(
+            ranges.weight_blob,
+            UmdlSectionRange {
+                offset: 192,
+                length: 8
+            }
+        );
+        assert_eq!(
+            ranges.checksum,
+            UmdlSectionRange {
+                offset: 224,
+                length: 24
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_section_bounds_overlap_and_checksum_failures() {
+        let (mut bytes, checksums) = sectioned_umdl_bytes();
+        write_u64(&mut bytes, 56, 250);
+        write_u64(&mut bytes, 64, 16);
+        refresh_header_checksum(&mut bytes);
+        let header = UmdlHeader::parse(&bytes).expect("header");
+        assert_eq!(
+            header.validate_sections(&bytes, checksums).unwrap_err(),
+            UmdlLoadError::SectionOutOfBounds {
+                offset: 250,
+                length: 16,
+                input_len: 256,
+            }
+        );
+
+        let (mut bytes, checksums) = sectioned_umdl_bytes();
+        write_u64(&mut bytes, 40, 162);
+        refresh_header_checksum(&mut bytes);
+        let header = UmdlHeader::parse(&bytes).expect("header");
+        assert_eq!(
+            header.validate_sections(&bytes, checksums).unwrap_err(),
+            UmdlLoadError::SectionOverlap
+        );
+
+        let (mut bytes, checksums) = sectioned_umdl_bytes();
+        bytes[12] ^= 1;
+        let header = UmdlHeader::parse(&bytes).expect("header");
+        assert_eq!(
+            header.validate_sections(&bytes, checksums).unwrap_err(),
+            UmdlLoadError::HeaderChecksumMismatch
+        );
+
+        let (bytes, mut checksums) = sectioned_umdl_bytes();
+        checksums.tokenizer ^= 1;
+        let header = UmdlHeader::parse(&bytes).expect("header");
+        assert_eq!(
+            header.validate_sections(&bytes, checksums).unwrap_err(),
+            UmdlLoadError::TokenizerSectionChecksumMismatch
         );
     }
 
