@@ -1,14 +1,14 @@
 # Current Mission
 
-Mission: C10.M9 Step 1 UMDL header parse and fixed-width contract
+Mission: C10.M9 Step 2 Section bounds and checksum validation
 Campaign: C10 M9 UMDL Loader
 Status: ready
 
 ## Objective
 
-Execute M9 campaign Step 1 from `docs/campaigns/m9-umdl-loader.md`: parse a
-UMDL header from bytes without allocation, pointers, host paths, or unsafe
-code.
+Execute M9 campaign Step 2 from `docs/campaigns/m9-umdl-loader.md`: prove UMDL
+section ranges are finite, non-overlapping where required, and covered by
+deterministic checksums.
 
 ## Scope
 
@@ -22,17 +22,17 @@ Allowed changes:
 
 Out of scope:
 
-- Section, tensor, checksum, arena reservation, smoke target, or fixture work.
+- Tensor descriptor parsing, tokenizer metadata parsing, arena reservation,
+  smoke target, or fixture work.
 - LLM sampler, SIMD kernels, storage, QEMU harness, or graph mutation changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- UMDL header parses from a caller-provided byte slice using little-endian
-  fixed-width fields.
-- Magic, supported format version, and minimum header length are validated.
-- Malformed-header tests cover bad magic, short input/header, and unsupported
-  version.
+- Tokenizer, tensor, weight, and checksum section ranges are checked against
+  input byte length with overflow-safe arithmetic.
+- Header and section checksum mismatches return structured errors.
+- Section validation tests cover out-of-bounds and checksum failure cases.
 - No new unsafe code, allocation, host paths, or pointer fields are introduced.
 
 ## Baseline to verify
@@ -57,4 +57,5 @@ python3 scripts/verify.py --mission current
 
 Campaign branch: `campaign/m9-umdl-loader`. Memory-unsafe Rust remains allowed
 by project identity, but UMDL persistent-format parsing should be safe,
-fixed-width, deterministic, and free of host paths or raw pointers.
+fixed-width, deterministic, and free of host paths or raw pointers. Step 1
+added little-endian header parsing and malformed-header tests.

@@ -71,6 +71,8 @@ Step 6 — M9 completion audit
 
 # Step 1 — UMDL header parse and fixed-width contract
 
+Status: Completed.
+
 Purpose:
   Parse a UMDL header from bytes without allocation, pointers, host paths, or
   unsafe code.

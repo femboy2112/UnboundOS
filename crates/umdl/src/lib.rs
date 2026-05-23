@@ -12,6 +12,7 @@ pub const UMDL_MAGIC: [u8; 4] = *b"UMDL";
 
 pub const UMDL_FORMAT_MAJOR: u16 = 1;
 pub const UMDL_FORMAT_MINOR: u16 = 0;
+pub const UMDL_HEADER_LENGTH: u32 = 152;
 
 /// Header at file offset 0. Spec §10.5.
 #[repr(C)]
@@ -43,6 +44,98 @@ pub struct UmdlHeader {
     pub minimum_simd_tier: u32,
     pub model_stable_id: u64,
     pub header_checksum: u64,
+}
+
+impl UmdlHeader {
+    /// Parse a fixed-width UMDL header from caller-provided bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UmdlLoadError` when the input is shorter than the fixed header
+    /// shape, the magic bytes are wrong, the format version is unsupported, or
+    /// the declared header length cannot cover the fixed-width header.
+    pub fn parse(bytes: &[u8]) -> Result<Self, UmdlLoadError> {
+        if bytes.len() < UMDL_HEADER_LENGTH as usize {
+            return Err(UmdlLoadError::HeaderTooShort);
+        }
+
+        let header = Self {
+            magic: read_magic(bytes),
+            format_major: read_u16(bytes, 4),
+            format_minor: read_u16(bytes, 6),
+            header_length: read_u32(bytes, 8),
+            architecture_id: read_u32(bytes, 12),
+            quantization_scheme_id: read_u32(bytes, 16),
+            tensor_count: read_u32(bytes, 20),
+            tokenizer_section_offset: read_u64(bytes, 24),
+            tokenizer_section_length: read_u64(bytes, 32),
+            tensor_section_offset: read_u64(bytes, 40),
+            tensor_section_length: read_u64(bytes, 48),
+            weight_blob_offset: read_u64(bytes, 56),
+            weight_blob_length: read_u64(bytes, 64),
+            checksum_section_offset: read_u64(bytes, 72),
+            checksum_section_length: read_u64(bytes, 80),
+            required_memory_bytes: read_u64(bytes, 88),
+            required_scratch_bytes: read_u64(bytes, 96),
+            required_kv_cache_bytes_per_token: read_u64(bytes, 104),
+            max_context_tokens: read_u32(bytes, 112),
+            vocabulary_size: read_u32(bytes, 116),
+            layer_count: read_u32(bytes, 120),
+            hidden_size: read_u32(bytes, 124),
+            attention_head_count: read_u32(bytes, 128),
+            minimum_simd_tier: read_u32(bytes, 132),
+            model_stable_id: read_u64(bytes, 136),
+            header_checksum: read_u64(bytes, 144),
+        };
+        header.validate_header_prefix(bytes.len())?;
+        Ok(header)
+    }
+
+    fn validate_header_prefix(self, input_len: usize) -> Result<(), UmdlLoadError> {
+        if self.magic != UMDL_MAGIC {
+            return Err(UmdlLoadError::BadMagic);
+        }
+        if self.format_major != UMDL_FORMAT_MAJOR || self.format_minor > UMDL_FORMAT_MINOR {
+            return Err(UmdlLoadError::UnsupportedVersion {
+                major: self.format_major,
+                minor: self.format_minor,
+            });
+        }
+        if self.header_length < UMDL_HEADER_LENGTH || self.header_length as usize > input_len {
+            return Err(UmdlLoadError::HeaderTooShort);
+        }
+        Ok(())
+    }
+}
+
+fn read_magic(bytes: &[u8]) -> [u8; 4] {
+    [bytes[0], bytes[1], bytes[2], bytes[3]]
+}
+
+fn read_u16(bytes: &[u8], offset: usize) -> u16 {
+    u16::from_le_bytes([bytes[offset], bytes[offset + 1]])
+}
+
+fn read_u32(bytes: &[u8], offset: usize) -> u32 {
+    u32::from_le_bytes([
+        bytes[offset],
+        bytes[offset + 1],
+        bytes[offset + 2],
+        bytes[offset + 3],
+    ])
+}
+
+fn read_u64(bytes: &[u8], offset: usize) -> u64 {
+    u64::from_le_bytes([
+        bytes[offset],
+        bytes[offset + 1],
+        bytes[offset + 2],
+        bytes[offset + 3],
+        bytes[offset + 4],
+        bytes[offset + 5],
+        bytes[offset + 6],
+        bytes[offset + 7],
+    ])
 }
 
 /// Scalar element type for tensor data.
@@ -263,9 +356,80 @@ pub enum UmdlLoadError {
 mod tests {
     use super::*;
 
+    fn minimal_header_bytes() -> [u8; UMDL_HEADER_LENGTH as usize] {
+        let mut bytes = [0u8; UMDL_HEADER_LENGTH as usize];
+        bytes[0..4].copy_from_slice(&UMDL_MAGIC);
+        bytes[4..6].copy_from_slice(&UMDL_FORMAT_MAJOR.to_le_bytes());
+        bytes[6..8].copy_from_slice(&UMDL_FORMAT_MINOR.to_le_bytes());
+        bytes[8..12].copy_from_slice(&UMDL_HEADER_LENGTH.to_le_bytes());
+        bytes[12..16].copy_from_slice(&1u32.to_le_bytes());
+        bytes[16..20].copy_from_slice(&(QuantType::QNoneF32 as u32).to_le_bytes());
+        bytes[20..24].copy_from_slice(&0u32.to_le_bytes());
+        bytes[112..116].copy_from_slice(&32u32.to_le_bytes());
+        bytes[116..120].copy_from_slice(&RAW_BYTE_TO_TOKEN_VOCAB_SIZE.to_le_bytes());
+        bytes[120..124].copy_from_slice(&1u32.to_le_bytes());
+        bytes[124..128].copy_from_slice(&8u32.to_le_bytes());
+        bytes[128..132].copy_from_slice(&1u32.to_le_bytes());
+        bytes[132..136].copy_from_slice(&(SimdTier::Scalar as u32).to_le_bytes());
+        bytes[136..144].copy_from_slice(&0x0000_0000_0009_0001u64.to_le_bytes());
+        bytes
+    }
+
     #[test]
     fn magic_bytes_are_stable() {
         assert_eq!(UMDL_MAGIC, [b'U', b'M', b'D', b'L']);
+    }
+
+    #[test]
+    fn header_layout_is_fixed_width() {
+        assert_eq!(
+            core::mem::size_of::<UmdlHeader>(),
+            UMDL_HEADER_LENGTH as usize
+        );
+    }
+
+    #[test]
+    fn parses_umdl_header_from_little_endian_bytes() {
+        let header = UmdlHeader::parse(&minimal_header_bytes()).expect("UMDL header");
+
+        assert_eq!(header.magic, UMDL_MAGIC);
+        assert_eq!(header.format_major, UMDL_FORMAT_MAJOR);
+        assert_eq!(header.format_minor, UMDL_FORMAT_MINOR);
+        assert_eq!(header.header_length, UMDL_HEADER_LENGTH);
+        assert_eq!(header.architecture_id, 1);
+        assert_eq!(header.quantization_scheme_id, QuantType::QNoneF32 as u32);
+        assert_eq!(header.minimum_simd_tier, SimdTier::Scalar as u32);
+        assert_eq!(header.model_stable_id, 0x0000_0000_0009_0001);
+    }
+
+    #[test]
+    fn rejects_malformed_umdl_header_prefix() {
+        assert_eq!(
+            UmdlHeader::parse(&minimal_header_bytes()[..UMDL_HEADER_LENGTH as usize - 1])
+                .unwrap_err(),
+            UmdlLoadError::HeaderTooShort
+        );
+
+        let mut bytes = minimal_header_bytes();
+        bytes[0] = b'X';
+        assert_eq!(
+            UmdlHeader::parse(&bytes).unwrap_err(),
+            UmdlLoadError::BadMagic
+        );
+
+        let mut bytes = minimal_header_bytes();
+        bytes[4..6].copy_from_slice(&2u16.to_le_bytes());
+        assert_eq!(
+            UmdlHeader::parse(&bytes).unwrap_err(),
+            UmdlLoadError::UnsupportedVersion { major: 2, minor: 0 }
+        );
+
+        let mut bytes = minimal_header_bytes();
+        bytes[8..12].copy_from_slice(&(UMDL_HEADER_LENGTH - 1).to_le_bytes());
+        assert_eq!(
+            UmdlHeader::parse(&bytes).unwrap_err(),
+            UmdlLoadError::HeaderTooShort
+        );
     }
 
     #[test]

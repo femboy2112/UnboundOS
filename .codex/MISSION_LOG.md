@@ -4,7 +4,22 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C10.M9 Step 1 UMDL header parse and fixed-width contract: ready.
+- C10.M9 Step 2 Section bounds and checksum validation: ready.
+
+## 2026-05-23T07:58:14Z - C10.M9 Step 1 UMDL header parse and fixed-width contract
+
+- Status: completed
+- Summary: Added safe little-endian `UmdlHeader::parse` for caller-provided
+  byte slices, fixed the public header length at 152 bytes, and validated magic,
+  supported format version, and declared header length with malformed-header
+  tests.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p umdl`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; parsing uses explicit fixed-width
+  byte reads and introduces no allocation, host path, pointer, or executable
+  data surface.
+- Blockers: none.
 
 ## 2026-05-23T07:55:40Z - C10.M9 campaign activation
 
