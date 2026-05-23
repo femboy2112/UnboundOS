@@ -240,7 +240,7 @@ Commit and push.
 
 # Step 6 — M11 completion audit
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Close M11 after assistant action-buffer, graph explanation, SSOD explanation,
