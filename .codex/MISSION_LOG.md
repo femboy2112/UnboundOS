@@ -4,7 +4,25 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C11.M10 Step 6 M10 completion audit: ready.
+*(none)*
+
+## 2026-05-23T08:24:19Z - C11.M10 Step 6 M10 completion audit
+
+- Status: completed
+- Summary: Marked M10 `DONE`, bumped the milestone catalog to `v0.22`,
+  recorded Step 1-5 checkpoint commits in the M10 campaign closeout, and
+  documented that the quantized path streams deterministic tokens through safe
+  scalar kernels, dispatch-table routing, caller-owned buffers, and explicit
+  streaming state.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make gates`, `make repo-state`, and
+  `python3 scripts/verify.py --mission current`.
+- Repo-state: expected STOP because no milestone is `IN-PROGRESS` after M10
+  closeout.
+- Memory-unsafety audit: no new unsafe blocks or functions; memory-unsafe Rust
+  remains allowed by project identity, with future SIMD unsafe constrained to
+  the kernel/dispatch boundary.
+- Blockers: none for M10; next action is final M10 PR or M11 rotation.
 
 ## 2026-05-23T08:23:35Z - C11.M10 Step 5 Quantized inference smoke evidence and gates
 

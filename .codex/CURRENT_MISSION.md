@@ -2,7 +2,7 @@
 
 Mission: C11.M10 Step 6 M10 completion audit
 Campaign: C11 M10 Quantized Inference
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -40,7 +40,7 @@ Out of scope:
 
 ```
 branch: campaign/m10-quantized-inference
-status: IN-PROGRESS
+status: DONE
 ```
 
 ## Verification Commands

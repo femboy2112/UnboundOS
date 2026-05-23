@@ -240,6 +240,8 @@ Commit and push.
 
 # Step 6 — M10 completion audit
 
+Status: Completed.
+
 Purpose:
   Close M10 after scalar quantized kernels, dispatch routing, deterministic
   token stepping, streaming, and smoke evidence are reproducibly verified.
@@ -268,3 +270,24 @@ python3 scripts/verify.py --mission current
 ```
 
 Commit and push.
+
+## Closeout
+
+M10 is complete. Checkpoint commits:
+
+- Step 1 Scalar quantized kernel contracts: `ec536f9`
+- Step 2 Dispatch-selected scalar kernel table: `d2b494c`
+- Step 3 Deterministic quantized token step: `008b7e8`
+- Step 4 Streaming token surface: `1140303`
+- Step 5 Quantized inference smoke evidence and gates: `0130ca8`
+
+No new unsafe blocks or functions were required for M10. The quantized
+inference path uses safe scalar kernels, dispatch-table routing,
+caller-provided buffers, deterministic token stepping, explicit streaming
+state, and source-level smoke evidence. Memory-unsafe Rust remains allowed by
+project identity, but SIMD-specific unsafe work is still future work and must
+remain isolated under `crates/llm/src/kernels/**` and selected only through
+dispatch.
+
+`/go` must stop here until the operator opens the final M10 PR or rotates the
+control files to M11.

@@ -2,7 +2,7 @@
 
 Campaign: C11 M10 Quantized Inference
 Active mission: C11.M10 Step 6 M10 completion audit
-Status: ready
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -29,7 +29,7 @@ See `.codex/CURRENT_MISSION.md`.
 3. C11.M10 Step 3 Deterministic quantized token step. Completed.
 4. C11.M10 Step 4 Streaming token surface. Completed.
 5. C11.M10 Step 5 Quantized inference smoke evidence and gates. Completed.
-6. C11.M10 Step 6 M10 completion audit. Active.
+6. C11.M10 Step 6 M10 completion audit. Completed.
 
 ## Required Preflight For `go`
 
