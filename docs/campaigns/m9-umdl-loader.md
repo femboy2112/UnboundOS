@@ -203,6 +203,8 @@ Commit and push.
 
 # Step 5 — UMDL smoke fixtures and gates
 
+Status: Completed.
+
 Purpose:
   Make UMDL loader evidence reproducible from checkout.
 

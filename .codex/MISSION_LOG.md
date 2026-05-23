@@ -4,7 +4,22 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C10.M9 Step 5 UMDL smoke fixtures and gates: ready.
+- C10.M9 Step 6 M9 completion audit: ready.
+
+## 2026-05-23T08:10:11Z - C10.M9 Step 5 UMDL smoke fixtures and gates
+
+- Status: completed
+- Summary: Added `make umdl-smoke`,
+  `scripts/check_umdl_smoke.py`, deterministic M9 UMDL fixture generation,
+  a malformed bad-magic corpus entry, and aggregate verification wiring for
+  UMDL loader evidence.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `make umdl-smoke`, `make gates`, and
+  `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; smoke checks actual unsafe
+  blocks/functions are absent while preserving the crate-level unsafe-op guard.
+- Blockers: none.
 
 ## 2026-05-23T08:07:56Z - C10.M9 Step 4 Model load view and arena reservation contract
 

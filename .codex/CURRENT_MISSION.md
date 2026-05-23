@@ -1,42 +1,40 @@
 # Current Mission
 
-Mission: C10.M9 Step 5 UMDL smoke fixtures and gates
+Mission: C10.M9 Step 6 M9 completion audit
 Campaign: C10 M9 UMDL Loader
 Status: ready
 
 ## Objective
 
-Execute M9 campaign Step 5 from `docs/campaigns/m9-umdl-loader.md`: make UMDL
-loader evidence reproducible from checkout.
+Execute M9 campaign Step 6 from `docs/campaigns/m9-umdl-loader.md`: close M9
+after UMDL parsing, validation, load-view, arena reservation, and smoke
+evidence are reproducibly verified.
 
 ## Scope
 
 Allowed changes:
 
-- `Makefile`
-- `scripts/**`
-- `crates/umdl/src/lib.rs`
-- `crates/umdl/src/**`
-- `tests/golden_models/**`
-- `tests/fuzz_corpus/umdl/**`
+- `MILESTONE_CATALOG.md`
 - `docs/campaigns/m9-umdl-loader.md`
+- `.codex/CURRENT_CAMPAIGN.md`
+- `.codex/CURRENT_MISSION.md`
+- `.codex/MISSION_LOG.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
+- Implementation changes outside M9 closeout metadata.
 - Sampler, tensor kernel, graph mutation, storage, or QEMU harness changes.
 - LLM sampler, SIMD kernels, storage, QEMU harness, or graph mutation changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- Deterministic golden `.UMDL` fixture or fixture generator exists.
-- Malformed corpus entry exists for a rejected UMDL package.
-- `make umdl-smoke` proves loader source and fixture evidence are reachable.
-- Aggregate mission verification runs UMDL smoke and `make gates` remains
-  green.
+- Row M9 `Status` changes from `IN-PROGRESS` to `DONE`.
+- Catalog version banner is bumped.
+- M9 change-log and campaign closeout record Step 1-5 checkpoint commits.
 
 ## Baseline to verify
 
@@ -50,8 +48,8 @@ status: IN-PROGRESS
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make umdl-smoke
 make gates
+make repo-state
 python3 scripts/verify.py --mission current
 ```
 
@@ -64,4 +62,6 @@ added little-endian header parsing and malformed-header tests. Step 2 added
 overflow-safe section bounds, non-overlap checks, and deterministic checksum
 validation. Step 3 added tokenizer metadata and tensor descriptor parsing and
 validation. Step 4 added a read-only loaded model view, explicit arena
-reservation accounting, and SIMD/profile budget validation.
+reservation accounting, and SIMD/profile budget validation. Step 5 added
+`make umdl-smoke`, a deterministic fixture generator, malformed corpus entry,
+and aggregate verification wiring.
