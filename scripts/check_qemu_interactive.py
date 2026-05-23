@@ -34,7 +34,7 @@ COMMANDS: tuple[tuple[str, str], ...] = (
         "ssod",
         "OK ssod ssod reason=page_fault rip=0xffff800000001234 fault_family=cpu_exception vector=0x0e error_code=0x0000000000000002",
     ),
-    ("cpu", "OK cpu tier=Scalar"),
+    ("cpu", "OK cpu tier=Sse2"),
 )
 
 

@@ -3,6 +3,7 @@ ENTRY(_mb2_start)
 SECTIONS
 {
   . = 2M;
+  __kernel_start = .;
 
   .boot : ALIGN(8)
   {
@@ -30,4 +31,7 @@ SECTIONS
     *(COMMON)
     *(.bss .bss.*)
   }
+
+  . = ALIGN(4K);
+  __kernel_end = .;
 }

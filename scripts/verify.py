@@ -13,9 +13,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CARGO_BIN = Path.home() / ".cargo" / "bin"
-ARENA_HOST_TEST = Path("/tmp/unboundos_arena_host_tests.rs")
-ARENA_HOST_BIN = Path("/tmp/unboundos_arena_host_tests")
-
 
 @dataclass(frozen=True)
 class Command:
@@ -59,6 +56,11 @@ RUST_COMMANDS = [
         ["cargo", "test", "--workspace", "--exclude", "kernel"],
         requires=("cargo",),
         optional=True,
+    ),
+    Command(
+        "kernel host module tests",
+        ["python3", "scripts/check_kernel_host_tests.py"],
+        requires=("python3", "rustc"),
     ),
     Command(
         "kernel custom-target release build",
@@ -144,37 +146,6 @@ def run(command: Command) -> int:
     return proc.returncode
 
 
-def run_arena_host_tests() -> int:
-    rustc = resolve_tool("rustc")
-    if rustc is None:
-        print("[verify] SKIP arena host tests: rustc missing", file=sys.stderr)
-        return 1
-
-    source = ROOT / "kernel" / "src" / "arena.rs"
-    ARENA_HOST_TEST.write_text(
-        f'#[path = "{source}"]\nmod arena;\n',
-        encoding="utf-8",
-    )
-
-    print("[verify] RUN arena host tests: rustc --test kernel/src/arena.rs")
-    compile_proc = subprocess.run(
-        [rustc, "--edition", "2021", "--test", str(ARENA_HOST_TEST), "-o", str(ARENA_HOST_BIN)],
-        cwd=ROOT,
-        text=True,
-        check=False,
-    )
-    if compile_proc.returncode != 0:
-        print("[verify] FAIL arena host tests compile", file=sys.stderr)
-        return compile_proc.returncode
-
-    run_proc = subprocess.run([str(ARENA_HOST_BIN)], cwd=ROOT, text=True, check=False)
-    if run_proc.returncode != 0:
-        print("[verify] FAIL arena host tests", file=sys.stderr)
-        return run_proc.returncode
-    print("[verify] PASS arena host tests")
-    return 0
-
-
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mission", default="current", choices=("current",))
@@ -218,14 +189,6 @@ def main(argv: list[str]) -> int:
         if code != 0:
             if command.optional and args.allow_missing_rust:
                 skipped.append(f"{command.name}: failed with {code}")
-            else:
-                failed = 1
-
-    if not args.dry_run:
-        code = run_arena_host_tests()
-        if code != 0:
-            if args.allow_missing_rust:
-                skipped.append(f"arena host tests: failed with {code}")
             else:
                 failed = 1
 

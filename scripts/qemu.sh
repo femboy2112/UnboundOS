@@ -190,12 +190,22 @@ assert_m2_dump() {
     local log="$1"
     local expected=(
         '^UNBOUNDOS_M2_MEMORY_DUMP_BEGIN$'
-        '^m2_memmap_status=unavailable$'
-        '^m2_memmap_usable_bytes=0x0000000000000000$'
+        '^m2_memmap_status=available$'
+        '^m2_memmap_region_count=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*$'
+        '^m2_multiboot_info_size=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*$'
         '^m2_arena_boot=BootArena$'
+        '^m2_arena_boot_status=initialized$'
+        '^m2_arena_boot_base=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*$'
         '^m2_arena_kernel=KernelArena$'
+        '^m2_arena_kernel_status=initialized$'
+        '^m2_arena_kernel_base=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*$'
         '^m2_arena_graph=GraphArena$'
+        '^m2_arena_graph_status=initialized$'
+        '^m2_arena_graph_base=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*$'
         '^m2_arena_scratch=ScratchArena$'
+        '^m2_arena_scratch_status=initialized$'
+        '^m2_arena_scratch_base=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*$'
+        '^m2_allocator_status=alloc_smoke_ok$'
         '^UNBOUNDOS_M2_MEMORY_DUMP_END$'
     )
     local marker
@@ -206,6 +216,10 @@ assert_m2_dump() {
             return 1
         }
     done
+    grep -Eq '^m2_memmap_usable_bytes=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*$' "$log" || {
+        echo "[qemu] M2 dump reported zero usable memory in $log" >&2
+        return 1
+    }
 }
 
 assert_storage_marker() {

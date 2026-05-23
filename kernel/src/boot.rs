@@ -6,7 +6,17 @@
 //! CLAUDE.md §11 (no silent placeholders); the heartbeat lines themselves are
 //! emitted in §1.6 order.
 
-use crate::{arena, cpu, heartbeat, idt, operator_shell, storage};
+use crate::{arena, cpu, heartbeat, idt, multiboot2, operator_shell, storage};
+
+#[derive(Copy, Clone)]
+pub struct BootHandoff {
+    pub multiboot_magic: u32,
+    pub multiboot_info_addr: u32,
+}
+
+unsafe extern "C" {
+    static __kernel_end: u8;
+}
 
 // Canonical source-level assertion for spec §3.2 kernel-entry order.
 // Runtime comments below cite the same steps at the implementation site;
@@ -34,7 +44,7 @@ use crate::{arena, cpu, heartbeat, idt, operator_shell, storage};
 ///
 /// Called exactly once from `_start`. Holds exclusive ownership of the
 /// CPU and the bootloader handoff structures.
-pub unsafe fn run() -> ! {
+pub unsafe fn run(handoff: BootHandoff) -> ! {
     // spec §3.2 step 1: disable interrupts.
     // SAFETY: pre-IDT phase; interrupts must be off until handlers exist.
     unsafe {
@@ -69,13 +79,11 @@ pub unsafe fn run() -> ! {
     heartbeat::emit_kv_str("UNBOUNDOS_CPU_PROFILE", tier.as_str());
 
     // spec §3.2 step 7: ingest memory map.
-    // TODO M2 (spec §3.1, §4.2): consume the Limine memory-map
-    // response and classify regions per §4.2. Until then the
-    // kernel reports zero registered bytes — honest, since no
-    // allocator is wired and no usable RAM has been claimed.
-    let mem_bytes: u64 = 0;
-    heartbeat::emit_kv_hex("UNBOUNDOS_MEMMAP_OK", mem_bytes);
-    emit_m2_memory_diagnostics();
+    // The current bootable image is GRUB/Multiboot2; Limine remains the
+    // spec-primary target for the later bootloader handoff milestone.
+    let memory_summary = read_boot_memory_summary(handoff);
+    heartbeat::emit_kv_hex("UNBOUNDOS_MEMMAP_OK", memory_summary.usable_bytes);
+    let mut m2_arenas = emit_m2_memory_diagnostics(memory_summary);
 
     // spec §3.2 step 6: install early IDT with halt handlers.
     // SAFETY: single boot-path call; no concurrent IDT writers.
@@ -88,8 +96,10 @@ pub unsafe fn run() -> ! {
     idt::trigger_forced_fault_from_env();
 
     // spec §3.2 step 8: initialize boot allocator.
-    // TODO M2 (spec §4.3): bitmap or stack frame allocator over
-    // the memory map ingested in step 7.
+    // The early M2 gate now constructs bounded arenas from the ingested memory
+    // map and performs a small allocation from each. The later frame allocator
+    // still needs to own page-frame reservation and free-list/bitmap policy.
+    exercise_m2_arenas(&mut m2_arenas);
 
     // spec §3.2 step 10: enable permitted SIMD/FPU state.
     // SAFETY: cpu::enable_math_features is the sole CR0/CR4/XCR0
@@ -176,17 +186,152 @@ fn run_m6_storage_smoke_from_env() {
     }
 }
 
-fn emit_m2_memory_diagnostics() {
+fn read_boot_memory_summary(handoff: BootHandoff) -> multiboot2::MemorySummary {
+    let kernel_end = kernel_reserved_end();
+    // SAFETY: `_mb2_start` preserves GRUB's Multiboot2 EAX/EBX handoff
+    // registers and passes them to `_start`. The smoke image identity-maps the
+    // first GiB, so the info block and selected early arenas are readable.
+    unsafe {
+        multiboot2::summarize_raw(
+            handoff.multiboot_magic,
+            handoff.multiboot_info_addr,
+            kernel_end,
+            multiboot2::IDENTITY_MAPPED_LIMIT,
+        )
+    }
+}
+
+fn kernel_reserved_end() -> u64 {
+    // linker.ld defines __kernel_end at the aligned end of the loaded image.
+    // Taking its address does not dereference memory.
+    let raw = (&raw const __kernel_end) as u64;
+    align_up(raw + 0x10000, 4096)
+}
+
+fn emit_m2_memory_diagnostics(summary: multiboot2::MemorySummary) -> Option<arena::M2ArenaSet> {
     heartbeat::emit("UNBOUNDOS_M2_MEMORY_DUMP_BEGIN");
-    heartbeat::emit_kv_str("m2_memmap_status", "unavailable");
-    heartbeat::emit_kv_hex("m2_memmap_usable_bytes", 0);
+    heartbeat::emit_kv_str(
+        "m2_memmap_status",
+        if summary.handoff_valid && summary.memmap_present {
+            "available"
+        } else {
+            "unavailable"
+        },
+    );
+    heartbeat::emit_kv_hex("m2_memmap_usable_bytes", summary.usable_bytes);
+    heartbeat::emit_kv_hex("m2_memmap_region_count", u64::from(summary.usable_regions));
+    heartbeat::emit_kv_hex("m2_multiboot_info_size", u64::from(summary.total_size));
     heartbeat::emit_kv_str("m2_arena_boot", arena::BOOT_ARENA.name);
-    heartbeat::emit_kv_str("m2_arena_boot_status", "uninitialized");
     heartbeat::emit_kv_str("m2_arena_kernel", arena::KERNEL_ARENA.name);
-    heartbeat::emit_kv_str("m2_arena_kernel_status", "uninitialized");
     heartbeat::emit_kv_str("m2_arena_graph", arena::GRAPH_ARENA.name);
-    heartbeat::emit_kv_str("m2_arena_graph_status", "uninitialized");
     heartbeat::emit_kv_str("m2_arena_scratch", arena::SCRATCH_ARENA.name);
-    heartbeat::emit_kv_str("m2_arena_scratch_status", "uninitialized");
+
+    let arenas = summary
+        .arena_region
+        .and_then(|region| m2_arena_regions_from(region.base).ok())
+        .and_then(|regions| arena::M2ArenaSet::new(regions).ok());
+
+    if let Some(ref arena_set) = arenas {
+        emit_arena_initialized("m2_arena_boot", arena_set.boot());
+        emit_arena_initialized("m2_arena_kernel", arena_set.kernel());
+        emit_arena_initialized("m2_arena_graph", arena_set.graph());
+        emit_arena_initialized("m2_arena_scratch", arena_set.scratch());
+    } else {
+        heartbeat::emit_kv_str("m2_arena_boot_status", "uninitialized");
+        heartbeat::emit_kv_str("m2_arena_kernel_status", "uninitialized");
+        heartbeat::emit_kv_str("m2_arena_graph_status", "uninitialized");
+        heartbeat::emit_kv_str("m2_arena_scratch_status", "uninitialized");
+    }
     heartbeat::emit("UNBOUNDOS_M2_MEMORY_DUMP_END");
+    arenas
+}
+
+fn exercise_m2_arenas(arenas: &mut Option<arena::M2ArenaSet>) {
+    let Some(arenas) = arenas else {
+        heartbeat::emit_kv_str("m2_allocator_status", "unavailable");
+        return;
+    };
+
+    let boot = arenas.with_boot_arena(|a| a.alloc_aligned(16, 16));
+    let kernel = arenas.with_kernel_arena(|a| a.alloc_aligned(16, 16));
+    let graph = arenas.with_graph_arena(|a| a.alloc_aligned(16, 16));
+    let scratch = arenas.with_scratch_arena(|a| a.alloc_aligned(16, 16));
+    if boot.is_ok() && kernel.is_ok() && graph.is_ok() && scratch.is_ok() {
+        heartbeat::emit_kv_str("m2_allocator_status", "alloc_smoke_ok");
+    } else {
+        heartbeat::emit_kv_str("m2_allocator_status", "alloc_smoke_failed");
+    }
+}
+
+fn m2_arena_regions_from(base: u64) -> Result<arena::M2ArenaRegions, ()> {
+    let boot = range_at(base, multiboot2::M2_BOOT_ARENA_BYTES)?;
+    let kernel_base = base
+        .checked_add(multiboot2::M2_BOOT_ARENA_BYTES)
+        .ok_or(())?;
+    let kernel = range_at(kernel_base, multiboot2::M2_KERNEL_ARENA_BYTES)?;
+    let graph_base = kernel_base
+        .checked_add(multiboot2::M2_KERNEL_ARENA_BYTES)
+        .ok_or(())?;
+    let graph = range_at(graph_base, multiboot2::M2_GRAPH_ARENA_BYTES)?;
+    let scratch_base = graph_base
+        .checked_add(multiboot2::M2_GRAPH_ARENA_BYTES)
+        .ok_or(())?;
+    let scratch = range_at(scratch_base, multiboot2::M2_SCRATCH_ARENA_BYTES)?;
+
+    Ok(arena::M2ArenaRegions {
+        boot,
+        kernel,
+        graph,
+        scratch,
+    })
+}
+
+fn range_at(base: u64, size: u64) -> Result<arena::ArenaRange, ()> {
+    let base = usize::try_from(base).map_err(|_| ())?;
+    let size = usize::try_from(size).map_err(|_| ())?;
+    Ok(arena::ArenaRange { base, size })
+}
+
+fn emit_arena_initialized(prefix: &str, arena: &arena::Arena) {
+    let status_key = status_key(prefix);
+    let base_key = base_key(prefix);
+    let size_key = size_key(prefix);
+    heartbeat::emit_kv_str(status_key, "initialized");
+    heartbeat::emit_kv_hex(base_key, arena.base() as u64);
+    heartbeat::emit_kv_hex(size_key, arena.remaining() as u64);
+}
+
+fn status_key(prefix: &str) -> &'static str {
+    match prefix {
+        "m2_arena_boot" => "m2_arena_boot_status",
+        "m2_arena_kernel" => "m2_arena_kernel_status",
+        "m2_arena_graph" => "m2_arena_graph_status",
+        "m2_arena_scratch" => "m2_arena_scratch_status",
+        _ => "m2_arena_unknown_status",
+    }
+}
+
+fn base_key(prefix: &str) -> &'static str {
+    match prefix {
+        "m2_arena_boot" => "m2_arena_boot_base",
+        "m2_arena_kernel" => "m2_arena_kernel_base",
+        "m2_arena_graph" => "m2_arena_graph_base",
+        "m2_arena_scratch" => "m2_arena_scratch_base",
+        _ => "m2_arena_unknown_base",
+    }
+}
+
+fn size_key(prefix: &str) -> &'static str {
+    match prefix {
+        "m2_arena_boot" => "m2_arena_boot_size",
+        "m2_arena_kernel" => "m2_arena_kernel_size",
+        "m2_arena_graph" => "m2_arena_graph_size",
+        "m2_arena_scratch" => "m2_arena_scratch_size",
+        _ => "m2_arena_unknown_size",
+    }
+}
+
+fn align_up(value: u64, alignment: u64) -> u64 {
+    let mask = alignment - 1;
+    (value + mask) & !mask
 }

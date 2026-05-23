@@ -67,7 +67,7 @@ qemu: image
 
 .PHONY: qemu-headless
 qemu-headless: image
-	./scripts/qemu.sh --headless
+	./scripts/qemu.sh --headless --assert-heartbeat
 
 .PHONY: qemu-interactive-smoke
 qemu-interactive-smoke:

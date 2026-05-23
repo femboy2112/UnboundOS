@@ -50,6 +50,8 @@ mb2_header_end:
 .code32
 _mb2_start:
     cli
+    mov dword ptr [boot_mb2_magic], eax
+    mov dword ptr [boot_mb2_info], ebx
     mov esp, offset boot_stack_top
 
     mov edi, offset boot_p2
@@ -101,6 +103,8 @@ long_mode_start:
     mov gs, ax
     mov rsp, offset boot_stack_top
     and rsp, -16
+    mov edi, dword ptr [boot_mb2_magic]
+    mov esi, dword ptr [boot_mb2_info]
     call _start
 2:
     hlt
@@ -126,6 +130,11 @@ boot_p3:
 boot_p2:
     .skip 4096
 .align 16
+boot_mb2_magic:
+    .skip 4
+boot_mb2_info:
+    .skip 4
+.align 16
 boot_stack_bottom:
     .skip 16384
 boot_stack_top:
@@ -139,6 +148,7 @@ mod cpu;
 mod framebuffer;
 mod heartbeat;
 mod idt;
+mod multiboot2;
 mod operator_shell;
 mod serial;
 mod ssod;
@@ -152,11 +162,16 @@ mod storage;
 /// The bootloader has set up the CPU state per the Limine contract.
 /// The function takes ownership of the CPU and never returns.
 #[unsafe(no_mangle)]
-pub extern "C" fn _start() -> ! {
+pub extern "C" fn _start(multiboot_magic: u32, multiboot_info_addr: u32) -> ! {
     // SAFETY: this is the unique entry point. We hold exclusive access
     // to the CPU. Each substep is responsible for its own invariants;
     // see boot::run for the full sequence.
-    unsafe { boot::run() }
+    unsafe {
+        boot::run(boot::BootHandoff {
+            multiboot_magic,
+            multiboot_info_addr,
+        })
+    }
 }
 
 #[panic_handler]

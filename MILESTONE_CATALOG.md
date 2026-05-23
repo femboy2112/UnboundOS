@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.27
+> **Catalog version:** v0.29
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -27,7 +27,7 @@ archived under `docs/campaigns/` and never edited again.
 |-----|-------|--------|--------|--------------------------------------|----------------------|
 | M0  | Boot heartbeat | §3.2, §1.6, §3.9 | DONE | `make qemu-headless` serial log contains `UNBOUNDOS_BOOT_BEGIN`, `UNBOUNDOS_CPU_PROFILE`, `UNBOUNDOS_MEMMAP_OK`, `UNBOUNDOS_IDT_OK`, `UNBOUNDOS_BOOT_OK` in that order; `make gates` PROCEED | docs/campaigns/m0-boot-heartbeat.md |
 | M1  | Diagnostics core | §3.5, §9, §13.3 | DONE | IDT installed; divide-by-zero, page fault, and invalid opcode forced faults route through SSOD; serial SSOD output includes RIP and reason; `make gates` PROCEED | docs/campaigns/m1-diagnostics-core.md |
-| M2  | Arena memory | §4.2–§4.11, §13.4 | DONE | BootArena, KernelArena, GraphArena, and ScratchArena exist; alignment tests pass; arena exhaustion is deterministic; memory map dump is available; `make gates` PROCEED | docs/campaigns/m2-arena-memory.md |
+| M2  | Arena memory | §4.2–§4.11, §13.4 | DONE | BootArena, KernelArena, GraphArena, and ScratchArena exist; alignment tests pass; arena exhaustion is deterministic; QEMU memory-map dump reports bootloader-provided nonzero usable bytes and initialized arena ranges; `make gates` PROCEED | docs/campaigns/m2-arena-memory.md |
 | M3  | Embedded graph | §5.7, §5.9, §13.5 | DONE | Hardcoded graph source -> transform -> sink executes through the verified graph path; epoch readiness works; fan-out test passes; active node diagnostics work; `make gates` PROCEED | docs/campaigns/m3-embedded-graph.md |
 | M4  | UMOD loader | §6, §13.6 | DONE | Persistent graph verifies and executes through `graph_load_from_umod -> graph_compile_verified`; malformed UMODs return structured errors; `make gates` PROCEED | docs/campaigns/m4-umod-loader.md |
 | M5  | Minimal UI | §3.7, §8, §13.7 | DONE | Framebuffer text primitives render boot diagnostics and graph state; `make gates` PROCEED | docs/campaigns/m5-minimal-ui.md |
@@ -45,6 +45,22 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.29** — Replaced the unconditional `Scalar` CPU profile stub with a
+  CPUID-backed SSE2 detector and boot-time CR0/CR4 math-state setup for the
+  detected tier. The live QEMU serial shell gate now expects `cpu` to report
+  `Sse2` under `qemu64`, and kernel host-module tests compile and exercise the
+  CPU tier string/detection surface. This hardens the M0/M10 CPU-profile gate
+  without enabling AVX paths before the OS owns XCR0.
+- **v0.28** — Tightened the M2 gate after live-boot analysis exposed that the
+  previous QEMU dump accepted `m2_memmap_status=unavailable` and zero usable
+  bytes. The GRUB Multiboot2 handoff registers are now preserved into `_start`,
+  the kernel parses the bootloader memory map during QEMU boot, derives bounded
+  Boot/Kernel/Graph/Scratch arena ranges from identity-mapped usable RAM, and
+  performs a boot-time allocation smoke across those arenas. `make gates` now
+  includes kernel host-module tests and the QEMU M2 assertion fails unless
+  usable memory is nonzero, the map is available, and every required arena is
+  initialized. Limine remains the spec-primary future handoff; this closes the
+  fake-success gap in the current bootable GRUB smoke path.
 - **v0.27** — Added a live polling serial operator shell after
   `UNBOUNDOS_BOOT_OK` and wired `make qemu-interactive-smoke` into aggregate
   gates. The dynamic QEMU check now boots the kernel, waits for
