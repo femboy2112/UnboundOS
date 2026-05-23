@@ -169,6 +169,8 @@ Commit and push.
 
 # Step 4 — Tokenizer smoke evidence and gates
 
+Status: Completed.
+
 Purpose:
   Make tokenizer evidence reproducible from checkout.
 

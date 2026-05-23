@@ -4,7 +4,20 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C8.M7 Step 4 Tokenizer smoke evidence and gates: ready.
+- C8.M7 Step 5 M7 completion audit: ready.
+
+## 2026-05-23T07:37:04Z - C8.M7 Step 4 Tokenizer smoke evidence and gates
+
+- Status: completed
+- Summary: Added `make tokenizer-smoke` and `scripts/check_tokenizer_smoke.py`
+  to prove the single supported tokenizer family, encode/decode surfaces,
+  structured errors, and round-trip test evidence remain source-reachable from
+  checkout. Wired tokenizer smoke into `python3 scripts/verify.py --mission
+  current`.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `make tokenizer-smoke`, `make gates`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Blockers: none.
 
 ## 2026-05-23T07:35:49Z - C8.M7 Step 3 Raw-byte detokenizer round trip
 

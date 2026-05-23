@@ -1,22 +1,20 @@
 # Current Mission
 
-Mission: C8.M7 Step 4 Tokenizer smoke evidence and gates
+Mission: C8.M7 Step 5 M7 completion audit
 Campaign: C8 M7 Tokenizer
 Status: ready
 
 ## Objective
 
-Execute M7 campaign Step 4 from `docs/campaigns/m7-tokenizer.md`: make
-tokenizer evidence reproducible from checkout.
+Execute M7 campaign Step 5 from `docs/campaigns/m7-tokenizer.md`: close M7
+after tokenizer metadata, encode/decode, round-trip tests, and smoke evidence
+are reproducibly verified.
 
 ## Scope
 
 Allowed changes:
 
-- `Makefile`
-- `scripts/**`
-- `crates/llm/src/lib.rs`
-- `crates/llm/src/tokenizer.rs`
+- `MILESTONE_CATALOG.md`
 - `docs/campaigns/m7-tokenizer.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -24,16 +22,20 @@ Allowed changes:
 
 Out of scope:
 
-- UMDL loader, tensor descriptors, model execution, sampler, storage, or QEMU
-  harness changes.
+- Implementation changes.
+- Scripts, Makefile, UMDL loader, tensor descriptors, model execution, sampler,
+  storage, or QEMU harness changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- A smoke target or source-level check proves exactly one tokenizer family is
-  supported and round-trip tests exist.
-- Aggregate mission verification runs the tokenizer smoke.
-- QEMU and graph gates remain green.
+- M7 row in `MILESTONE_CATALOG.md` changes from `IN-PROGRESS` to `DONE`.
+- Catalog version banner is bumped.
+- `MILESTONE_CATALOG.md` change log records the M7 closeout.
+- `docs/campaigns/m7-tokenizer.md` has a `## Closeout` section naming the
+  Step 1-4 checkpoint commits.
+- `make gates`, `make repo-state`, and `python3 scripts/verify.py --mission
+  current` prove the closeout state.
 
 ## Baseline to verify
 
@@ -47,16 +49,12 @@ status: IN-PROGRESS
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make fmt
-make clippy
-make tokenizer-smoke
 make gates
-cargo test -p llm
+make repo-state
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m7-tokenizer`. Step 3 added decode, UTF-8
-validation, invalid-token handling, and representative encode/decode round-trip
-tests. Step 4 should add only smoke/check wiring.
+Campaign branch: `campaign/m7-tokenizer`. Step 4 added `make tokenizer-smoke`
+and wired tokenizer smoke into aggregate mission verification.
