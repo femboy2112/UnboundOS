@@ -205,6 +205,8 @@ Commit and push.
 
 # Step 5 — Quantized inference smoke evidence and gates
 
+Status: Completed.
+
 Purpose:
   Make quantized inference evidence reproducible from checkout.
 

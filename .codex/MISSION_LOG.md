@@ -4,7 +4,24 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C11.M10 Step 5 Quantized inference smoke evidence and gates: ready.
+- C11.M10 Step 6 M10 completion audit: ready.
+
+## 2026-05-23T08:23:35Z - C11.M10 Step 5 Quantized inference smoke evidence and gates
+
+- Status: completed
+- Summary: Added `make quantized-smoke` and
+  `scripts/check_quantized_smoke.py` to prove scalar kernels, dispatch routing,
+  deterministic token stepping, streaming, caller-owned buffers, and no
+  backend-specific unsafe/SIMD leakage are source-reachable. Wired quantized
+  smoke into aggregate mission verification.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `make quantized-smoke`, `make gates`, and
+  `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; smoke rejects actual unsafe
+  blocks/functions in the quantized scalar path while preserving future bounded
+  SIMD room under `kernels/**`.
+- Blockers: none.
 
 ## 2026-05-23T08:22:02Z - C11.M10 Step 4 Streaming token surface
 
