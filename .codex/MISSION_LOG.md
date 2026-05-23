@@ -4,7 +4,18 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C4.M3 Step 4 Active node diagnostics: ready.
+- C4.M3 Step 5 M3 completion audit: ready.
+
+## 2026-05-23T01:54:40Z - C4.M3 Step 4 Active node diagnostics
+
+- Status: completed
+- Summary: Added private active-node tracking to the built-in graph runtime,
+  cleared it after each node fired, and added graph tests proving the active
+  node is clear after execution while the last completed node records the sink.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `python3 scripts/verify.py --mission
+  current`, and `make gates`.
+- Blockers: none.
 
 ## 2026-05-23T01:49:41Z - C4.M3 Step 3 Fan-out execution proof
 

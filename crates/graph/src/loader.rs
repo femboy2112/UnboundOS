@@ -49,6 +49,8 @@ struct GraphRuntime {
     nodes: [NodeRuntime; 3],
     source_to_transform: WireRuntime,
     transform_to_sink: WireRuntime,
+    active_node: Option<NodeId>,
+    last_completed_node: Option<NodeId>,
     sink_value: u32,
 }
 
@@ -116,6 +118,8 @@ impl GraphRuntime {
             ],
             source_to_transform: WireRuntime::new(1, 1, 1),
             transform_to_sink: WireRuntime::new(2, 2, 1),
+            active_node: None,
+            last_completed_node: None,
             sink_value: 0,
         }
     }
@@ -124,9 +128,12 @@ impl GraphRuntime {
         let mut transform_input = ConsumerObservation::new(self.source_to_transform.wire_id, 2);
         let mut sink_input = ConsumerObservation::new(self.transform_to_sink.wire_id, 3);
 
+        self.set_active_node(1);
         let source_value = 7;
         self.source_to_transform.publish();
+        self.clear_active_node_completed(1);
 
+        self.set_active_node(2);
         let transformed = if self.source_to_transform.ready_for(transform_input) {
             transform_input.observe(self.source_to_transform);
             source_value + 1
@@ -134,13 +141,33 @@ impl GraphRuntime {
             0
         };
         self.transform_to_sink.publish();
+        self.clear_active_node_completed(2);
 
+        self.set_active_node(3);
         if self.transform_to_sink.ready_for(sink_input) {
             sink_input.observe(self.transform_to_sink);
             self.sink_value = transformed;
         }
+        self.clear_active_node_completed(3);
 
         self.sink_value
+    }
+
+    fn set_active_node(&mut self, node_id: NodeId) {
+        self.active_node = Some(node_id);
+    }
+
+    fn clear_active_node_completed(&mut self, node_id: NodeId) {
+        self.last_completed_node = Some(node_id);
+        self.active_node = None;
+    }
+
+    const fn active_node(&self) -> Option<NodeId> {
+        self.active_node
+    }
+
+    const fn last_completed_node(&self) -> Option<NodeId> {
+        self.last_completed_node
     }
 }
 
@@ -165,6 +192,8 @@ pub(crate) fn compile(
     if verified.bytes() == BUILTIN_SOURCE_TRANSFORM_SINK_UMOD {
         let mut runtime = GraphRuntime::source_transform_sink();
         let _ = runtime.execute_once();
+        let _ = runtime.active_node();
+        let _ = runtime.last_completed_node();
     }
 
     Ok(GraphRuntimeHandle::new_internal())
@@ -251,5 +280,16 @@ mod tests {
         assert_eq!(sink, 8);
         assert_eq!(graph.source_to_transform.epoch(), 1);
         assert_eq!(graph.transform_to_sink.epoch(), 1);
+    }
+
+    #[test]
+    fn active_node_is_cleared_after_execution() {
+        let mut graph = GraphRuntime::source_transform_sink();
+
+        assert_eq!(graph.active_node(), None);
+        graph.execute_once();
+
+        assert_eq!(graph.active_node(), None);
+        assert_eq!(graph.last_completed_node(), Some(3));
     }
 }

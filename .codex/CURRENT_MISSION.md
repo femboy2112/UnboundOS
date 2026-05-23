@@ -1,21 +1,20 @@
 # Current Mission
 
-Mission: C4.M3 Step 4 Active node diagnostics
+Mission: C4.M3 Step 5 M3 completion audit
 Campaign: C4 M3 Embedded Graph
 Status: ready
 
 ## Objective
 
-Execute M3 campaign Step 4 from `docs/campaigns/m3-embedded-graph.md`: track
-active node identity during graph execution and clear it after each node fires.
+Execute M3 campaign Step 5 from `docs/campaigns/m3-embedded-graph.md`: close
+the Embedded Graph milestone after source -> transform -> sink execution,
+epoch readiness, fan-out, and active-node diagnostics have all been verified.
 
 ## Scope
 
 Allowed changes:
 
-- `crates/graph/src/lib.rs`
-- `crates/graph/src/loader.rs`
-- `kernel/src/ssod.rs`
+- `MILESTONE_CATALOG.md`
 - `docs/campaigns/m3-embedded-graph.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -23,15 +22,17 @@ Allowed changes:
 
 Out of scope:
 
-- Direct public `GraphRuntime` construction.
-- Boot hook, storage, UI, LLM, or persistent artifact format changes.
+- Runtime graph implementation changes.
+- UMOD parser or persistent artifact format changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- Active node is set before each graph node fires and cleared afterward.
-- Graph tests prove the last completed node and active-node clearing behavior.
-- No external code can mutate graph state directly.
+- M3 is marked `DONE` in `MILESTONE_CATALOG.md`.
+- M3 closeout records the Step 1-4 checkpoint commits and verification
+  evidence.
+- `make gates`, `make repo-state`, and `python3 scripts/verify.py --mission
+  current` pass for the closed M3 state.
 
 ## Baseline to verify
 
@@ -45,13 +46,12 @@ status: IN-PROGRESS
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make fmt
-make clippy
-python3 scripts/verify.py --mission current
 make gates
+make repo-state
+python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m3-embedded-graph`. Step 3 proved fan-out epoch
-readiness.
+Campaign branch: `campaign/m3-embedded-graph`. Step 4 added private active-node
+diagnostics and verified that active node state clears after execution.

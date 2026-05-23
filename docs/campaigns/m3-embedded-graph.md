@@ -192,6 +192,8 @@ Commit and push.
 
 # Step 4 — Active node diagnostics
 
+Status: Completed.
+
 Purpose:
   Track active node identity during graph execution and clear it after each
   node fires.
