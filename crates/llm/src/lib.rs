@@ -17,6 +17,7 @@
 
 pub mod dispatch;
 pub mod kernels;
+pub mod quantized;
 pub mod tokenizer;
 pub mod toy_transformer;
 

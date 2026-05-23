@@ -142,6 +142,8 @@ Commit and push.
 
 # Step 3 — Deterministic quantized token step
 
+Status: Completed.
+
 Purpose:
   Produce one deterministic next-token step from a validated model view and
   caller-provided buffers.

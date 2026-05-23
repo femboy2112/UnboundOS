@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C11.M10 Step 3 Deterministic quantized token step: ready.
+- C11.M10 Step 4 Streaming token surface: ready.
+
+## 2026-05-23T08:20:06Z - C11.M10 Step 3 Deterministic quantized token step
+
+- Status: completed
+- Summary: Added `crates/llm/src/quantized.rs` with `next_token_step`, explicit
+  config/buffer structs, validated-model metadata input, dispatch-table kernel
+  invocation, caller-owned logits/output token buffers, deterministic argmax
+  selection, and structured buffer/vocabulary/kernel errors.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; the quantized step uses safe
+  dispatch-table calls and writes only to caller-provided output buffers.
+- Blockers: none.
 
 ## 2026-05-23T08:16:04Z - C11.M10 Step 2 Dispatch-selected scalar kernel table
 
