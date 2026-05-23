@@ -4,7 +4,18 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C3.M2 Step 1 Bounded arena core and alignment checks: ready.
+- C3.M2 Step 2 Named M2 arena set: ready.
+
+## 2026-05-23T01:18:28Z - C3.M2 Step 1 Bounded arena core and alignment checks
+
+- Status: completed
+- Summary: Implemented the bounded `Arena` cursor contract with explicit
+  alignment rejection, checked overflow handling, deterministic exhaustion
+  context, reset support, and verifier-run host tests for the arena module.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `python3 scripts/verify.py --mission
+  current`, and `make gates`.
+- Blockers: none.
 
 ## 2026-05-23T01:06:00Z - C3.M2 campaign activation
 

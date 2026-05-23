@@ -94,6 +94,8 @@ Step 5 — M2 completion audit
 
 # Step 1 — Bounded arena core and alignment checks
 
+Status: Completed.
+
 Purpose:
   Implement the reusable bounded arena cursor contract with explicit alignment
   rejection and overflow/exhaustion errors.
