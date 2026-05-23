@@ -657,7 +657,9 @@ fn looks_like_path(bytes: &[u8]) -> bool {
     bytes.starts_with(b"local://")
         || bytes.starts_with(b"~")
         || bytes.windows(2).any(|window| window == b"..")
-        || bytes.iter().any(|byte| matches!(*byte, b'/' | b'\\'))
+        || bytes
+            .iter()
+            .any(|byte| matches!(*byte, b'/' | b'\\' | b'~'))
 }
 
 fn opaque_id_char(byte: u8) -> bool {
@@ -886,22 +888,34 @@ mod tests {
 
         assert_eq!(parsed.kind, ResourceType::Model);
         assert_eq!(parsed.opaque_id, b"tiny_transformer-01");
+
+        for accepted in [
+            b"graph:boot_graph.v1".as_slice(),
+            b"index:sector0_marker".as_slice(),
+            b"blob:raw-sector-00000000".as_slice(),
+            b"font:boot-font-8x16".as_slice(),
+            b"profile:qemu-storage-smoke".as_slice(),
+        ] {
+            parse_resource_ref(accepted).expect("opaque resource ref");
+        }
     }
 
     #[test]
     fn parse_resource_ref_rejects_path_shapes() {
-        assert_eq!(
-            parse_resource_ref(b"local://models/tiny.umdl").unwrap_err(),
-            ResourceRefError::LooksLikeAPath
-        );
-        assert_eq!(
-            parse_resource_ref(b"model:../tiny").unwrap_err(),
-            ResourceRefError::LooksLikeAPath
-        );
-        assert_eq!(
-            parse_resource_ref(br"model:dir\tiny").unwrap_err(),
-            ResourceRefError::LooksLikeAPath
-        );
+        for rejected in [
+            b"local://models/tiny.umdl".as_slice(),
+            b"/etc/models/tiny.umdl".as_slice(),
+            br"C:\models\tiny.umdl".as_slice(),
+            b"model:../tiny".as_slice(),
+            br"model:dir\tiny".as_slice(),
+            b"blob:fat32/sector0".as_slice(),
+            b"index:~profile".as_slice(),
+        ] {
+            assert_eq!(
+                parse_resource_ref(rejected).unwrap_err(),
+                ResourceRefError::LooksLikeAPath
+            );
+        }
     }
 
     #[test]

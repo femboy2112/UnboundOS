@@ -178,6 +178,8 @@ Commit and push.
 
 # Step 4 — Resource namespace guard evidence
 
+Status: Completed.
+
 Purpose:
   Prove storage bring-up did not leak POSIX/FAT32 paths into graph-visible
   resource state.

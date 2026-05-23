@@ -4,7 +4,19 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C7.M6 Step 4 Resource namespace guard evidence: ready.
+- C7.M6 Step 5 M6 completion audit: ready.
+
+## 2026-05-23T07:25:21Z - C7.M6 Step 4 Resource namespace guard evidence
+
+- Status: completed
+- Summary: Added `scripts/check_storage_namespace.py` to the aggregate mission
+  verifier, broadened UMOD resource-reference tests for storage-shaped path
+  leakage, and tightened `~` detection so graph-visible resource references
+  stay opaque.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p umod`, `cargo test -p
+  graph`, `python3 scripts/verify.py --mission current`, and `make gates`.
+- Blockers: none.
 
 ## 2026-05-23T07:22:43Z - C7.M6 Step 3 QEMU raw-sector smoke fixture
 

@@ -31,6 +31,7 @@ STATIC_COMMANDS = [
     Command("no eval node", ["bash", "scripts/check_no_eval_node.sh"]),
     Command("no pointer serde derive", ["bash", "scripts/check_no_pointer_derive.sh"]),
     Command("no POSIX path leakage", ["bash", "scripts/check_no_posix_paths.sh"]),
+    Command("storage namespace guard", ["python3", "scripts/check_storage_namespace.py"]),
     Command("dispatch boundary", ["bash", "scripts/check_dispatch_boundary.sh"]),
     Command(
         "address scan",
