@@ -4,7 +4,17 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- none.
+- C7.M6 Step 1 Storage contracts and timeout model: ready.
+
+## 2026-05-23T07:13:10Z - C7.M6 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m6-storage-stage-1`, marked M6 `IN-PROGRESS`,
+  created the M6 campaign plan, and rotated `.codex` state to Step 1 while
+  preserving the project rule that memory-unsafe Rust is allowed at bounded,
+  inspectable hardware boundaries.
+- Verification: pending below for the active Step 1 mission state.
+- Blockers: none.
 
 ## 2026-05-23T07:12:42Z - C6.M5 Step 5 M5 completion audit
 

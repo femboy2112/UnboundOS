@@ -1,45 +1,45 @@
 # Current Mission
 
-Mission: C6.M5 Step 5 M5 completion audit
-Campaign: C6 M5 Minimal UI
-Status: completed
+Mission: C7.M6 Step 1 Storage contracts and timeout model
+Campaign: C7 M6 Storage Stage 1
+Status: ready
 
 ## Objective
 
-Execute M5 campaign Step 5 from `docs/campaigns/m5-minimal-ui.md`: close M5
-after framebuffer text output, boot-diagnostic fallback, graph-state display,
-and smoke evidence are reproducibly verified.
+Execute M6 campaign Step 1 from `docs/campaigns/m6-storage-stage-1.md`: add
+the storage contracts, diagnostics, and timeout model needed before real ATA
+PIO port I/O.
 
 ## Scope
 
 Allowed changes:
 
-- `MILESTONE_CATALOG.md`
-- `docs/campaigns/m5-minimal-ui.md`
+- `kernel/src/main.rs`
+- `kernel/src/storage.rs`
+- `docs/campaigns/m6-storage-stage-1.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- Implementation changes.
-- Script or Makefile changes.
+- ATA PIO port I/O.
+- QEMU disk fixture or harness changes.
+- FAT32, append-only graph store, or write support.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- M5 row in `MILESTONE_CATALOG.md` changes from `IN-PROGRESS` to `DONE`.
-- Catalog version banner is bumped.
-- `MILESTONE_CATALOG.md` change log records the M5 closeout.
-- `docs/campaigns/m5-minimal-ui.md` has a `## Closeout` section naming the
-  Step 1-4 checkpoint commits.
-- `make gates`, `make repo-state`, and `python3 scripts/verify.py --mission
-  current` prove the closeout state.
+- `kernel/src/storage.rs` defines fixed-width storage diagnostics with backend,
+  LBA, operation, status, and timeout-count evidence.
+- Timeout behavior is deterministic and unit-tested without hardware.
+- No write API is exposed by default.
+- No graph-visible path-like storage identifier is introduced.
 
 ## Baseline to verify
 
 ```
-branch: campaign/m5-minimal-ui
+branch: campaign/m6-storage-stage-1
 status: IN-PROGRESS
 ```
 
@@ -48,16 +48,15 @@ status: IN-PROGRESS
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make gates
-make repo-state
+make fmt
+make clippy
+rustc --test kernel/src/storage.rs
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m5-minimal-ui`. Step 4 added `make ui-smoke` and
-`scripts/check_ui_smoke.py`, then wired the UI smoke into the aggregate mission
-verifier without requiring graphical CI.
-
-Stop reason: M5 campaign complete. Await operator action to open the final M5
-PR or rotate mission state to M6.
+Campaign branch: `campaign/m6-storage-stage-1`. Memory-unsafe Rust remains
+allowed at real storage hardware boundaries; Step 1 intentionally builds the
+bounded timeout/error contract first so later unsafe ATA PIO access has a
+deterministic failure surface.

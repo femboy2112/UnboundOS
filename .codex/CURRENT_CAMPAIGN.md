@@ -1,8 +1,8 @@
 # Current Campaign
 
-Campaign: C6 M5 Minimal UI
-Active mission: C6.M5 Step 5 M5 completion audit
-Status: completed
+Campaign: C7 M6 Storage Stage 1
+Active mission: C7.M6 Step 1 Storage contracts and timeout model
+Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -11,13 +11,12 @@ mission state after each completed mission.
 Publish policy: commit and push the campaign branch after each completed
 mission.
 Main policy: never merge to main, never push main, or force-push.
-Campaign branch: campaign/m5-minimal-ui
+Campaign branch: campaign/m6-storage-stage-1
 
 ## Campaign Objective
 
-Close M5 by proving the spec §13.7 Minimal UI exit criterion: framebuffer text
-output exists, boot diagnostics can surface without UART, and a minimal IDE
-display can show verified graph state.
+Close M6 by proving the spec §13.8 Storage stage 1 exit criterion: raw sector
+read works with timeout while graph-visible storage references remain opaque.
 
 ## Active Mission
 
@@ -25,21 +24,16 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C6.M5 Step 1 Framebuffer text surface primitives. Completed.
-2. C6.M5 Step 2 Boot diagnostic framebuffer fallback. Completed.
-3. C6.M5 Step 3 Minimal graph-state display model. Completed.
-4. C6.M5 Step 4 UI smoke evidence and gates. Completed.
-5. C6.M5 Step 5 M5 completion audit. Completed.
-
-## Closeout
-
-M5 is complete. `/go` must stop here until the operator opens the final M5 PR
-or rotates the control files to M6.
+1. C7.M6 Step 1 Storage contracts and timeout model. Active.
+2. C7.M6 Step 2 ATA PIO sector-read primitive. Pending.
+3. C7.M6 Step 3 QEMU raw-sector smoke fixture. Pending.
+4. C7.M6 Step 4 Resource namespace guard evidence. Pending.
+5. C7.M6 Step 5 M6 completion audit. Pending.
 
 ## Required Preflight For `go`
 
 1. Read `CLAUDE.md`.
-2. Read `docs/campaigns/m5-minimal-ui.md`.
+2. Read `docs/campaigns/m6-storage-stage-1.md`.
 3. Read `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf` or the
    extracted requirements in `.codex/PROJECT_PLAN.md`.
 4. Read `.codex/CURRENT_CAMPAIGN.md`.
@@ -56,6 +50,6 @@ unless the mission explicitly permits that skip.
 
 ## Campaign Source
 
-The detailed M5 step contract is `docs/campaigns/m5-minimal-ui.md`.
+The detailed M6 step contract is `docs/campaigns/m6-storage-stage-1.md`.
 Step allowed-file blocks are binding for implementation files; `.codex/*`
 files may be edited only for required mission-state closeout.
