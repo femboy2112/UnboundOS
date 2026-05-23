@@ -238,6 +238,40 @@ pub fn retrieve_top_k(
     Ok(emitted)
 }
 
+/// Pack retrieved snippets into deterministic assistant context.
+///
+/// # Errors
+///
+/// Returns `RetrievalError` if a result does not match the index snapshot or
+/// if `output` cannot hold the full context.
+pub fn pack_retrieval_context(
+    index: &RetrievalIndexSnapshot<'_>,
+    results: &[RetrievalResult],
+    output: &mut [u8],
+) -> Result<usize, RetrievalError> {
+    let mut writer = RetrievalContextWriter::new(output);
+    for result in results {
+        let document_index = u32_to_usize(result.document_index);
+        let document = index
+            .get(document_index)
+            .ok_or(RetrievalError::DocumentRefInvalid {
+                index: result.document_index,
+            })?;
+        if result.resource_ref_bytes() != document.resource_ref_bytes() {
+            return Err(RetrievalError::DocumentRefInvalid {
+                index: result.document_index,
+            });
+        }
+
+        writer.write(b"doc=")?;
+        writer.write(document.resource_ref_bytes())?;
+        writer.write(b"\nsnippet=")?;
+        writer.write(document.snippet_bytes())?;
+        writer.write(b"\n---\n")?;
+    }
+    Ok(writer.len())
+}
+
 pub struct RetrievalResultBuffer<'a> {
     storage: &'a mut [RetrievalResult],
     len: usize,
@@ -363,6 +397,40 @@ fn checked_text_bytes(text: &str, capacity: usize) -> Result<&[u8], RetrievalErr
         });
     }
     Ok(bytes)
+}
+
+struct RetrievalContextWriter<'a> {
+    output: &'a mut [u8],
+    len: usize,
+    required: usize,
+}
+
+impl<'a> RetrievalContextWriter<'a> {
+    const fn new(output: &'a mut [u8]) -> Self {
+        Self {
+            output,
+            len: 0,
+            required: 0,
+        }
+    }
+
+    const fn len(&self) -> usize {
+        self.len
+    }
+
+    fn write(&mut self, bytes: &[u8]) -> Result<(), RetrievalError> {
+        self.required = self.required.saturating_add(bytes.len());
+        if self.required > self.output.len() {
+            return Err(RetrievalError::OutputOverflow {
+                required: len_to_u32(self.required),
+                available: len_to_u32(self.output.len()),
+            });
+        }
+        let end = self.len + bytes.len();
+        self.output[self.len..end].copy_from_slice(bytes);
+        self.len = end;
+        Ok(())
+    }
 }
 
 fn next_ranked_document(
@@ -657,6 +725,51 @@ mod tests {
         assert_eq!(
             retrieve_top_k(&index, &query, 0, &mut results),
             Err(RetrievalError::UnsupportedQuery)
+        );
+    }
+
+    #[test]
+    fn pack_retrieval_context_preserves_ids_and_boundaries() {
+        let docs = [
+            RetrievalDocumentRef::new("index:spec-13.1", "Spec", "assistant searches local docs")
+                .unwrap(),
+            RetrievalDocumentRef::new("blob:assistant-note", "Note", "context pack").unwrap(),
+        ];
+        let index = RetrievalIndexSnapshot::new(&docs).unwrap();
+        let results = [
+            RetrievalResult::new(0, 90, "index:spec-13.1").unwrap(),
+            RetrievalResult::new(1, 70, "blob:assistant-note").unwrap(),
+        ];
+        let mut output = [0u8; 160];
+
+        let written = pack_retrieval_context(&index, &results, &mut output).unwrap();
+
+        assert_eq!(
+            core::str::from_utf8(&output[..written]).unwrap(),
+            "doc=index:spec-13.1\nsnippet=assistant searches local docs\n---\ndoc=blob:assistant-note\nsnippet=context pack\n---\n"
+        );
+    }
+
+    #[test]
+    fn pack_retrieval_context_rejects_overflow_and_mismatched_results() {
+        let docs = [RetrievalDocumentRef::new("index:spec", "Spec", "retrieval").unwrap()];
+        let index = RetrievalIndexSnapshot::new(&docs).unwrap();
+        let results = [RetrievalResult::new(0, 90, "index:spec").unwrap()];
+        let mut output = [0u8; 8];
+
+        assert_eq!(
+            pack_retrieval_context(&index, &results, &mut output),
+            Err(RetrievalError::OutputOverflow {
+                required: 14,
+                available: 8,
+            })
+        );
+
+        let mismatched = [RetrievalResult::new(0, 90, "index:other").unwrap()];
+        let mut output = [0u8; 80];
+        assert_eq!(
+            pack_retrieval_context(&index, &mismatched, &mut output),
+            Err(RetrievalError::DocumentRefInvalid { index: 0 })
         );
     }
 }

@@ -163,7 +163,7 @@ Commit and push.
 
 # Step 4 — Context packing
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Pack retrieved document snippets into bounded assistant context.
@@ -192,6 +192,8 @@ Commit and push.
 ---
 
 # Step 5 — Assistant retrieval surface
+
+Status: Active.
 
 Purpose:
   Connect local retrieval results to the assistant data surface.

@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C13 M12 Local Retrieval
-Active mission: C13.M12 Step 4 Context packing
+Active mission: C13.M12 Step 5 Assistant retrieval surface
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -27,8 +27,8 @@ See `.codex/CURRENT_MISSION.md`.
 1. C13.M12 Step 1 Retrieval data contracts. Completed.
 2. C13.M12 Step 2 Local document index snapshot. Completed.
 3. C13.M12 Step 3 Deterministic retrieval ranking. Completed.
-4. C13.M12 Step 4 Context packing. Active.
-5. C13.M12 Step 5 Assistant retrieval surface. Pending.
+4. C13.M12 Step 4 Context packing. Completed.
+5. C13.M12 Step 5 Assistant retrieval surface. Active.
 6. C13.M12 Step 6 Retrieval smoke evidence and gates. Pending.
 7. C13.M12 Step 7 M12 completion audit. Pending.
 
