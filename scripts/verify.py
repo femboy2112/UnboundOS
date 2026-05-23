@@ -36,6 +36,7 @@ STATIC_COMMANDS = [
         "address scan",
         ["python3", "scripts/address_scan.py", "tests/golden_graphs", "tests/golden_models"],
     ),
+    Command("ui smoke", ["python3", "scripts/check_ui_smoke.py"]),
 ]
 
 RUST_COMMANDS = [

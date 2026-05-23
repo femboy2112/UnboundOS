@@ -4,7 +4,19 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C6.M5 Step 4 UI smoke evidence and gates: ready.
+- C6.M5 Step 5 M5 completion audit: ready.
+
+## 2026-05-23T07:10:27Z - C6.M5 Step 4 UI smoke evidence and gates
+
+- Status: completed
+- Summary: Added `make ui-smoke` and `scripts/check_ui_smoke.py` to prove the
+  framebuffer graph-state renderer, read-only graph display snapshot, and
+  no-serial smoke assertion remain source-reachable without requiring graphical
+  CI. Wired the UI smoke into `python3 scripts/verify.py --mission current`.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `make ui-smoke`, `make gates`, and
+  `python3 scripts/verify.py --mission current`.
+- Blockers: none.
 
 ## 2026-05-23T07:08:52Z - C6.M5 Step 3 Minimal graph-state display model
 

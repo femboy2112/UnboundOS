@@ -183,6 +183,8 @@ Commit and push.
 
 # Step 4 — UI smoke evidence and gates
 
+Status: Completed.
+
 Purpose:
   Make the minimal UI evidence reproducible from checkout.
 
@@ -204,6 +206,7 @@ Validation:
 ```
 make fmt
 make clippy
+make ui-smoke
 make gates
 python3 scripts/verify.py --mission current
 ```

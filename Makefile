@@ -19,6 +19,7 @@ help:
 	@echo "  make qemu            # build + boot under QEMU (with display)"
 	@echo "  make qemu-headless   # build + boot under QEMU, headless"
 	@echo "  make qemu-no-serial  # exercise no-UART boot fallback"
+	@echo "  make ui-smoke        # source-level M5 framebuffer/graph-state smoke"
 	@echo "  make qemu-fault-de   # assert divide-by-zero SSOD path"
 	@echo "  make qemu-fault-ud   # assert invalid-opcode SSOD path"
 	@echo "  make qemu-fault-pf   # assert page-fault SSOD path"
@@ -90,6 +91,10 @@ test:
 .PHONY: fidelity
 fidelity:
 	./scripts/fidelity_check.sh
+
+.PHONY: ui-smoke
+ui-smoke:
+	python3 scripts/check_ui_smoke.py
 
 .PHONY: address-scan
 address-scan:
