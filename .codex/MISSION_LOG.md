@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C9.M8 Step 3 Prompt-to-text toy inference path: ready.
+- C9.M8 Step 4 Toy transformer smoke evidence and gates: ready.
+
+## 2026-05-23T07:50:26Z - C9.M8 Step 3 Prompt-to-text toy inference path
+
+- Status: completed
+- Summary: Connected `RawByteToToken` prompt encoding and generated-token
+  decoding to the deterministic toy transformer path using only
+  caller-provided prompt token, generated token, and output byte buffers.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; the memory-unsafe project identity
+  remains a permission for bounded hardware/model-kernel boundaries, not a
+  reason to make deterministic safe toy inference unsound.
+- Blockers: none.
 
 ## 2026-05-23T07:47:25Z - C9.M8 Step 2 Deterministic token generation
 

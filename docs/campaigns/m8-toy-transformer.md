@@ -134,6 +134,8 @@ Commit and push.
 
 # Step 3 — Prompt-to-text toy inference path
 
+Status: Completed.
+
 Purpose:
   Connect M7 tokenizer encode/decode with the M8 deterministic toy generator.
 

@@ -4,6 +4,8 @@
 //! hidden execution. The arithmetic is deliberately scalar and deterministic;
 //! SIMD kernels remain behind dispatch and are not touched by M8.
 
+use crate::tokenizer::{self, TokenizerError};
+use umdl::TokenizerMetadata;
 use umdl::TokenizerType;
 
 pub const M8_SUPPORTED_ARCHITECTURE_ID: u32 = 1;
@@ -75,6 +77,7 @@ pub enum ToyTransformerError {
     UnsupportedConfig,
     PromptTooLong { provided: u32, max: u32 },
     OutputOverflow { required: u32, available: u32 },
+    Tokenizer(TokenizerError),
 }
 
 /// Validate the single toy model shape supported by M8.
@@ -176,6 +179,38 @@ pub fn generate_tokens(
         *slot = 32 + ((state >> 24) % 95) as u32;
     }
     Ok(count)
+}
+
+/// Run the M8 prompt-to-text toy path using explicit caller buffers.
+///
+/// # Errors
+///
+/// Returns `ToyTransformerError` when tokenizer metadata is invalid, prompt
+/// tokenization or output decoding fails, toy model/config validation fails,
+/// or any caller-provided buffer is too small.
+pub fn generate_text<'a>(
+    metadata: ToyModelMetadata,
+    config: ToyGenerationConfig,
+    tokenizer_metadata: TokenizerMetadata,
+    prompt: &str,
+    prompt_tokens: &mut [u32],
+    generated_tokens: &mut [u32],
+    output_bytes: &'a mut [u8],
+) -> Result<&'a str, ToyTransformerError> {
+    let prompt_len = tokenizer::encode_raw_bytes(tokenizer_metadata, prompt, prompt_tokens)
+        .map_err(ToyTransformerError::Tokenizer)?;
+    let generated_len = generate_tokens(
+        metadata,
+        config,
+        &prompt_tokens[..prompt_len],
+        generated_tokens,
+    )?;
+    tokenizer::decode_raw_bytes(
+        tokenizer_metadata,
+        &generated_tokens[..generated_len],
+        output_bytes,
+    )
+    .map_err(ToyTransformerError::Tokenizer)
 }
 
 fn initial_state(
@@ -351,6 +386,74 @@ mod tests {
         let mut short_output = [0u32; 3];
         assert_eq!(
             generate_tokens(metadata, config, &[], &mut short_output).unwrap_err(),
+            ToyTransformerError::OutputOverflow {
+                required: 4,
+                available: 3,
+            }
+        );
+    }
+
+    #[test]
+    fn prompt_to_text_generation_is_deterministic() {
+        let metadata = ToyModelMetadata::m8_toy();
+        let config = ToyGenerationConfig::deterministic(6, 123);
+        let tokenizer_metadata = TokenizerMetadata::raw_byte_to_token();
+        let mut prompt_tokens = [0u32; 32];
+        let mut generated_tokens = [0u32; 8];
+        let mut output_bytes = [0u8; 8];
+        let text = generate_text(
+            metadata,
+            config,
+            tokenizer_metadata,
+            "OS",
+            &mut prompt_tokens,
+            &mut generated_tokens,
+            &mut output_bytes,
+        )
+        .unwrap();
+
+        assert_eq!(text, "l UnkA");
+    }
+
+    #[test]
+    fn prompt_to_text_uses_caller_provided_buffers() {
+        let metadata = ToyModelMetadata::m8_toy();
+        let config = ToyGenerationConfig::deterministic(4, 1);
+        let tokenizer_metadata = TokenizerMetadata::raw_byte_to_token();
+        let mut short_prompt_tokens = [0u32; 1];
+        let mut generated_tokens = [0u32; 4];
+        let mut output_bytes = [0u8; 4];
+
+        assert_eq!(
+            generate_text(
+                metadata,
+                config,
+                tokenizer_metadata,
+                "too long",
+                &mut short_prompt_tokens,
+                &mut generated_tokens,
+                &mut output_bytes,
+            )
+            .unwrap_err(),
+            ToyTransformerError::Tokenizer(TokenizerError::OutputOverflow {
+                required: 8,
+                available: 1,
+            })
+        );
+
+        let mut prompt_tokens = [0u32; 8];
+        let mut short_generated_tokens = [0u32; 3];
+        assert_eq!(
+            generate_text(
+                metadata,
+                config,
+                tokenizer_metadata,
+                "ok",
+                &mut prompt_tokens,
+                &mut short_generated_tokens,
+                &mut output_bytes,
+            )
+            .unwrap_err(),
             ToyTransformerError::OutputOverflow {
                 required: 4,
                 available: 3,

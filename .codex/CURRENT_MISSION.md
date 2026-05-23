@@ -1,21 +1,21 @@
 # Current Mission
 
-Mission: C9.M8 Step 3 Prompt-to-text toy inference path
+Mission: C9.M8 Step 4 Toy transformer smoke evidence and gates
 Campaign: C9 M8 Toy Transformer
 Status: ready
 
 ## Objective
 
-Execute M8 campaign Step 3 from `docs/campaigns/m8-toy-transformer.md`:
-connect M7 tokenizer encode/decode with the M8 deterministic toy generator.
+Execute M8 campaign Step 4 from `docs/campaigns/m8-toy-transformer.md`:
+make toy-model deterministic output evidence reproducible from checkout.
 
 ## Scope
 
 Allowed changes:
 
-- `crates/llm/src/tokenizer.rs`
-- `crates/llm/src/lib.rs`
-- `crates/llm/src/toy_transformer.rs`
+- `Makefile`
+- `scripts/**`
+- `crates/llm/src/**`
 - `docs/campaigns/m8-toy-transformer.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -23,17 +23,16 @@ Allowed changes:
 
 Out of scope:
 
-- Smoke target or script wiring.
 - UMDL loader, tensor descriptors, sampler, SIMD kernels, storage, or QEMU
   harness changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- UTF-8 prompts tokenize through `RawByteToToken`, generate new tokens, and
-  decode to UTF-8 text using caller-provided buffers.
-- Representative prompts produce deterministic text output.
-- All state stays in explicit caller-provided buffers.
+- Smoke target/source check proves toy-model deterministic output and
+  prompt-to-text tests exist.
+- Aggregate mission verification runs toy transformer smoke.
+- QEMU and graph gates remain green.
 
 ## Baseline to verify
 
@@ -49,7 +48,8 @@ python3 scripts/status.py
 python3 scripts/mission.py validate
 make fmt
 make clippy
-cargo test -p llm
+make toy-transformer-smoke
+make gates
 python3 scripts/verify.py --mission current
 ```
 
@@ -58,4 +58,5 @@ python3 scripts/verify.py --mission current
 Campaign branch: `campaign/m8-toy-transformer`. M8 should not need new unsafe
 code. Step 1 added fixed-width toy model/config metadata and validation for
 exactly one supported toy architecture. Step 2 added deterministic token
-generation.
+generation. Step 3 added prompt-to-text inference through tokenizer
+encode/decode and the toy generator with caller-provided buffers.
