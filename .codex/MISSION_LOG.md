@@ -4,7 +4,23 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C6.M5 Step 1 Framebuffer text surface primitives: ready.
+- C6.M5 Step 2 Boot diagnostic framebuffer fallback: ready.
+
+## 2026-05-23T06:59:40Z - C6.M5 Step 1 Framebuffer text surface primitives
+
+- Status: completed
+- Summary: Added `kernel/src/framebuffer.rs` with boot-passive text-cell
+  rendering over caller-provided linear pixel memory and registered the module
+  in `kernel/src/main.rs`. The surface uses checked buffer sizing, checked
+  pixel indexing, explicit clipping, and no global framebuffer pointer.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `make kernel`, and `python3
+  scripts/verify.py --mission current`.
+- Memory-unsafety audit: current Step 1 code introduces no new unsafe block;
+  this is intentional because the real hardware/MMIO boundary is not in Step 1.
+  Future unsafe framebuffer access remains allowed when bounded, inspectable,
+  deterministic, and not undefined by design.
+- Blockers: none.
 
 ## 2026-05-23T06:55:00Z - C6.M5 campaign activation
 

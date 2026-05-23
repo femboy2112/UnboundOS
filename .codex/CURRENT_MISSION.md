@@ -1,20 +1,23 @@
 # Current Mission
 
-Mission: C6.M5 Step 1 Framebuffer text surface primitives
+Mission: C6.M5 Step 2 Boot diagnostic framebuffer fallback
 Campaign: C6 M5 Minimal UI
 Status: ready
 
 ## Objective
 
-Execute M5 campaign Step 1 from `docs/campaigns/m5-minimal-ui.md`: add a small
-framebuffer text surface with deterministic glyph-cell writes that can be built
-and tested without requiring bootloader framebuffer handoff.
+Execute M5 campaign Step 2 from `docs/campaigns/m5-minimal-ui.md`: wire the
+heartbeat fallback hook so a framebuffer surface can display `BOOT_NO_SERIAL`,
+`BOOT_HEARTBEAT_BUFFER_PRESENT`, and the recorded boot diagnostic buffer when
+UART is unavailable.
 
 ## Scope
 
 Allowed changes:
 
-- `kernel/src/main.rs`
+- `kernel/src/boot.rs`
+- `kernel/src/heartbeat.rs`
+- `kernel/src/boot_diag.rs`
 - `kernel/src/framebuffer.rs`
 - `docs/campaigns/m5-minimal-ui.md`
 - `.codex/CURRENT_MISSION.md`
@@ -23,19 +26,16 @@ Allowed changes:
 
 Out of scope:
 
-- Boot framebuffer initialization.
 - Graph runtime or verifier changes.
 - Storage, LLM, or SIMD changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- `kernel/src/framebuffer.rs` provides fixed-size text-cell rendering
-  primitives over a caller-provided linear pixel buffer.
-- The module is boot-passive: no global framebuffer assumptions and no writes
-  before explicit initialization.
-- Cell placement, newline, and bounds clipping are covered by tests or
-  build-time assertions.
+- The TODO-only framebuffer fallback is replaced with a real call path through
+  framebuffer text output.
+- Serial heartbeat order and normal boot behavior remain unchanged.
+- Headless boot does not require a framebuffer.
 
 ## Baseline to verify
 
@@ -51,12 +51,14 @@ python3 scripts/status.py
 python3 scripts/mission.py validate
 make fmt
 make clippy
-make kernel
+make qemu-headless
+make qemu-no-serial
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m5-minimal-ui`. M4 completed at `65d8ab3`; this
-mission starts the framebuffer UI surface without bootloader handoff
-assumptions.
+Campaign branch: `campaign/m5-minimal-ui`. Step 1 added boot-passive
+framebuffer text primitives over caller-provided pixel memory. Unsafe memory
+access remains allowed for real hardware/MMIO boundaries, but must be bounded,
+inspectable, deterministic, and not undefined by design.

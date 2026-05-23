@@ -52,6 +52,12 @@ H9  boot is never blind    — framebuffer augments heartbeat, never replaces it
 H10 structured failures    — UI failures must not swallow SSOD diagnostics.
 ```
 
+Memory-unsafe Rust is allowed and expected when the hardware boundary requires
+it. The constraint is not "avoid unsafe"; the constraint is that unsafe memory
+access remains bounded, inspectable, deterministic, and not undefined by
+design. Safe wrappers over caller-provided memory are acceptable until a real
+MMIO or bootloader-handoff boundary requires an explicit unsafe block.
+
 ## Macro sequence
 
 ```
@@ -65,6 +71,8 @@ Step 5 — M5 completion audit
 ---
 
 # Step 1 — Framebuffer text surface primitives
+
+Status: Completed.
 
 Purpose:
   Add a small framebuffer text surface with deterministic glyph-cell writes

@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C6 M5 Minimal UI
-Active mission: C6.M5 Step 1 Framebuffer text surface primitives
+Active mission: C6.M5 Step 2 Boot diagnostic framebuffer fallback
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -25,8 +25,8 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C6.M5 Step 1 Framebuffer text surface primitives. Active.
-2. C6.M5 Step 2 Boot diagnostic framebuffer fallback. Pending.
+1. C6.M5 Step 1 Framebuffer text surface primitives. Completed.
+2. C6.M5 Step 2 Boot diagnostic framebuffer fallback. Active.
 3. C6.M5 Step 3 Minimal graph-state display model. Pending.
 4. C6.M5 Step 4 UI smoke evidence and gates. Pending.
 5. C6.M5 Step 5 M5 completion audit. Pending.

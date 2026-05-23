@@ -136,6 +136,7 @@ mod arena;
 mod boot;
 mod boot_diag;
 mod cpu;
+mod framebuffer;
 mod heartbeat;
 mod idt;
 mod serial;
