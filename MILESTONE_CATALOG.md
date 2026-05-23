@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.24
+> **Catalog version:** v0.25
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** none
+> **Active milestone:** M12 Local retrieval
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -37,7 +37,7 @@ archived under `docs/campaigns/` and never edited again.
 | M9  | UMDL loader | §10, §13.11 | DONE | Model package validates and loads; `make gates` PROCEED | docs/campaigns/m9-umdl-loader.md |
 | M10 | Quantized inference | §10, §11, §13.12 | DONE | Small quantized model streams tokens; `make gates` PROCEED | docs/campaigns/m10-quantized-inference.md |
 | M11 | IDE assistant | §10, §13.1 | DONE | Local assistant explains graph and SSOD; `make gates` PROCEED | docs/campaigns/m11-ide-assistant.md |
-| M12 | Local retrieval | §10, §13.1 | TODO | Assistant searches local docs | docs/campaigns/m12-local-retrieval.md *(not yet written)* |
+| M12 | Local retrieval | §10, §13.1 | IN-PROGRESS | Assistant searches local docs; `make gates` PROCEED | docs/campaigns/m12-local-retrieval.md |
 
 ## Deferred reasons
 
@@ -45,6 +45,11 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.25** — Opened M12 Local retrieval on
+  `campaign/m12-local-retrieval`. The campaign owns fixed-width local document
+  retrieval inputs, deterministic ranking, context packing, assistant retrieval
+  surface integration, and smoke evidence without exposing host paths or
+  granting assistant mutation authority.
 - **v0.24** — M11 completed on `campaign/m11-ide-assistant`: fixed-width
   assistant action proposals, caller-owned action buffers, read-only graph and
   SSOD explanation snapshots, deterministic caller-buffer explanation text, a

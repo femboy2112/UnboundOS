@@ -1,42 +1,46 @@
 # Current Mission
 
-Mission: C12.M11 Step 6 M11 completion audit
-Campaign: C12 M11 IDE Assistant
-Status: completed
+Mission: C13.M12 Step 1 Retrieval data contracts
+Campaign: C13 M12 Local Retrieval
+Status: ready
 
 ## Objective
 
-Execute M11 campaign Step 6 from `docs/campaigns/m11-ide-assistant.md`:
-close M11 after assistant action-buffer, graph explanation, SSOD explanation,
-unified explain surface, and smoke evidence are reproducibly verified.
+Execute M12 campaign Step 1 from `docs/campaigns/m12-local-retrieval.md`:
+add fixed-width retrieval query, document reference, and result records.
 
 ## Scope
 
 Allowed changes:
 
-- `MILESTONE_CATALOG.md`
-- `docs/campaigns/m11-ide-assistant.md`
+- `crates/llm/src/lib.rs`
+- `crates/llm/src/retrieval.rs`
+- `docs/campaigns/m12-local-retrieval.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- Implementation changes outside campaign/catalog/control closeout files.
+- Filesystem access, host paths above storage adapters, graph mutation,
+  storage behavior changes, QEMU harness changes, thread/queue, eval, or
+  execution-hook changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- M11 row in `MILESTONE_CATALOG.md` is marked `DONE`.
-- Catalog version banner and change log are updated for M11.
-- M11 campaign closeout records Step 1-5 commit SHAs.
-- `make gates`, `make repo-state`, and mission verification pass.
+- `crates/llm` exposes a retrieval module.
+- Retrieval query, document reference, and result records use fixed-width
+  bounded fields and caller-owned buffers.
+- Host paths, `local://`, and oversized text are rejected deterministically.
+- No unsafe code, filesystem access, thread/queue, eval, execution hook, or
+  graph mutation surface is introduced.
 
 ## Baseline to verify
 
 ```
-branch: campaign/m11-ide-assistant
-status: DONE
+branch: campaign/m12-local-retrieval
+status: IN-PROGRESS
 ```
 
 ## Verification Commands
@@ -44,14 +48,14 @@ status: DONE
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make gates
-make repo-state
+make fmt
+make clippy
+cargo test -p llm
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m11-ide-assistant`. Step 5 added reproducible
-assistant smoke evidence, wired it into `make gates` and mission verification,
-and kept the graph/QEMU aggregate gates green. Memory-unsafe Rust remains
-allowed by project identity; M11 did not require new unsafe code.
+Campaign branch: `campaign/m12-local-retrieval`. M11 completed at `8f91be3`.
+Memory-unsafe Rust remains allowed by project identity, but M12 retrieval
+contracts should be safe, deterministic, bounded, and non-executing.

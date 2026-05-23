@@ -1,8 +1,8 @@
 # Current Campaign
 
-Campaign: C12 M11 IDE Assistant
-Active mission: C12.M11 Step 6 M11 completion audit
-Status: completed
+Campaign: C13 M12 Local Retrieval
+Active mission: C13.M12 Step 1 Retrieval data contracts
+Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -11,12 +11,12 @@ mission state after each completed mission.
 Publish policy: commit and push the campaign branch after each completed
 mission.
 Main policy: never merge to main, never push main, or force-push.
-Campaign branch: campaign/m11-ide-assistant
+Campaign branch: campaign/m12-local-retrieval
 
 ## Campaign Objective
 
-Close M11 by proving the spec §13.1 assistant criterion: a local assistant
-explains graph and SSOD.
+Close M12 by proving the spec §13.1 retrieval criterion: a local assistant
+searches local docs.
 
 ## Active Mission
 
@@ -24,17 +24,18 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C12.M11 Step 1 Structured action buffer contract. Completed.
-2. C12.M11 Step 2 Graph explanation snapshot. Completed.
-3. C12.M11 Step 3 SSOD explanation snapshot. Completed.
-4. C12.M11 Step 4 Assistant explanation surface. Completed.
-5. C12.M11 Step 5 Assistant smoke evidence and gates. Completed.
-6. C12.M11 Step 6 M11 completion audit. Completed.
+1. C13.M12 Step 1 Retrieval data contracts. Active.
+2. C13.M12 Step 2 Local document index snapshot. Pending.
+3. C13.M12 Step 3 Deterministic retrieval ranking. Pending.
+4. C13.M12 Step 4 Context packing. Pending.
+5. C13.M12 Step 5 Assistant retrieval surface. Pending.
+6. C13.M12 Step 6 Retrieval smoke evidence and gates. Pending.
+7. C13.M12 Step 7 M12 completion audit. Pending.
 
 ## Required Preflight For `go`
 
 1. Read `CLAUDE.md`.
-2. Read `docs/campaigns/m11-ide-assistant.md`.
+2. Read `docs/campaigns/m12-local-retrieval.md`.
 3. Read `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf` or the
    extracted requirements in `.codex/PROJECT_PLAN.md`.
 4. Read `.codex/CURRENT_CAMPAIGN.md`.
@@ -51,6 +52,6 @@ unless the mission explicitly permits that skip.
 
 ## Campaign Source
 
-The detailed M11 step contract is `docs/campaigns/m11-ide-assistant.md`.
+The detailed M12 step contract is `docs/campaigns/m12-local-retrieval.md`.
 Step allowed-file blocks are binding for implementation files; `.codex/*`
 files may be edited only for required mission-state closeout.

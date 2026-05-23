@@ -4,7 +4,19 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- none.
+- C13.M12 Step 1 Retrieval data contracts: ready.
+
+## 2026-05-23T08:46:21Z - C13.M12 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m12-local-retrieval`, marked M12 `IN-PROGRESS`,
+  created the M12 campaign plan, and rotated `.codex` state to Step 1 for
+  fixed-width retrieval query/document/result contracts.
+- Verification: pending below for the active Step 1 mission state.
+- Memory-unsafety audit: M12 keeps unsafe Rust allowed by project identity, but
+  retrieval and context-packing surfaces should remain safe, deterministic,
+  bounded, and non-executing.
+- Blockers: none.
 
 ## 2026-05-23T08:44:53Z - C12.M11 Step 6 M11 completion audit
 
