@@ -102,7 +102,7 @@ Commit and push.
 
 # Step 2 — Local document index snapshot
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Represent a read-only local document index snapshot from fixed document
@@ -132,6 +132,8 @@ Commit and push.
 ---
 
 # Step 3 — Deterministic retrieval ranking
+
+Status: Active.
 
 Purpose:
   Return deterministic top-k local document matches into caller-provided output.

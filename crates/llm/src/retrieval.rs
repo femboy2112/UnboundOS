@@ -19,6 +19,9 @@ pub enum RetrievalError {
     QueryEmpty,
     ResourceRefTooLong { required: u32, available: u32 },
     ResourceRefInvalid,
+    IndexEmpty,
+    DuplicateResourceRef { first: u32, duplicate: u32 },
+    DocumentRefInvalid { index: u32 },
     TextTooLong { required: u32, available: u32 },
     OutputOverflow { required: u32, available: u32 },
 }
@@ -130,6 +133,14 @@ impl RetrievalDocumentRef {
         let len = u32_to_usize(self.snippet_len).min(RETRIEVAL_SNIPPET_BYTES);
         &self.snippet[..len]
     }
+
+    #[must_use]
+    pub fn is_valid(&self) -> bool {
+        u32_to_usize(self.resource_ref_len) <= RETRIEVAL_RESOURCE_REF_BYTES
+            && u32_to_usize(self.title_len) <= RETRIEVAL_TITLE_BYTES
+            && u32_to_usize(self.snippet_len) <= RETRIEVAL_SNIPPET_BYTES
+            && is_opaque_resource_ref(self.resource_ref_bytes())
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -231,6 +242,69 @@ impl<'a> RetrievalResultBuffer<'a> {
 
     pub fn clear(&mut self) {
         self.len = 0;
+    }
+}
+
+/// Read-only local document index over caller-owned document records.
+#[derive(Debug)]
+pub struct RetrievalIndexSnapshot<'a> {
+    documents: &'a [RetrievalDocumentRef],
+}
+
+impl<'a> RetrievalIndexSnapshot<'a> {
+    /// Build a read-only local document index snapshot.
+    ///
+    /// # Errors
+    ///
+    /// Returns `RetrievalError` when the index is empty, contains invalid
+    /// document references, or repeats the same opaque document ID.
+    pub fn new(documents: &'a [RetrievalDocumentRef]) -> Result<Self, RetrievalError> {
+        if documents.is_empty() {
+            return Err(RetrievalError::IndexEmpty);
+        }
+
+        for (index, document) in documents.iter().enumerate() {
+            if !document.is_valid() {
+                return Err(RetrievalError::DocumentRefInvalid {
+                    index: len_to_u32(index),
+                });
+            }
+        }
+
+        for first in 0..documents.len() {
+            for duplicate in (first + 1)..documents.len() {
+                if documents[first].resource_ref_bytes()
+                    == documents[duplicate].resource_ref_bytes()
+                {
+                    return Err(RetrievalError::DuplicateResourceRef {
+                        first: len_to_u32(first),
+                        duplicate: len_to_u32(duplicate),
+                    });
+                }
+            }
+        }
+
+        Ok(Self { documents })
+    }
+
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.documents.len()
+    }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.documents.is_empty()
+    }
+
+    #[must_use]
+    pub const fn documents(&self) -> &'a [RetrievalDocumentRef] {
+        self.documents
+    }
+
+    #[must_use]
+    pub fn get(&self, index: usize) -> Option<&'a RetrievalDocumentRef> {
+        self.documents.get(index)
     }
 }
 
@@ -371,5 +445,52 @@ mod tests {
         );
         buffer.clear();
         assert!(buffer.is_empty());
+    }
+
+    #[test]
+    fn index_snapshot_is_read_only_view_over_caller_documents() {
+        let docs = [
+            RetrievalDocumentRef::new("index:spec-13.1", "Spec", "retrieval").unwrap(),
+            RetrievalDocumentRef::new("blob:assistant-note", "Note", "context").unwrap(),
+        ];
+
+        let index = RetrievalIndexSnapshot::new(&docs).unwrap();
+
+        assert_eq!(index.len(), 2);
+        assert!(!index.is_empty());
+        assert_eq!(index.documents(), &docs);
+        assert_eq!(
+            index.get(1).unwrap().resource_ref_bytes(),
+            b"blob:assistant-note"
+        );
+        assert!(index.get(2).is_none());
+    }
+
+    #[test]
+    fn index_snapshot_rejects_empty_duplicate_and_invalid_refs() {
+        assert_eq!(
+            RetrievalIndexSnapshot::new(&[]).unwrap_err(),
+            RetrievalError::IndexEmpty
+        );
+
+        let duplicate_docs = [
+            RetrievalDocumentRef::new("index:spec-13.1", "Spec", "one").unwrap(),
+            RetrievalDocumentRef::new("index:spec-13.1", "Spec copy", "two").unwrap(),
+        ];
+        assert_eq!(
+            RetrievalIndexSnapshot::new(&duplicate_docs).unwrap_err(),
+            RetrievalError::DuplicateResourceRef {
+                first: 0,
+                duplicate: 1,
+            }
+        );
+
+        let mut invalid = RetrievalDocumentRef::new("index:spec", "Spec", "snippet").unwrap();
+        invalid.resource_ref[0] = b'/';
+        let invalid_docs = [invalid];
+        assert_eq!(
+            RetrievalIndexSnapshot::new(&invalid_docs).unwrap_err(),
+            RetrievalError::DocumentRefInvalid { index: 0 }
+        );
     }
 }

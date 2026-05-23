@@ -1,14 +1,13 @@
 # Current Mission
 
-Mission: C13.M12 Step 2 Local document index snapshot
+Mission: C13.M12 Step 3 Deterministic retrieval ranking
 Campaign: C13 M12 Local Retrieval
 Status: ready
 
 ## Objective
 
-Execute M12 campaign Step 2 from `docs/campaigns/m12-local-retrieval.md`:
-represent a read-only local document index snapshot from fixed document
-records.
+Execute M12 campaign Step 3 from `docs/campaigns/m12-local-retrieval.md`:
+return deterministic top-k local document matches into caller-provided output.
 
 ## Scope
 
@@ -29,11 +28,9 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- Document index snapshots are read-only views over caller-owned document
-  records.
-- Empty indexes, duplicate document IDs, and invalid document references return
-  structured errors.
-- Opaque document/resource IDs remain enforced above storage adapters.
+- Query matching and top-k ranking are deterministic with stable tie-breaking.
+- Ranked results are written only into caller-provided output.
+- Output overflow and unsupported query shapes return structured errors.
 
 ## Baseline to verify
 
@@ -55,7 +52,8 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m12-local-retrieval`. Step 1 added fixed-width
-retrieval query, document reference, result, and caller-owned result buffer
-contracts. Memory-unsafe Rust remains allowed by project identity, but M12
-retrieval contracts should be safe, deterministic, bounded, and non-executing.
+Campaign branch: `campaign/m12-local-retrieval`. Step 2 added read-only local
+document index snapshots over caller-owned records, with validation for empty
+indexes, duplicate refs, and invalid refs. Memory-unsafe Rust remains allowed
+by project identity, but M12 retrieval contracts should be safe,
+deterministic, bounded, and non-executing.

@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C13.M12 Step 2 Local document index snapshot: ready.
+- C13.M12 Step 3 Deterministic retrieval ranking: ready.
+
+## 2026-05-23T08:54:10Z - C13.M12 Step 2 Local document index snapshot
+
+- Status: completed
+- Summary: Added `RetrievalIndexSnapshot` as a read-only view over
+  caller-owned document records, with structured rejection for empty indexes,
+  duplicate opaque document refs, and tampered invalid document refs.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code, filesystem access, host-path
+  leakage, graph mutation, storage behavior change, thread/queue, eval, or
+  execution hook.
+- Blockers: none.
 
 ## 2026-05-23T08:51:54Z - C13.M12 Step 1 Retrieval data contracts
 
