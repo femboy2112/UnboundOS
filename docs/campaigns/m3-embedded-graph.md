@@ -95,6 +95,8 @@ Step 5 — M3 completion audit
 
 # Step 1 — Runtime epoch readiness primitives
 
+Status: Completed.
+
 Purpose:
   Add private runtime wire/consumer epoch observation primitives with tests that
   prove readiness is `wire_epoch > last_observed_epoch`.

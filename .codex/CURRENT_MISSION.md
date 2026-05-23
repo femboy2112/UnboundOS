@@ -1,14 +1,14 @@
 # Current Mission
 
-Mission: C4.M3 Step 1 Runtime epoch readiness primitives
+Mission: C4.M3 Step 2 Private hardcoded graph runtime
 Campaign: C4 M3 Embedded Graph
 Status: ready
 
 ## Objective
 
-Execute M3 campaign Step 1 from `docs/campaigns/m3-embedded-graph.md`: add
-private runtime wire/consumer epoch observation primitives with tests that prove
-readiness is `wire_epoch > last_observed_epoch`.
+Execute M3 campaign Step 2 from `docs/campaigns/m3-embedded-graph.md`:
+implement a built-in source -> transform -> sink graph shape behind the
+verified compile path.
 
 ## Scope
 
@@ -16,7 +16,7 @@ Allowed changes:
 
 - `crates/graph/src/lib.rs`
 - `crates/graph/src/loader.rs`
-- `scripts/verify.py`
+- `crates/graph/src/verifier.rs`
 - `docs/campaigns/m3-embedded-graph.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -25,15 +25,16 @@ Allowed changes:
 Out of scope:
 
 - Direct public `GraphRuntime` construction.
-- Storage, UI, LLM, or persistent artifact format changes.
+- Boot hook, storage, UI, LLM, or persistent artifact format expansion beyond
+  the minimal symbolic built-in fixture.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- Runtime epoch observation primitives are private to the graph crate/loader
-  surface.
-- Tests prove readiness before observation, not ready after observation, and
-  ready again after producer epoch increment.
+- A symbolic built-in graph payload passes `graph_load_from_umod`.
+- `graph_compile_verified` builds private runtime structures for that verified
+  graph.
+- A graph-crate test executes source -> transform -> sink once.
 - No public bypass around `graph_load_from_umod -> graph_compile_verified` is
   added.
 
@@ -56,5 +57,5 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m3-embedded-graph`. M3 must not add a developer-mode
-or test-only graph runtime constructor.
+Campaign branch: `campaign/m3-embedded-graph`. Step 1 added private epoch
+readiness primitives and tests.

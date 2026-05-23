@@ -4,7 +4,18 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C4.M3 Step 1 Runtime epoch readiness primitives: ready.
+- C4.M3 Step 2 Private hardcoded graph runtime: ready.
+
+## 2026-05-23T01:42:42Z - C4.M3 Step 1 Runtime epoch readiness primitives
+
+- Status: completed
+- Summary: Added private graph runtime wire/consumer epoch observation
+  primitives inside the loader module and tests proving readiness follows
+  `wire_epoch > last_observed_epoch`.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `cargo test -p graph`, `python3 scripts/verify.py
+  --mission current`, and `make gates`.
+- Blockers: none.
 
 ## 2026-05-23T01:36:00Z - C4.M3 campaign activation
 
