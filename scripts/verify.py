@@ -74,6 +74,11 @@ QEMU_COMMANDS = [
         requires=("make", "qemu-system-x86_64"),
     ),
     Command(
+        "qemu interactive serial shell",
+        ["make", "-s", "qemu-interactive-smoke"],
+        requires=("make", "python3", "qemu-system-x86_64"),
+    ),
+    Command(
         "qemu no-serial fallback",
         ["make", "-s", "qemu-no-serial"],
         requires=("make", "qemu-system-x86_64"),

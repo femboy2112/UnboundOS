@@ -17,7 +17,7 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-TOTAL=20
+TOTAL=21
 PASS=()
 FAILED=""
 
@@ -58,12 +58,13 @@ step 11 "quantized-smoke" python3 scripts/check_quantized_smoke.py
 step 12 "assistant-smoke" python3 scripts/check_assistant_smoke.py
 step 13 "retrieval-smoke" python3 scripts/check_retrieval_smoke.py
 step 14 "qemu heartbeat" make -s qemu-headless
-step 15 "qemu no-serial fallback" make -s qemu-no-serial
-step 16 "qemu SSOD divide_error" make -s qemu-fault-de
-step 17 "qemu SSOD invalid_opcode" make -s qemu-fault-ud
-step 18 "qemu SSOD page_fault" make -s qemu-fault-pf
-step 19 "qemu M2 arena/memory dump" make -s qemu-m2-dump
-step 20 "qemu M6 storage marker" make -s qemu-storage-smoke
+step 15 "qemu interactive serial shell" make -s qemu-interactive-smoke
+step 16 "qemu no-serial fallback" make -s qemu-no-serial
+step 17 "qemu SSOD divide_error" make -s qemu-fault-de
+step 18 "qemu SSOD invalid_opcode" make -s qemu-fault-ud
+step 19 "qemu SSOD page_fault" make -s qemu-fault-pf
+step 20 "qemu M2 arena/memory dump" make -s qemu-m2-dump
+step 21 "qemu M6 storage marker" make -s qemu-storage-smoke
 
 rm -f /tmp/gates-$$.log
 

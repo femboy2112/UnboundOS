@@ -19,6 +19,7 @@ const REG_LINE_CTRL: u16 = COM1 + 3; // LCR (bit 7 = DLAB)
 const REG_MODEM_CTRL: u16 = COM1 + 4; // MCR
 const REG_LINE_STATUS: u16 = COM1 + 5; // LSR
 
+const LSR_DATA_READY: u8 = 0x01;
 const LSR_THR_EMPTY: u8 = 0x20;
 const MCR_LOOPBACK: u8 = 0x10;
 
@@ -121,6 +122,21 @@ pub fn write_byte(b: u8) {
     unsafe {
         wait_thr_empty();
         outb(REG_DATA, b);
+    }
+}
+
+/// Read one byte if the UART receive buffer has data. No-op when unavailable.
+pub fn read_byte_nonblocking() -> Option<u8> {
+    if !is_available() {
+        return None;
+    }
+    // SAFETY: availability flag was checked; RBR read is the only legal way
+    // to receive one byte from COM1 in the polling operator shell.
+    unsafe {
+        if inb(REG_LINE_STATUS) & LSR_DATA_READY == 0 {
+            return None;
+        }
+        Some(inb(REG_DATA))
     }
 }
 

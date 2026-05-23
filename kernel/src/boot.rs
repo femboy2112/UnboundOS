@@ -6,7 +6,7 @@
 //! CLAUDE.md §11 (no silent placeholders); the heartbeat lines themselves are
 //! emitted in §1.6 order.
 
-use crate::{arena, cpu, heartbeat, idt, ssod, storage};
+use crate::{arena, cpu, heartbeat, idt, operator_shell, storage};
 
 // Canonical source-level assertion for spec §3.2 kernel-entry order.
 // Runtime comments below cite the same steps at the implementation site;
@@ -116,11 +116,13 @@ pub unsafe fn run() -> ! {
     run_m6_storage_smoke_from_env();
 
     // spec §3.2 step 14: enter orchestrator or IDE shell.
-    // TODO M3 (spec §5.9): cooperative scheduler.
+    // The initial interactive surface is a polling serial operator shell. It
+    // dynamically exercises graph, LLM, retrieval, and assistant surfaces until
+    // the full framebuffer IDE/orchestrator replaces it.
 
     heartbeat::emit("UNBOUNDOS_BOOT_OK");
     qemu_exit_on_boot_ok_for_smoke();
-    ssod::halt_idle()
+    operator_shell::run(tier)
 }
 
 fn qemu_exit_on_boot_ok_for_smoke() {

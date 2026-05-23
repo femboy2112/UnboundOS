@@ -20,6 +20,7 @@ help:
 	@echo "  make test            # run host-side tests"
 	@echo "  make qemu            # build + boot under QEMU (with display)"
 	@echo "  make qemu-headless   # build + boot under QEMU, headless"
+	@echo "  make qemu-interactive-smoke # boot QEMU and exercise serial shell commands"
 	@echo "  make qemu-no-serial  # exercise no-UART boot fallback"
 	@echo "  make qemu-storage-smoke # assert M6 raw sector read under QEMU"
 	@echo "  make ui-smoke        # source-level M5 framebuffer/graph-state smoke"
@@ -67,6 +68,10 @@ qemu: image
 .PHONY: qemu-headless
 qemu-headless: image
 	./scripts/qemu.sh --headless
+
+.PHONY: qemu-interactive-smoke
+qemu-interactive-smoke:
+	python3 scripts/check_qemu_interactive.py
 
 .PHONY: qemu-no-serial
 qemu-no-serial:

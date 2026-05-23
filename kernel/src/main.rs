@@ -139,6 +139,7 @@ mod cpu;
 mod framebuffer;
 mod heartbeat;
 mod idt;
+mod operator_shell;
 mod serial;
 mod ssod;
 mod storage;

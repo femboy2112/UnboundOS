@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.26
+> **Catalog version:** v0.27
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -45,6 +45,15 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.27** — Added a live polling serial operator shell after
+  `UNBOUNDOS_BOOT_OK` and wired `make qemu-interactive-smoke` into aggregate
+  gates. The dynamic QEMU check now boots the kernel, waits for
+  `UNBOUNDOS_SHELL_READY`, sends serial commands, and verifies responses from
+  graph verification/compilation, tokenizer round trip, toy generation,
+  quantized token streaming, retrieval/context packing, assistant graph/SSOD
+  explanation, and CPU profile reporting. This is not final spec completion;
+  it closes the prior gap where M7-M12 could pass only as host-side library
+  evidence while the booted OS halted after `BOOT_OK`.
 - **v0.26** — M12 completed on `campaign/m12-local-retrieval`: fixed-width
   retrieval query/document/result contracts, read-only local index snapshots,
   deterministic top-k ranking, bounded context packing, assistant retrieval
