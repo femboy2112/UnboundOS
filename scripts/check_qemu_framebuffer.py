@@ -22,6 +22,8 @@ TIMEOUT_SECONDS = 30.0
 MIN_RENDERED_WORDS = 128
 QEMU_CPU = os.environ.get("QEMU_CPU", "qemu64")
 QEMU_RAM = os.environ.get("QEMU_RAM", "512M")
+QEMU_VIDEO = os.environ.get("QEMU_VIDEO", "std")
+QEMU_EXPECT_FRAMEBUFFER = os.environ.get("QEMU_EXPECT_FRAMEBUFFER", "rendered")
 
 
 def wait_for(path: Path, needle: str, deadline: float) -> None:
@@ -105,6 +107,8 @@ def main() -> int:
             str(IMAGE),
             "-boot",
             "d",
+            "-vga",
+            QEMU_VIDEO,
             "-serial",
             f"file:{SERIAL_LOG}",
             "-monitor",
@@ -118,6 +122,16 @@ def main() -> int:
 
     try:
         deadline = time.monotonic() + TIMEOUT_SECONDS
+        if QEMU_EXPECT_FRAMEBUFFER == "unavailable":
+            wait_for(SERIAL_LOG, "UNBOUNDOS_FRAMEBUFFER=unavailable", deadline)
+            wait_for(SERIAL_LOG, "UNBOUNDOS_BOOT_OK", deadline)
+            print(
+                f"[qemu-framebuffer] PASS: cpu={QEMU_CPU} ram={QEMU_RAM} "
+                f"video={QEMU_VIDEO} reported framebuffer unavailable fallback"
+            )
+            return 0
+        if QEMU_EXPECT_FRAMEBUFFER != "rendered":
+            raise RuntimeError(f"unknown QEMU_EXPECT_FRAMEBUFFER={QEMU_EXPECT_FRAMEBUFFER!r}")
         wait_for(SERIAL_LOG, "UNBOUNDOS_FRAMEBUFFER_RENDERED", deadline)
         framebuffer_addr = serial_hex("framebuffer_addr")
         width = serial_hex("framebuffer_width")
@@ -155,7 +169,7 @@ def main() -> int:
             proc.wait(timeout=3)
 
     print(
-        f"[qemu-framebuffer] PASS: cpu={QEMU_CPU} ram={QEMU_RAM} "
+        f"[qemu-framebuffer] PASS: cpu={QEMU_CPU} ram={QEMU_RAM} video={QEMU_VIDEO} "
         f"{width}x{height} framebuffer has {lit_words} lit words"
     )
     return 0

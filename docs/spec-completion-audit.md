@@ -10,11 +10,12 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
 
 ## Verified Now
 
-- `make gates` passes 29/29, including malformed persistent-artifact corpus
+- `make gates` passes 30/30, including malformed persistent-artifact corpus
   checks, live QEMU boots, the interactive serial
   shell, no-serial fallback, three SSOD fault vectors, M2 memory diagnostics,
-  boot-time graph load, framebuffer memory inspection, storage success/error
-  matrix, and the repeated QEMU stress and CPU/RAM matrix sweeps.
+  boot-time graph load, framebuffer memory inspection across VGA adapters,
+  storage success/error matrix, and the repeated QEMU stress and CPU/RAM matrix
+  sweeps.
 - `python3 scripts/verify.py --mission current` passes and runs the same QEMU
   stress sweep.
 - `make qemu-stress` repeats 10 runtime paths twice by default:
@@ -24,6 +25,9 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
 - `make qemu-matrix` runs heartbeat, M2 arena/memory, graph boot, framebuffer,
   and interactive shell gates under low-RAM, baseline, larger-RAM, and `max`
   CPU QEMU profiles.
+- `make qemu-framebuffer-matrix` proves rendered framebuffer memory under QEMU
+  `std` and `virtio` VGA adapters, and proves the explicit unavailable
+  framebuffer fallback under `cirrus`.
 - `make qemu-storage-matrix` proves the M6 raw-sector path for marker success,
   marker mismatch, and missing-primary-disk read-error diagnostics under QEMU.
 - `make parser-fuzz-matrix` validates UMOD/UMDL malformed-corpus metadata and
@@ -89,8 +93,9 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
    `make qemu-stress` now catches single-shot flakiness by repeating all live
    runtime paths twice, `make qemu-matrix` covers several CPU/RAM profiles, and
    `make qemu-storage-matrix` covers storage success/mismatch/read-error cases.
-   This is still not a long soak test, randomized parser fuzz run,
-   framebuffer-mode matrix, or broad host-hardware matrix.
+   This is still not a long soak test, randomized parser fuzz run, true
+   framebuffer resolution/depth negotiation matrix, or broad host-hardware
+   matrix.
 
 7. Stale closed-milestone TODOs and comments remain.
 
@@ -109,5 +114,6 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
    arenas with phase guards and diagnostics.
 4. Turn the framebuffer path into an interactive IDE surface rather than only a
    rendered diagnostic surface.
-5. Add remaining matrix stress gates for framebuffer mode plus randomized
-   parser fuzz/soak coverage beyond the deterministic malformed corpus.
+5. Add remaining matrix stress gates for framebuffer resolution/depth
+   negotiation plus randomized parser fuzz/soak coverage beyond the
+   deterministic malformed corpus.

@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.38
+> **Catalog version:** v0.39
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -47,6 +47,15 @@ stale mission state. Completed campaigns are archived under
 
 ## Change log
 
+- **v0.39** — Added `make qemu-framebuffer-matrix`, which boots the
+  framebuffer path under QEMU `std`, `cirrus`, and `virtio` VGA adapters. The
+  `std` and `virtio` profiles must render nonblank guest framebuffer memory
+  through the QEMU monitor; the `cirrus` profile must boot through the explicit
+  unavailable-framebuffer fallback. The framebuffer smoke runner now accepts
+  `QEMU_VIDEO` and `QEMU_EXPECT_FRAMEBUFFER`, and aggregate gates plus mission
+  verification reject adapter-specific blank, missing-render, or missing-fallback
+  regressions. This expands dynamic display-backend coverage; true
+  resolution/depth negotiation remains future Limine/framebuffer work.
 - **v0.38** — Added `make parser-fuzz-matrix`, a first-class deterministic
   malformed-artifact corpus gate for UMOD and UMDL. The gate validates corpus
   metadata, runs the graph verifier's declared UMOD malformed fixtures, runs a

@@ -37,6 +37,7 @@ help:
 	@echo "  make qemu-m2-dump    # assert M2 memory/arena diagnostic dump"
 	@echo "  make qemu-graph-boot # assert initial graph loads during boot"
 	@echo "  make qemu-framebuffer-smoke # capture framebuffer diagnostics from QEMU"
+	@echo "  make qemu-framebuffer-matrix # capture framebuffer diagnostics across VGA adapters"
 	@echo "  make qemu-stress     # repeat live QEMU milestone smoke paths"
 	@echo "  make qemu-matrix     # live QEMU CPU/RAM profile matrix"
 	@echo "  make fidelity        # run scripts/fidelity_check.sh"
@@ -95,6 +96,10 @@ qemu-graph-boot: image
 .PHONY: qemu-framebuffer-smoke
 qemu-framebuffer-smoke:
 	python3 scripts/check_qemu_framebuffer.py
+
+.PHONY: qemu-framebuffer-matrix
+qemu-framebuffer-matrix:
+	python3 scripts/check_qemu_framebuffer_matrix.py
 
 .PHONY: qemu-stress
 qemu-stress:
