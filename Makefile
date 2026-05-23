@@ -36,7 +36,7 @@ help:
 	@echo "  make address-scan    # scan persistent fixtures"
 	@echo "  make fmt             # cargo fmt --check"
 	@echo "  make clippy          # cargo clippy -D warnings"
-	@echo "  make gates           # run all gates sequentially (fmt/clippy/test/scan/fidelity/qemu)"
+	@echo "  make gates           # run spec gates sequentially (build/test/static/smoke/qemu)"
 	@echo "  make repo-state      # JSON verdict from scripts/milestone_state.py"
 	@echo "  make mission-preflight # repo-state then gates (the /go preflight)"
 	@echo "  make clean           # cargo clean"

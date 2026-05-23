@@ -60,6 +60,49 @@ RUST_COMMANDS = [
         requires=("cargo",),
         optional=True,
     ),
+    Command(
+        "kernel custom-target release build",
+        ["make", "-s", "kernel"],
+        requires=("make", "cargo", "rustup"),
+    ),
+]
+
+QEMU_COMMANDS = [
+    Command(
+        "qemu heartbeat",
+        ["make", "-s", "qemu-headless"],
+        requires=("make", "qemu-system-x86_64"),
+    ),
+    Command(
+        "qemu no-serial fallback",
+        ["make", "-s", "qemu-no-serial"],
+        requires=("make", "qemu-system-x86_64"),
+    ),
+    Command(
+        "qemu SSOD divide_error",
+        ["make", "-s", "qemu-fault-de"],
+        requires=("make", "qemu-system-x86_64"),
+    ),
+    Command(
+        "qemu SSOD invalid_opcode",
+        ["make", "-s", "qemu-fault-ud"],
+        requires=("make", "qemu-system-x86_64"),
+    ),
+    Command(
+        "qemu SSOD page_fault",
+        ["make", "-s", "qemu-fault-pf"],
+        requires=("make", "qemu-system-x86_64"),
+    ),
+    Command(
+        "qemu M2 arena/memory dump",
+        ["make", "-s", "qemu-m2-dump"],
+        requires=("make", "qemu-system-x86_64"),
+    ),
+    Command(
+        "qemu M6 storage marker",
+        ["make", "-s", "qemu-storage-smoke"],
+        requires=("make", "qemu-system-x86_64"),
+    ),
 ]
 
 
@@ -146,7 +189,7 @@ def main(argv: list[str]) -> int:
     )
     args = parser.parse_args(argv[1:])
 
-    commands = STATIC_COMMANDS + RUST_COMMANDS
+    commands = STATIC_COMMANDS + RUST_COMMANDS + QEMU_COMMANDS
     failed = 0
     skipped: list[str] = []
 
