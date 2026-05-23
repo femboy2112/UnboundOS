@@ -138,6 +138,8 @@ Commit and push.
 
 # Step 3 — Raw-byte detokenizer round trip
 
+Status: Completed.
+
 Purpose:
   Implement token-to-UTF-8 decoding and round-trip tests.
 

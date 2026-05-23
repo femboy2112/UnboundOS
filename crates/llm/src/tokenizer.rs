@@ -12,6 +12,8 @@ pub const SUPPORTED_TOKENIZER: TokenizerType = M7_SUPPORTED_TOKENIZER;
 pub enum TokenizerError {
     Metadata(TokenizerMetadataError),
     OutputOverflow { required: u32, available: u32 },
+    InvalidTokenId { token_id: u32 },
+    InvalidUtf8,
 }
 
 /// Validate tokenizer metadata against the M7 support boundary.
@@ -53,6 +55,51 @@ pub fn encode_raw_bytes(
         *slot = u32::from(byte);
     }
     Ok(bytes.len())
+}
+
+/// Decode raw-byte token IDs into caller-provided UTF-8 output storage.
+///
+/// # Errors
+///
+/// Returns `TokenizerError::Metadata` when metadata is invalid,
+/// `TokenizerError::OutputOverflow` when output is too small,
+/// `TokenizerError::InvalidTokenId` when any token is outside the byte range,
+/// or `TokenizerError::InvalidUtf8` when the resulting bytes are not valid
+/// UTF-8.
+pub fn decode_raw_bytes<'a>(
+    metadata: TokenizerMetadata,
+    tokens: &[u32],
+    output: &'a mut [u8],
+) -> Result<&'a str, TokenizerError> {
+    validate_metadata(metadata).map_err(TokenizerError::Metadata)?;
+    if output.len() < tokens.len() {
+        return Err(TokenizerError::OutputOverflow {
+            required: len_to_u32(tokens.len()),
+            available: len_to_u32(output.len()),
+        });
+    }
+    for (slot, token) in output.iter_mut().zip(tokens.iter().copied()) {
+        let byte =
+            u8::try_from(token).map_err(|_| TokenizerError::InvalidTokenId { token_id: token })?;
+        *slot = byte;
+    }
+    core::str::from_utf8(&output[..tokens.len()]).map_err(|_| TokenizerError::InvalidUtf8)
+}
+
+/// Encode and immediately decode through the raw-byte tokenizer.
+///
+/// # Errors
+///
+/// Returns the same `TokenizerError` variants as `encode_raw_bytes` and
+/// `decode_raw_bytes`.
+pub fn round_trip_raw_bytes<'a>(
+    metadata: TokenizerMetadata,
+    input: &str,
+    token_buffer: &mut [u32],
+    byte_buffer: &'a mut [u8],
+) -> Result<&'a str, TokenizerError> {
+    let token_count = encode_raw_bytes(metadata, input, token_buffer)?;
+    decode_raw_bytes(metadata, &token_buffer[..token_count], byte_buffer)
 }
 
 fn len_to_u32(len: usize) -> u32 {
@@ -139,5 +186,68 @@ mod tests {
                 actual: 255,
             })
         );
+    }
+
+    #[test]
+    fn decodes_token_ids_into_utf8_text() {
+        let tokens = [72, 105, 33];
+        let mut bytes = [0u8; 8];
+        let text =
+            decode_raw_bytes(TokenizerMetadata::raw_byte_to_token(), &tokens, &mut bytes).unwrap();
+
+        assert_eq!(text, "Hi!");
+    }
+
+    #[test]
+    fn decode_reports_output_overflow() {
+        let tokens = [72, 105, 33];
+        let mut bytes = [0u8; 2];
+        let err = decode_raw_bytes(TokenizerMetadata::raw_byte_to_token(), &tokens, &mut bytes)
+            .unwrap_err();
+
+        assert_eq!(
+            err,
+            TokenizerError::OutputOverflow {
+                required: 3,
+                available: 2,
+            }
+        );
+    }
+
+    #[test]
+    fn decode_reports_invalid_token_id() {
+        let tokens = [256];
+        let mut bytes = [0u8; 1];
+        let err = decode_raw_bytes(TokenizerMetadata::raw_byte_to_token(), &tokens, &mut bytes)
+            .unwrap_err();
+
+        assert_eq!(err, TokenizerError::InvalidTokenId { token_id: 256 });
+    }
+
+    #[test]
+    fn decode_rejects_invalid_utf8_bytes() {
+        let tokens = [0xFF];
+        let mut bytes = [0u8; 1];
+        let err = decode_raw_bytes(TokenizerMetadata::raw_byte_to_token(), &tokens, &mut bytes)
+            .unwrap_err();
+
+        assert_eq!(err, TokenizerError::InvalidUtf8);
+    }
+
+    #[test]
+    fn representative_prompts_round_trip() {
+        for prompt in ["", "hello", "snark OS", "µ-kernel", "line\nbreak"] {
+            let mut tokens = [0u32; 64];
+            let mut bytes = [0u8; 64];
+            let text = round_trip_raw_bytes(
+                TokenizerMetadata::raw_byte_to_token(),
+                prompt,
+                &mut tokens,
+                &mut bytes,
+            )
+            .unwrap();
+
+            assert_eq!(text, prompt);
+        }
     }
 }

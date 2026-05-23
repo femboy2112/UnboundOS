@@ -4,7 +4,20 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C8.M7 Step 3 Raw-byte detokenizer round trip: ready.
+- C8.M7 Step 4 Tokenizer smoke evidence and gates: ready.
+
+## 2026-05-23T07:35:49Z - C8.M7 Step 3 Raw-byte detokenizer round trip
+
+- Status: completed
+- Summary: Added raw-byte token decoding into caller-provided byte output,
+  UTF-8 validation, invalid-token and overflow errors, and representative
+  prompt round-trip tests through encode and decode.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p llm`, and `python3
+  scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; decode uses caller-provided slices,
+  checked token conversion, and `core::str::from_utf8` validation.
+- Blockers: none.
 
 ## 2026-05-23T07:34:29Z - C8.M7 Step 2 Raw-byte tokenizer encode path
 
