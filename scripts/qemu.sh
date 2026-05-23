@@ -9,11 +9,13 @@
 #   ./scripts/qemu.sh --assert-heartbeat
 #   ./scripts/qemu.sh --assert-ssod reason
 #   ./scripts/qemu.sh --assert-m2-dump
+#   ./scripts/qemu.sh --storage-image /tmp/sector0.bin --assert-storage-marker
 #
 # Environment overrides:
 #   QEMU_CPU      override CPU model (default: qemu64)
 #   QEMU_RAM      override RAM size (default: 512M)
 #   IMAGE         override image path (default: /tmp/unboundos.img)
+#   STORAGE_IMAGE optional raw disk image attached as primary ATA
 #   SERIAL_LOG    override serial-capture path (default: /tmp/unboundos-serial.log)
 
 set -euo pipefail
@@ -24,12 +26,14 @@ cd "$ROOT"
 QEMU_CPU="${QEMU_CPU:-qemu64}"
 QEMU_RAM="${QEMU_RAM:-512M}"
 IMAGE="${IMAGE:-/tmp/unboundos.img}"
+STORAGE_IMAGE="${STORAGE_IMAGE:-}"
 SERIAL_LOG="${SERIAL_LOG:-/tmp/unboundos-serial.log}"
 HEADLESS=0
 NO_SERIAL=0
 ASSERT_HEARTBEAT=0
 ASSERT_SSOD_REASON=""
 ASSERT_M2_DUMP=0
+ASSERT_STORAGE_MARKER=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -38,6 +42,8 @@ while [[ $# -gt 0 ]]; do
         --assert-heartbeat)  ASSERT_HEARTBEAT=1; shift ;;
         --assert-ssod)       ASSERT_SSOD_REASON="$2"; shift 2 ;;
         --assert-m2-dump)    ASSERT_M2_DUMP=1; shift ;;
+        --assert-storage-marker) ASSERT_STORAGE_MARKER=1; shift ;;
+        --storage-image)     STORAGE_IMAGE="$2"; shift 2 ;;
         --cpu)               QEMU_CPU="$2"; shift 2 ;;
         --image)             IMAGE="$2"; shift 2 ;;
         *)                   echo "[qemu] unknown arg: $1" >&2; exit 2 ;;
@@ -64,9 +70,19 @@ if [ "$ASSERT_M2_DUMP" -eq 1 ] && [ "$NO_SERIAL" -eq 1 ]; then
     exit 2
 fi
 
+if [ "$ASSERT_STORAGE_MARKER" -eq 1 ] && [ "$NO_SERIAL" -eq 1 ]; then
+    echo "[qemu] --assert-storage-marker requires serial capture" >&2
+    exit 2
+fi
+
 if [ ! -f "$IMAGE" ]; then
     echo "[qemu] image not found: $IMAGE" >&2
     echo "       run: ./scripts/make_image.sh <kernel-elf> $IMAGE" >&2
+    exit 2
+fi
+
+if [ -n "$STORAGE_IMAGE" ] && [ ! -f "$STORAGE_IMAGE" ]; then
+    echo "[qemu] storage image not found: $STORAGE_IMAGE" >&2
     exit 2
 fi
 
@@ -77,7 +93,14 @@ ARGS=(
     -device "isa-debug-exit,iobase=0xf4,iosize=0x04"
 )
 
-if file "$IMAGE" | grep -q 'ISO 9660'; then
+if [ -n "$STORAGE_IMAGE" ]; then
+    ARGS+=(-drive "format=raw,file=$STORAGE_IMAGE,if=ide,index=0,media=disk")
+    if file "$IMAGE" | grep -q 'ISO 9660'; then
+        ARGS+=(-drive "format=raw,file=$IMAGE,if=ide,index=2,media=cdrom" -boot d)
+    else
+        ARGS+=(-drive "format=raw,file=$IMAGE,if=ide,index=2,media=disk")
+    fi
+elif file "$IMAGE" | grep -q 'ISO 9660'; then
     ARGS+=(-cdrom "$IMAGE" -boot d)
 else
     ARGS+=(-drive "format=raw,file=$IMAGE")
@@ -94,6 +117,7 @@ if [ "$HEADLESS" -eq 1 ]; then
 fi
 
 echo "[qemu] cpu=$QEMU_CPU ram=$QEMU_RAM image=$IMAGE"
+[ -n "$STORAGE_IMAGE" ] && echo "[qemu] storage → $STORAGE_IMAGE"
 [ "$NO_SERIAL" -eq 0 ] && echo "[qemu] serial → $SERIAL_LOG"
 
 if [ "$NO_SERIAL" -eq 1 ]; then
@@ -184,6 +208,19 @@ assert_m2_dump() {
     done
 }
 
+assert_storage_marker() {
+    local log="$1"
+
+    grep -q '^UNBOUNDOS_STORAGE_READ_BEGIN$' "$log" || {
+        echo "[qemu] missing UNBOUNDOS_STORAGE_READ_BEGIN in $log" >&2
+        return 1
+    }
+    grep -q '^UNBOUNDOS_STORAGE_MARKER_OK$' "$log" || {
+        echo "[qemu] missing UNBOUNDOS_STORAGE_MARKER_OK in $log" >&2
+        return 1
+    }
+}
+
 if [ "$ASSERT_HEARTBEAT" -eq 0 ] && [ -z "$ASSERT_SSOD_REASON" ] && [ "$HEADLESS" -eq 0 ]; then
     # 60s wall-clock budget; kernel must reach UNBOUNDOS_BOOT_OK before then.
     exec timeout 60s qemu-system-x86_64 "${ARGS[@]}"
@@ -216,6 +253,9 @@ for _ in $(seq 1 600); do
         elif [ "$ASSERT_M2_DUMP" -eq 1 ]; then
             assert_m2_dump "$SERIAL_LOG"
             echo "[qemu] M2 dump assertion passed"
+        elif [ "$ASSERT_STORAGE_MARKER" -eq 1 ]; then
+            assert_storage_marker "$SERIAL_LOG"
+            echo "[qemu] storage marker assertion passed"
         else
             echo "[qemu] boot heartbeat reached UNBOUNDOS_BOOT_OK"
         fi
@@ -238,6 +278,9 @@ if [ -n "$ASSERT_SSOD_REASON" ]; then
 fi
 if [ "$ASSERT_M2_DUMP" -eq 1 ]; then
     assert_m2_dump "$SERIAL_LOG"
+fi
+if [ "$ASSERT_STORAGE_MARKER" -eq 1 ]; then
+    assert_storage_marker "$SERIAL_LOG"
 fi
 echo "[qemu] UNBOUNDOS_BOOT_OK not observed in $SERIAL_LOG" >&2
 exit 1

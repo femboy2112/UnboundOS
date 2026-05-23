@@ -4,7 +4,24 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C7.M6 Step 3 QEMU raw-sector smoke fixture: ready.
+- C7.M6 Step 4 Resource namespace guard evidence: ready.
+
+## 2026-05-23T07:22:43Z - C7.M6 Step 3 QEMU raw-sector smoke fixture
+
+- Status: completed
+- Summary: Added a deterministic raw-sector fixture generator, `make
+  qemu-storage-smoke`, QEMU secondary storage-image plumbing with the raw disk
+  attached as primary ATA, and a boot-time storage smoke path that emits
+  `UNBOUNDOS_STORAGE_MARKER_OK` after reading sector 0 through the ATA PIO
+  primitive.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `rustc --test kernel/src/storage.rs`,
+  `make qemu-storage-smoke`, `make gates`, and `python3 scripts/verify.py
+  --mission current`.
+- Memory-unsafety audit: the QEMU smoke exercises the real unsafe ATA PIO path
+  under a compile-time smoke flag with a deterministic primary-disk fixture and
+  finite timeout budget.
+- Blockers: none.
 
 ## 2026-05-23T07:19:46Z - C7.M6 Step 2 ATA PIO sector-read primitive
 

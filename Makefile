@@ -9,6 +9,8 @@ IMAGE       := /tmp/unboundos.img
 SERIAL_LOG  := /tmp/unboundos-serial.log
 FORCE_IMAGE := /tmp/unboundos-forced-fault.img
 NO_SERIAL_IMAGE := /tmp/unboundos-no-serial.img
+STORAGE_SMOKE_IMAGE := /tmp/unboundos-storage-smoke.img
+STORAGE_FIXTURE := /tmp/unboundos-storage-sector0.bin
 
 .PHONY: help
 help:
@@ -19,6 +21,7 @@ help:
 	@echo "  make qemu            # build + boot under QEMU (with display)"
 	@echo "  make qemu-headless   # build + boot under QEMU, headless"
 	@echo "  make qemu-no-serial  # exercise no-UART boot fallback"
+	@echo "  make qemu-storage-smoke # assert M6 raw sector read under QEMU"
 	@echo "  make ui-smoke        # source-level M5 framebuffer/graph-state smoke"
 	@echo "  make qemu-fault-de   # assert divide-by-zero SSOD path"
 	@echo "  make qemu-fault-ud   # assert invalid-opcode SSOD path"
@@ -68,6 +71,12 @@ qemu-no-serial:
 .PHONY: qemu-m2-dump
 qemu-m2-dump: image
 	./scripts/qemu.sh --headless --assert-m2-dump
+
+.PHONY: qemu-storage-smoke
+qemu-storage-smoke:
+	python3 scripts/make_storage_fixture.py $(STORAGE_FIXTURE)
+	UNBOUNDOS_STORAGE_SMOKE=1 $(MAKE) image IMAGE=$(STORAGE_SMOKE_IMAGE)
+	./scripts/qemu.sh --headless --image $(STORAGE_SMOKE_IMAGE) --storage-image $(STORAGE_FIXTURE) --assert-storage-marker
 
 .PHONY: qemu-fault-de
 qemu-fault-de:

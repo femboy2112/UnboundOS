@@ -6,7 +6,7 @@
 //! CLAUDE.md §11 (no silent placeholders); the heartbeat lines themselves are
 //! emitted in §1.6 order.
 
-use crate::{arena, cpu, heartbeat, idt, ssod};
+use crate::{arena, cpu, heartbeat, idt, ssod, storage};
 
 // Canonical source-level assertion for spec §3.2 kernel-entry order.
 // Runtime comments below cite the same steps at the implementation site;
@@ -113,6 +113,7 @@ pub unsafe fn run() -> ! {
     // TODO M3 (spec §5.7): bytes → graph_load_from_umod →
     // graph_compile_verified → GraphRuntimeHandle. The single
     // verifier gate is enforced by crates/graph/src/loader.rs.
+    run_m6_storage_smoke_from_env();
 
     // spec §3.2 step 14: enter orchestrator or IDE shell.
     // TODO M3 (spec §5.9): cooperative scheduler.
@@ -136,6 +137,40 @@ fn qemu_exit_on_boot_ok_for_smoke() {
             in("al") 0x10_u8,
             options(nomem, nostack, preserves_flags)
         );
+    }
+}
+
+fn run_m6_storage_smoke_from_env() {
+    if option_env!("UNBOUNDOS_STORAGE_SMOKE") != Some("1") {
+        return;
+    }
+    heartbeat::emit("UNBOUNDOS_STORAGE_READ_BEGIN");
+    let Ok(request) = storage::ReadSectorRequest::new(0) else {
+        heartbeat::emit("UNBOUNDOS_STORAGE_REQUEST_INVALID");
+        return;
+    };
+    let mut sector = [0u16; storage::SECTOR_WORDS];
+    // SAFETY: this path is compile-time selected only by `make
+    // qemu-storage-smoke`, which attaches a deterministic raw disk fixture as
+    // the primary ATA device. Boot is single-threaded, so no other storage
+    // command can race the legacy ATA PIO port range.
+    match unsafe {
+        storage::ata_pio_read_sector(
+            request,
+            storage::TimeoutBudget::new(storage::DEFAULT_ATA_TIMEOUT_POLLS),
+            &mut sector,
+        )
+    } {
+        Ok(_) if storage::sector_starts_with(&sector, storage::M6_STORAGE_MARKER) => {
+            heartbeat::emit("UNBOUNDOS_STORAGE_MARKER_OK");
+        }
+        Ok(_) => heartbeat::emit("UNBOUNDOS_STORAGE_MARKER_MISMATCH"),
+        Err(err) => {
+            let diagnostic = err.diagnostic();
+            heartbeat::emit("UNBOUNDOS_STORAGE_READ_ERROR");
+            heartbeat::emit_kv_hex("storage_status", u64::from(diagnostic.status_register));
+            heartbeat::emit_kv_hex("storage_timeout_count", u64::from(diagnostic.timeout_count));
+        }
     }
 }
 

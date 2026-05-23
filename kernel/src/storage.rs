@@ -10,6 +10,7 @@ pub const WRITE_SUPPORT_ENABLED: bool = false;
 pub const ACTIVE_NODE_NONE: u32 = u32::MAX;
 pub const STATUS_UNAVAILABLE: u8 = 0xFF;
 pub const DEFAULT_ATA_TIMEOUT_POLLS: u32 = 100_000;
+pub const M6_STORAGE_MARKER: &[u8] = b"UNBOUNDOS_M6_SECTOR0";
 
 pub const ATA_STATUS_ERR: u8 = 0x01;
 pub const ATA_STATUS_DRQ: u8 = 0x08;
@@ -312,6 +313,24 @@ pub unsafe fn ata_pio_read_sector(
     ata_pio_read_sector_with_ports(&mut ports, request, budget, sector)
 }
 
+pub fn sector_starts_with(sector: &SectorBuffer, prefix: &[u8]) -> bool {
+    if prefix.len() > SECTOR_BYTES as usize {
+        return false;
+    }
+    for (idx, expected) in prefix.iter().copied().enumerate() {
+        let word = sector[idx / 2];
+        let actual = if idx % 2 == 0 {
+            word as u8
+        } else {
+            (word >> 8) as u8
+        };
+        if actual != expected {
+            return false;
+        }
+    }
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -516,5 +535,20 @@ mod tests {
         assert_eq!(err.diagnostic().kind, StorageErrorKind::DeviceError);
         assert_eq!(err.diagnostic().status_register, ATA_STATUS_ERR);
         assert_eq!(ports.word_reads, 0);
+    }
+
+    #[test]
+    fn sector_prefix_reads_little_endian_words() {
+        let mut sector = [0u16; SECTOR_WORDS];
+        for (idx, byte) in M6_STORAGE_MARKER.iter().copied().enumerate() {
+            if idx % 2 == 0 {
+                sector[idx / 2] |= u16::from(byte);
+            } else {
+                sector[idx / 2] |= u16::from(byte) << 8;
+            }
+        }
+
+        assert!(sector_starts_with(&sector, M6_STORAGE_MARKER));
+        assert!(!sector_starts_with(&sector, b"UNBOUNDOS_BAD"));
     }
 }

@@ -141,6 +141,8 @@ Commit and push.
 
 # Step 3 — QEMU raw-sector smoke fixture
 
+Status: Completed.
+
 Purpose:
   Prove raw-sector read under QEMU with a deterministic disk image and finite
   timeout behavior.
