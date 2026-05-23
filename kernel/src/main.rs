@@ -141,6 +141,7 @@ mod heartbeat;
 mod idt;
 mod serial;
 mod ssod;
+mod storage;
 
 /// Kernel entry point. Called by Limine after the CPU is in 64-bit long
 /// mode. The handoff contract is defined in spec section 3.1.

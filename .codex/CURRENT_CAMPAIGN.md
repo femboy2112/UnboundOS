@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C7 M6 Storage Stage 1
-Active mission: C7.M6 Step 1 Storage contracts and timeout model
+Active mission: C7.M6 Step 2 ATA PIO sector-read primitive
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -24,8 +24,8 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C7.M6 Step 1 Storage contracts and timeout model. Active.
-2. C7.M6 Step 2 ATA PIO sector-read primitive. Pending.
+1. C7.M6 Step 1 Storage contracts and timeout model. Completed.
+2. C7.M6 Step 2 ATA PIO sector-read primitive. Active.
 3. C7.M6 Step 3 QEMU raw-sector smoke fixture. Pending.
 4. C7.M6 Step 4 Resource namespace guard evidence. Pending.
 5. C7.M6 Step 5 M6 completion audit. Pending.

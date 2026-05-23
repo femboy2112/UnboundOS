@@ -72,6 +72,8 @@ Step 5 — M6 completion audit
 
 # Step 1 — Storage contracts, diagnostics, and timeout model
 
+Status: Completed.
+
 Purpose:
   Add the kernel storage surface for finite-poll raw-sector reads before
   touching real port I/O.

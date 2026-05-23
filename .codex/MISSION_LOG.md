@@ -4,7 +4,23 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C7.M6 Step 1 Storage contracts and timeout model: ready.
+- C7.M6 Step 2 ATA PIO sector-read primitive: ready.
+
+## 2026-05-23T07:17:28Z - C7.M6 Step 1 Storage contracts and timeout model
+
+- Status: completed
+- Summary: Added `kernel/src/storage.rs` with fixed-width storage diagnostics,
+  a read-sector request surface, finite ATA status polling, LBA28 validation,
+  no default write support, and host tests for ready, device-error, timeout,
+  zero-budget, and out-of-range behavior.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `rustc --test kernel/src/storage.rs`,
+  and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: Step 1 introduces no new unsafe block; this is
+  intentional because real ATA PIO port I/O is Step 2. The contract permits
+  unsafe storage access when it remains bounded, inspectable, deterministic,
+  and not undefined by design.
+- Blockers: none.
 
 ## 2026-05-23T07:13:10Z - C7.M6 campaign activation
 
