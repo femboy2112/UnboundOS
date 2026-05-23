@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C12.M11 Step 3 SSOD explanation snapshot: ready.
+- C12.M11 Step 4 Assistant explanation surface: ready.
+
+## 2026-05-23T08:38:10Z - C12.M11 Step 3 SSOD explanation snapshot
+
+- Status: completed
+- Summary: Added fixed-width SSOD explanation snapshot fields derived from
+  structured diagnostic context, plus a no-std assistant SSOD formatter for
+  reason, RIP, fault family, vector, and error-code state in caller-provided
+  output.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code, panic-route bypass, hidden
+  execution, diagnostic swallowing, or assistant mutation authority.
+- Blockers: none.
 
 ## 2026-05-23T08:34:34Z - C12.M11 Step 2 Graph explanation snapshot
 

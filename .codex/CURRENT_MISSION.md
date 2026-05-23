@@ -1,20 +1,20 @@
 # Current Mission
 
-Mission: C12.M11 Step 3 SSOD explanation snapshot
+Mission: C12.M11 Step 4 Assistant explanation surface
 Campaign: C12 M11 IDE Assistant
 Status: ready
 
 ## Objective
 
-Execute M11 campaign Step 3 from `docs/campaigns/m11-ide-assistant.md`:
-produce deterministic explanations from structured SSOD diagnostic records.
+Execute M11 campaign Step 4 from `docs/campaigns/m11-ide-assistant.md`:
+provide a single local assistant explain surface for graph and SSOD states.
 
 ## Scope
 
 Allowed changes:
 
-- `kernel/src/ssod.rs`
 - `crates/llm/src/assistant.rs`
+- `crates/llm/src/lib.rs`
 - `docs/campaigns/m11-ide-assistant.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -22,18 +22,16 @@ Allowed changes:
 
 Out of scope:
 
-- Unified assistant surface, smoke target, graph mutation, storage, QEMU
-  harness, thread/queue, eval, or execution-hook changes.
+- Smoke target, graph mutation, storage, QEMU harness, thread/queue, eval, or
+  execution-hook changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- SSOD explanation input is read-only and derived from structured SSOD
-  diagnostic fields.
-- Reason/RIP/fault-family style information formats into caller-provided
-  output.
-- H10 remains intact: fatal diagnostics are not swallowed, weakened, or routed
-  around the SSOD record.
+- A single explicit assistant request/response surface routes graph and SSOD
+  explanation requests.
+- Proposed actions, if requested, can only land in `StructuredActionBuffer`.
+- Unsupported request kinds return structured errors.
 
 ## Baseline to verify
 
@@ -55,8 +53,8 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m11-ide-assistant`. Step 2 added read-only graph
-explanation snapshots and deterministic caller-buffer graph explanation text.
+Campaign branch: `campaign/m11-ide-assistant`. Step 3 added fixed-width SSOD
+explanation snapshots and deterministic caller-buffer SSOD explanation text.
 Memory-unsafe Rust remains allowed by project identity, but M11 assistant
 explanation/action-buffer work should be safe, deterministic, bounded, and
 non-executing.

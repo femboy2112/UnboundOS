@@ -6,6 +6,9 @@ use crate::{
 };
 use core::panic::PanicInfo;
 
+pub const SSOD_REASON_BYTES: usize = 32;
+pub const SSOD_REASON_BYTES_U32: u32 = 32;
+
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct DiagnosticContext {
@@ -37,6 +40,60 @@ impl DiagnosticContext {
             error_code: 0,
             arena_fault: None,
         }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum SsodFaultFamily {
+    CpuException = 1,
+    RustPanic = 2,
+    Arena = 3,
+    Unknown = 255,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum SsodSnapshotError {
+    ReasonTooLong { required: u32, available: u32 },
+}
+
+/// Fixed-width read-only SSOD facts for assistant explanation.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(C)]
+pub struct SsodExplanationSnapshot {
+    pub vector: u8,
+    pub fault_family: u32,
+    pub reason_len: u32,
+    pub reason: [u8; SSOD_REASON_BYTES],
+    pub instruction_pointer: u64,
+    pub has_error_code: u8,
+    pub error_code: u64,
+}
+
+impl SsodExplanationSnapshot {
+    pub fn from_diagnostic(
+        reason: &str,
+        ctx: DiagnosticContext,
+    ) -> Result<Self, SsodSnapshotError> {
+        let reason_bytes = reason.as_bytes();
+        if reason_bytes.len() > SSOD_REASON_BYTES {
+            return Err(SsodSnapshotError::ReasonTooLong {
+                required: len_to_u32(reason_bytes.len()),
+                available: SSOD_REASON_BYTES_U32,
+            });
+        }
+
+        let mut stored_reason = [0u8; SSOD_REASON_BYTES];
+        stored_reason[..reason_bytes.len()].copy_from_slice(reason_bytes);
+        Ok(Self {
+            vector: ctx.vector,
+            fault_family: fault_family_for(reason, ctx) as u32,
+            reason_len: len_to_u32(reason_bytes.len()),
+            reason: stored_reason,
+            instruction_pointer: ctx.instruction_pointer,
+            has_error_code: u8::from(ctx.has_error_code),
+            error_code: ctx.error_code,
+        })
     }
 }
 
@@ -96,6 +153,39 @@ fn emit_arena_fault(ctx: ArenaFaultContext) {
     emit_kv_hex("arena_base", ctx.base as u64);
     emit_kv_hex("arena_cursor", ctx.cursor as u64);
     emit_kv_hex("arena_limit", ctx.limit as u64);
+}
+
+const fn fault_family_for(reason: &str, ctx: DiagnosticContext) -> SsodFaultFamily {
+    if str_eq(reason, "rust_panic") {
+        SsodFaultFamily::RustPanic
+    } else if str_eq(reason, "arena_alloc_error") || ctx.arena_fault.is_some() {
+        SsodFaultFamily::Arena
+    } else if ctx.vector != 0xFF {
+        SsodFaultFamily::CpuException
+    } else {
+        SsodFaultFamily::Unknown
+    }
+}
+
+const fn str_eq(left: &str, right: &str) -> bool {
+    let left = left.as_bytes();
+    let right = right.as_bytes();
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut index = 0;
+    while index < left.len() {
+        if left[index] != right[index] {
+            return false;
+        }
+        index += 1;
+    }
+    true
+}
+
+fn len_to_u32(len: usize) -> u32 {
+    u32::try_from(len).unwrap_or(u32::MAX)
 }
 
 pub fn halt_idle() -> ! {

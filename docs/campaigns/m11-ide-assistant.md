@@ -138,7 +138,7 @@ Commit and push.
 
 # Step 3 — SSOD explanation snapshot
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Produce deterministic explanations from structured SSOD diagnostic records.
@@ -169,6 +169,8 @@ Commit and push.
 ---
 
 # Step 4 — Assistant explanation surface
+
+Status: Active.
 
 Purpose:
   Provide a single local assistant explain surface for graph and SSOD states.

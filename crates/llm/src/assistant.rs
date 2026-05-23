@@ -10,6 +10,8 @@ pub const ACTION_PAYLOAD_WORDS: usize = 4;
 pub const ACTION_TEXT_BYTES: usize = 32;
 pub const ACTION_TEXT_BYTES_U32: u32 = 32;
 pub const GRAPH_NODE_NONE: u32 = u32::MAX;
+pub const SSOD_REASON_BYTES: usize = 32;
+pub const SSOD_REASON_BYTES_U32: u32 = 32;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
@@ -24,6 +26,15 @@ pub enum AssistantActionError {
     UnsupportedKind { requested: u32 },
     OutputOverflow { required: u32, available: u32 },
     TextTooLong { required: u32, available: u32 },
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum SsodFaultFamily {
+    CpuException = 1,
+    RustPanic = 2,
+    Arena = 3,
+    Unknown = 255,
 }
 
 /// Graph display facts accepted by the assistant explainer.
@@ -66,6 +77,85 @@ impl GraphExplanationInput {
     #[must_use]
     pub const fn last_completed_node(&self) -> Option<u32> {
         decode_optional_node(self.last_completed_node)
+    }
+}
+
+/// SSOD diagnostic facts accepted by the assistant explainer.
+///
+/// This is copied diagnostic data only; it does not replace or route around the
+/// kernel SSOD fatal record.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(C)]
+pub struct SsodExplanationInput {
+    pub vector: u8,
+    pub fault_family: u32,
+    pub reason_len: u32,
+    pub reason: [u8; SSOD_REASON_BYTES],
+    pub instruction_pointer: u64,
+    pub has_error_code: u8,
+    pub error_code: u64,
+}
+
+impl SsodExplanationInput {
+    /// Build a fixed-width SSOD explanation input.
+    ///
+    /// # Errors
+    ///
+    /// Returns `AssistantActionError::TextTooLong` when `reason` does not fit
+    /// in the fixed diagnostic storage.
+    pub fn new(
+        fault_family: SsodFaultFamily,
+        vector: u8,
+        reason: &str,
+        instruction_pointer: u64,
+        error_code: Option<u64>,
+    ) -> Result<Self, AssistantActionError> {
+        let reason_bytes = reason.as_bytes();
+        if reason_bytes.len() > SSOD_REASON_BYTES {
+            return Err(AssistantActionError::TextTooLong {
+                required: len_to_u32(reason_bytes.len()),
+                available: SSOD_REASON_BYTES_U32,
+            });
+        }
+
+        let mut stored_reason = [0u8; SSOD_REASON_BYTES];
+        stored_reason[..reason_bytes.len()].copy_from_slice(reason_bytes);
+        Ok(Self {
+            vector,
+            fault_family: fault_family as u32,
+            reason_len: len_to_u32(reason_bytes.len()),
+            reason: stored_reason,
+            instruction_pointer,
+            has_error_code: u8::from(error_code.is_some()),
+            error_code: error_code.unwrap_or(0),
+        })
+    }
+
+    #[must_use]
+    pub fn fault_family(self) -> SsodFaultFamily {
+        match self.fault_family {
+            1 => SsodFaultFamily::CpuException,
+            2 => SsodFaultFamily::RustPanic,
+            3 => SsodFaultFamily::Arena,
+            _ => SsodFaultFamily::Unknown,
+        }
+    }
+
+    #[must_use]
+    pub const fn error_code(self) -> Option<u64> {
+        if self.has_error_code == 0 {
+            None
+        } else {
+            Some(self.error_code)
+        }
+    }
+
+    #[must_use]
+    pub fn reason_bytes(&self) -> &[u8] {
+        let len = usize::try_from(self.reason_len)
+            .unwrap_or(SSOD_REASON_BYTES)
+            .min(SSOD_REASON_BYTES);
+        &self.reason[..len]
     }
 }
 
@@ -230,6 +320,35 @@ pub fn explain_graph<'a>(
     writer.finish()
 }
 
+/// Format an SSOD explanation into caller-provided storage.
+///
+/// # Errors
+///
+/// Returns `AssistantActionError::OutputOverflow` when `output` is too small
+/// for the deterministic explanation text.
+pub fn explain_ssod<'a>(
+    input: &SsodExplanationInput,
+    output: &'a mut [u8],
+) -> Result<&'a str, AssistantActionError> {
+    let mut writer = BoundedTextWriter::new(output);
+    writer
+        .write_str("ssod reason=")
+        .map_err(|_| writer.overflow())?;
+    write_reason(&mut writer, input)?;
+    write!(
+        writer,
+        " rip=0x{:016x} fault_family=",
+        input.instruction_pointer
+    )
+    .map_err(|_| writer.overflow())?;
+    writer
+        .write_str(ssod_fault_family_name(input.fault_family()))
+        .map_err(|_| writer.overflow())?;
+    write!(writer, " vector=0x{:02x} error_code=", input.vector).map_err(|_| writer.overflow())?;
+    write_optional_error_code(&mut writer, input.error_code())?;
+    writer.finish()
+}
+
 const fn encode_optional_node(node: Option<u32>) -> u32 {
     match node {
         Some(id) => id,
@@ -256,6 +375,33 @@ fn write_optional_node(
     match node {
         Some(id) => write!(writer, "{id}").map_err(|_| writer.overflow()),
         None => writer.write_str("none").map_err(|_| writer.overflow()),
+    }
+}
+
+fn write_reason(
+    writer: &mut BoundedTextWriter<'_>,
+    input: &SsodExplanationInput,
+) -> Result<(), AssistantActionError> {
+    let reason = str::from_utf8(input.reason_bytes()).unwrap_or("<invalid-reason>");
+    writer.write_str(reason).map_err(|_| writer.overflow())
+}
+
+fn write_optional_error_code(
+    writer: &mut BoundedTextWriter<'_>,
+    error_code: Option<u64>,
+) -> Result<(), AssistantActionError> {
+    match error_code {
+        Some(code) => write!(writer, "0x{code:016x}").map_err(|_| writer.overflow()),
+        None => writer.write_str("none").map_err(|_| writer.overflow()),
+    }
+}
+
+const fn ssod_fault_family_name(fault_family: SsodFaultFamily) -> &'static str {
+    match fault_family {
+        SsodFaultFamily::CpuException => "cpu_exception",
+        SsodFaultFamily::RustPanic => "rust_panic",
+        SsodFaultFamily::Arena => "arena",
+        SsodFaultFamily::Unknown => "unknown",
     }
 }
 
@@ -405,6 +551,71 @@ mod tests {
             AssistantActionError::OutputOverflow {
                 required: 17,
                 available: 16,
+            }
+        );
+    }
+
+    #[test]
+    fn ssod_explanation_formats_structured_diagnostic_fields() {
+        let input = SsodExplanationInput::new(
+            SsodFaultFamily::CpuException,
+            14,
+            "page_fault",
+            0xFFFF_8000_0000_1234,
+            Some(0x2),
+        )
+        .unwrap();
+        let mut output = [0u8; 128];
+
+        let explanation = explain_ssod(&input, &mut output).unwrap();
+
+        assert_eq!(
+            explanation,
+            "ssod reason=page_fault rip=0xffff800000001234 fault_family=cpu_exception vector=0x0e error_code=0x0000000000000002"
+        );
+    }
+
+    #[test]
+    fn ssod_explanation_formats_absent_error_code_and_rejects_long_reason() {
+        let input =
+            SsodExplanationInput::new(SsodFaultFamily::RustPanic, 0xFF, "rust_panic", 0, None)
+                .unwrap();
+        let mut output = [0u8; 128];
+
+        let explanation = explain_ssod(&input, &mut output).unwrap();
+
+        assert_eq!(
+            explanation,
+            "ssod reason=rust_panic rip=0x0000000000000000 fault_family=rust_panic vector=0xff error_code=none"
+        );
+        assert_eq!(
+            SsodExplanationInput::new(
+                SsodFaultFamily::Unknown,
+                0xFF,
+                "x".repeat(SSOD_REASON_BYTES + 1).as_str(),
+                0,
+                None,
+            )
+            .unwrap_err(),
+            AssistantActionError::TextTooLong {
+                required: 33,
+                available: SSOD_REASON_BYTES_U32,
+            }
+        );
+    }
+
+    #[test]
+    fn ssod_explanation_reports_caller_output_overflow() {
+        let input =
+            SsodExplanationInput::new(SsodFaultFamily::Arena, 0xFF, "arena_alloc_error", 0, None)
+                .unwrap();
+        let mut output = [0u8; 8];
+
+        assert_eq!(
+            explain_ssod(&input, &mut output).unwrap_err(),
+            AssistantActionError::OutputOverflow {
+                required: 12,
+                available: 8,
             }
         );
     }
