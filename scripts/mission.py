@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,7 +19,16 @@ LOG = CODEX / "MISSION_LOG.md"
 
 
 REQUIRED_MISSION_KEYS = ("Mission:", "Campaign:", "Status:")
-REQUIRED_CAMPAIGN_KEYS = ("Campaign:", "Active mission:", "Status:", "Publish policy:")
+REQUIRED_CAMPAIGN_KEYS = (
+    "Campaign:",
+    "Active mission:",
+    "Status:",
+    "Stop rule:",
+    "Bundle policy:",
+    "Publish policy:",
+    "Main policy:",
+    "Campaign branch:",
+)
 
 
 def read(path: Path) -> str:
@@ -35,6 +45,19 @@ def value(text: str, key: str) -> str:
     return ""
 
 
+def current_branch() -> str:
+    proc = subprocess.run(
+        ["git", "branch", "--show-current"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return ""
+    return proc.stdout.strip()
+
+
 def validate() -> int:
     mission_text = read(MISSION)
     campaign_text = read(CAMPAIGN)
@@ -49,6 +72,25 @@ def validate() -> int:
         if key not in campaign_text:
             errors.append(f"CURRENT_CAMPAIGN.md missing {key}")
 
+    publish_policy = value(campaign_text, "Publish policy").lower()
+    main_policy = value(campaign_text, "Main policy").lower()
+    if "campaign branch" not in publish_policy:
+        errors.append("CURRENT_CAMPAIGN.md Publish policy must name the campaign branch")
+    for required in ("never merge to main", "never push main", "force-push"):
+        if required not in main_policy:
+            errors.append(f"CURRENT_CAMPAIGN.md Main policy missing {required!r}")
+
+    branch = current_branch()
+    campaign_branch = value(campaign_text, "Campaign branch")
+    if not branch:
+        errors.append("could not determine current git branch")
+    elif branch == "main":
+        errors.append("refusing mission work on main")
+    elif campaign_branch and branch != campaign_branch:
+        errors.append(
+            f"current branch {branch!r} does not match Campaign branch {campaign_branch!r}"
+        )
+
     mission_name = value(mission_text, "Mission")
     active = value(campaign_text, "Active mission")
     if mission_name and active and mission_name not in active:
@@ -61,9 +103,6 @@ def validate() -> int:
         errors.append("CURRENT_MISSION.md missing Acceptance Criteria section")
     if "## Verification Commands" not in mission_text:
         errors.append("CURRENT_MISSION.md missing Verification Commands section")
-    if "Stop rule:" not in campaign_text:
-        errors.append("CURRENT_CAMPAIGN.md missing Stop rule")
-
     if errors:
         for error in errors:
             print(f"[mission] FAIL: {error}", file=sys.stderr)

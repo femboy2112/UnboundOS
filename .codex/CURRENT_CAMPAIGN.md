@@ -1,10 +1,16 @@
 # Current Campaign
 
 Campaign: C1 M0 Boot Heartbeat
-Active mission: C1.M0 Step 5 Review gate
-Status: blocked-review-gate
-Stop rule: stop after one complete mission, even when the next mission is obvious.
-Publish policy: commit and push after each completed mission.
+Active mission: C1.M0 Step 7 QEMU smoke headless assertion
+Status: ready
+Stop rule: stop after one complete mission unless the operator explicitly
+approves a bundled run; bundled runs stop at the next review gate, blocker, or
+failed verification.
+Bundle policy: sequential only; run validation, commit, push, and reload
+mission state after each completed mission.
+Publish policy: commit and push the campaign branch after each completed
+mission.
+Main policy: never merge to main, never push main, or force-push.
 Campaign branch: campaign/m0-boot-heartbeat
 
 ## Campaign Objective
@@ -24,9 +30,9 @@ See `.codex/CURRENT_MISSION.md`.
 2. C1.M0 Step 2 Serial UART probe and heartbeat string emission. Completed.
 3. C1.M0 Step 3 IDT install and `UNBOUNDOS_IDT_OK`. Completed.
 4. C1.M0 Step 4 Boot-diagnostic-buffer fallback. Completed.
-5. C1.M0 Step 5 Review gate. Active.
-6. C1.M0 Step 6 Panic path routed through SSOD.
-7. C1.M0 Step 7 QEMU smoke headless assertion.
+5. C1.M0 Step 5 Review gate. Approved to continue by operator.
+6. C1.M0 Step 6 Panic path routed through SSOD. Completed.
+7. C1.M0 Step 7 QEMU smoke headless assertion. Active.
 8. C1.M0 Step 8 M0 completion audit.
 
 ## Required Preflight For `go`

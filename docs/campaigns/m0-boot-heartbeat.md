@@ -282,14 +282,14 @@ Purpose:
 
 Allowed files:
 ```
-kernel/src/panic.rs
+kernel/src/ssod.rs
 kernel/src/heartbeat.rs
 kernel/src/boot_diag.rs
-kernel/src/arch/exceptions.rs
+kernel/src/idt.rs
 ```
 
 Required work:
-  - In `panic.rs`, emit `UNBOUNDOS_SSOD_BEGIN` then a structured
+  - In `ssod.rs`, emit `UNBOUNDOS_SSOD_BEGIN` then a structured
     record `{ reason, ctx.arena_id?, ctx.graph_id?, ctx.node_id? }`
     serialized as plain text key=value lines, then
     `UNBOUNDOS_SSOD_END`, then halt (`hlt`).
@@ -307,7 +307,7 @@ make kernel
 ```
 
 Spawn `Task subagent_type=ssod-diagnostics-engineer` with prompt
-"review M0-scope panic record format in kernel/src/panic.rs for spec
+"review M0-scope panic record format in kernel/src/ssod.rs for spec
 §9.7 structured field compliance".
 
 Commit and push.

@@ -16,6 +16,10 @@ pub struct DiagnosticContext {
     pub error_code: u64,
 }
 
+const SSOD_BEGIN: &str = "UNBOUNDOS_SSOD_BEGIN";
+const SSOD_END: &str = "UNBOUNDOS_SSOD_END";
+const M0_ABSENT_CONTEXT: &str = "none";
+
 impl DiagnosticContext {
     pub const fn rust_panic() -> Self {
         Self {
@@ -37,17 +41,18 @@ pub fn from_rust_panic(_info: &PanicInfo) -> ! {
 
 /// M0-scope structured fatal diagnostic path.
 ///
-/// Step 6 owns the full SSOD record format. At Step 3, fatal IDT stubs still
-/// route through this single diagnostic surface instead of halting directly,
-/// preserving H10 and keeping boot failures inspectable through serial or the
-/// boot-diagnostic buffer.
+/// Spec §9 requires fatal exceptions to pass through a structured diagnostic
+/// record instead of silently halting. M0 emits the stable skeleton fields now;
+/// later milestones fill arena/graph/node/model context when those systems
+/// exist.
 pub fn kernel_panic(reason: &str, ctx: DiagnosticContext) -> ! {
     // SAFETY: fatal path owns the CPU until reset.
     unsafe {
         core::arch::asm!("cli", options(nomem, nostack, preserves_flags));
     }
 
-    emit_line("UNBOUNDOS_SSOD_STUB_BEGIN");
+    emit_line(SSOD_BEGIN);
+    emit_kv_str("format", "m0_ssod_v1");
     emit_kv_str("reason", reason);
     emit_kv_hex("vector", u64::from(ctx.vector));
     emit_kv_hex("rip", ctx.instruction_pointer);
@@ -57,8 +62,14 @@ pub fn kernel_panic(reason: &str, ctx: DiagnosticContext) -> ! {
     emit_kv_hex("ss", ctx.stack_segment);
     if ctx.has_error_code {
         emit_kv_hex("error_code", ctx.error_code);
+    } else {
+        emit_kv_str("error_code", M0_ABSENT_CONTEXT);
     }
-    emit_line("UNBOUNDOS_SSOD_STUB_END");
+    emit_kv_str("arena_id", M0_ABSENT_CONTEXT);
+    emit_kv_str("graph_id", M0_ABSENT_CONTEXT);
+    emit_kv_str("node_id", M0_ABSENT_CONTEXT);
+    emit_kv_str("model_id", M0_ABSENT_CONTEXT);
+    emit_line(SSOD_END);
 
     halt_idle()
 }

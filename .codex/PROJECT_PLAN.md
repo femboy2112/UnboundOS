@@ -10,7 +10,8 @@ resource IDs, visible boot diagnostics, and structured SSOD failures.
 
 ## Operating Contract
 
-When the operator says `go`, Codex must complete exactly one active mission:
+When the operator says `go`, Codex must complete exactly one active mission by
+default:
 
 1. Load `CLAUDE.md`, this plan, `.codex/CURRENT_CAMPAIGN.md`, and
    `.codex/CURRENT_MISSION.md`.
@@ -20,6 +21,14 @@ When the operator says `go`, Codex must complete exactly one active mission:
 5. Use the matching `.agents/agents/*` review role for touched subsystems.
 6. Update mission state and `.codex/MISSION_LOG.md`.
 7. Stage only mission-owned files, commit, push, and stop.
+
+When the operator explicitly approves a bundled run, Codex may complete
+multiple adjacent missions in campaign order before stopping. Bundled runs must
+stay off `main`, never merge to `main`, never push `main`, never force-push,
+preserve every `CLAUDE.md` hard rule, keep per-mission log evidence, run each
+mission's validation commands before completion, commit and push after each
+completed mission, reload mission state after each checkpoint, and stop at the
+next review gate, failed verification, blocker, or ambiguous scope.
 
 ## Campaigns
 

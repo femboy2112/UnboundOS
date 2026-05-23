@@ -1,6 +1,6 @@
 ---
 name: unboundos-go
-description: Execute exactly one UnboundOS mission from the repo-local Codex control files. Use when the operator says "go" in this repo or asks to advance the current UnboundOS mission.
+description: Execute one UnboundOS mission, or an explicitly operator-approved bounded mission bundle, from the repo-local Codex control files. Use when the operator says "go" in this repo or asks to advance the current UnboundOS mission.
 ---
 
 # UnboundOS Go
@@ -20,9 +20,24 @@ implementation files.
 
 ## Execution Rule
 
-Execute exactly one active mission. Do not continue into the next mission in the
-same turn. If the active mission is ambiguous, repair the mission file first
-instead of guessing.
+By default, execute exactly one active mission. Do not continue into the next
+mission in the same turn. If the active mission is ambiguous, repair the mission
+file first instead of guessing.
+
+If the operator explicitly approves a bundled run, Codex may execute multiple
+adjacent missions in one turn to increase efficiency. Bundled runs must:
+
+- stay on a non-`main` branch;
+- never merge to `main`, never push `main`, or force-push;
+- preserve every Hard Stop below;
+- process missions in campaign order, without skipping review gates unless the
+  operator explicitly approves passing that gate;
+- keep each mission's evidence in `.codex/MISSION_LOG.md`;
+- run each mission's validation commands before marking it complete;
+- checkpoint each completed mission with its own validation, commit, push, and
+  control-file reload;
+- stop at the next review gate, blocker, failed verification, or scope
+  ambiguity.
 
 ## Scope Rule
 
@@ -59,14 +74,15 @@ Use the matching role file under `.agents/agents/` for touched subsystems:
 
 ## Publish Rule
 
-When the mission is complete:
+When the mission or approved bundle is complete:
 
 1. Update `.codex/MISSION_LOG.md`.
 2. Advance `.codex/CURRENT_CAMPAIGN.md` and `.codex/CURRENT_MISSION.md` to the
    next mission, or mark blocked if no safe next mission exists.
 3. Run `git status --short`.
 4. Stage only mission-owned files.
-5. Commit with message `mission: <mission id> <short title>`.
+5. Commit with message `mission: <mission id> <short title>` for a single
+   mission, or `mission: <campaign id> <bundle title>` for an approved bundle.
 6. Push the current branch.
 7. Stop.
 

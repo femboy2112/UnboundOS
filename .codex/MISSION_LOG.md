@@ -4,8 +4,24 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C1.M0 Step 5 Review gate: blocked pending explicit operator approval for
-  Steps 6+.
+- C1.M0 Step 7 QEMU smoke headless assertion: ready.
+
+## 2026-05-23T00:13:59Z - C1.M0 Step 6 Panic path routed through SSOD
+
+- Status: completed
+- Summary: Documented the operator-approved bundled-run workflow with
+  per-mission validation/commit/push checkpoints and no-main guards, aligned
+  the Step 6 campaign paths to the live `ssod.rs` / `idt.rs` code, hardened
+  mission validation to enforce the campaign branch and main policy, and
+  changed the M0 panic path to emit `UNBOUNDOS_SSOD_BEGIN` /
+  `UNBOUNDOS_SSOD_END` with key=value fields to both serial and `boot_diag`.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `make kernel`, SSOD source review, and
+  `python3 scripts/verify.py --mission current`.
+- Notes: the SSOD record intentionally uses explicit `none` context for
+  arena/graph/node/model IDs because those subsystems are later milestones.
+- Blockers: none.
 
 ## 2026-05-23T00:03:42Z - C1.M0 Step 5 Review gate
 
@@ -18,7 +34,10 @@ Append one entry per completed mission. Keep entries concise and factual.
   `python3 scripts/verify.py --mission current`.
 - Stop reason: review-gate. The campaign requires explicit operator approval
   before Steps 6+ run.
-- Blockers: explicit operator approval to continue past the Step 5 review gate.
+- Resolution: operator later approved continuing past the review gate in an
+  explicit bundled run while preserving spec adherence and editing working
+  code.
+- Blockers: none after operator approval.
 
 ## 2026-05-22T23:56:36Z - C1.M0 Step 4 Boot-diagnostic-buffer fallback
 
