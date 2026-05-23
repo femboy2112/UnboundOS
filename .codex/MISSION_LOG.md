@@ -4,7 +4,19 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C13.M12 Step 7 M12 completion audit: ready.
+*(none)*
+
+## 2026-05-23T09:08:54Z - C13.M12 Step 7 M12 completion audit
+
+- Status: completed
+- Summary: Marked M12 Local retrieval DONE, bumped the milestone catalog to
+  v0.26, recorded the M12 change log, and added closeout commit evidence for
+  activation and Steps 1-6.
+- Verification: `make gates`, `make repo-state`, and
+  `python3 scripts/verify.py --mission current`.
+- Notes: `make repo-state` reports STOP because no milestone remains
+  `IN-PROGRESS`; this is the expected post-closeout state.
+- Blockers: none.
 
 ## 2026-05-23T09:07:42Z - C13.M12 Step 6 Retrieval smoke evidence and gates
 

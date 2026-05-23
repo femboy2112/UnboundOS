@@ -259,7 +259,7 @@ Commit and push.
 
 # Step 7 — M12 completion audit
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Close M12 after retrieval contracts, document snapshot, deterministic
@@ -290,3 +290,21 @@ python3 scripts/verify.py --mission current
 ```
 
 Commit and push.
+
+## Closeout
+
+M12 Local retrieval completed on `campaign/m12-local-retrieval`.
+
+Step commits:
+- Activation: `31aa43d`
+- Step 1 Retrieval data contracts: `1359a51`
+- Step 2 Local document index snapshot: `3f2f78f`
+- Step 3 Deterministic retrieval ranking: `c413b72`
+- Step 4 Context packing: `39ec24a`
+- Step 5 Assistant retrieval surface: `62c27ed`
+- Step 6 Retrieval smoke evidence and gates: `29b4d89`
+
+Closeout verification:
+- `make gates` passed with retrieval smoke in the aggregate gate sequence.
+- `make repo-state` reports STOP because no milestone remains in progress.
+- `python3 scripts/verify.py --mission current` passed.

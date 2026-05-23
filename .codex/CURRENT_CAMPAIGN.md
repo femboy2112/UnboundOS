@@ -1,8 +1,8 @@
 # Current Campaign
 
 Campaign: C13 M12 Local Retrieval
-Active mission: C13.M12 Step 7 M12 completion audit
-Status: ready
+Active mission: C13.M12 Completed
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -30,7 +30,7 @@ See `.codex/CURRENT_MISSION.md`.
 4. C13.M12 Step 4 Context packing. Completed.
 5. C13.M12 Step 5 Assistant retrieval surface. Completed.
 6. C13.M12 Step 6 Retrieval smoke evidence and gates. Completed.
-7. C13.M12 Step 7 M12 completion audit. Active.
+7. C13.M12 Step 7 M12 completion audit. Completed.
 
 ## Required Preflight For `go`
 

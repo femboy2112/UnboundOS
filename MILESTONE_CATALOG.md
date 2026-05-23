@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.25
+> **Catalog version:** v0.26
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** M12 Local retrieval
+> **Active milestone:** none
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -37,7 +37,7 @@ archived under `docs/campaigns/` and never edited again.
 | M9  | UMDL loader | §10, §13.11 | DONE | Model package validates and loads; `make gates` PROCEED | docs/campaigns/m9-umdl-loader.md |
 | M10 | Quantized inference | §10, §11, §13.12 | DONE | Small quantized model streams tokens; `make gates` PROCEED | docs/campaigns/m10-quantized-inference.md |
 | M11 | IDE assistant | §10, §13.1 | DONE | Local assistant explains graph and SSOD; `make gates` PROCEED | docs/campaigns/m11-ide-assistant.md |
-| M12 | Local retrieval | §10, §13.1 | IN-PROGRESS | Assistant searches local docs; `make gates` PROCEED | docs/campaigns/m12-local-retrieval.md |
+| M12 | Local retrieval | §10, §13.1 | DONE | Assistant searches local docs; `make gates` PROCEED | docs/campaigns/m12-local-retrieval.md |
 
 ## Deferred reasons
 
@@ -45,6 +45,14 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.26** — M12 completed on `campaign/m12-local-retrieval`: fixed-width
+  retrieval query/document/result contracts, read-only local index snapshots,
+  deterministic top-k ranking, bounded context packing, assistant retrieval
+  request/response routing, and `make retrieval-smoke` now prove local
+  document search evidence without host-path leakage or direct assistant
+  mutation authority. M12 added no unsafe blocks or functions; memory-unsafe
+  Rust remains allowed by project identity at bounded OS/model-kernel
+  boundaries.
 - **v0.25** — Opened M12 Local retrieval on
   `campaign/m12-local-retrieval`. The campaign owns fixed-width local document
   retrieval inputs, deterministic ranking, context packing, assistant retrieval

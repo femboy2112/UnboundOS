@@ -1,14 +1,13 @@
 # Current Mission
 
-Mission: C13.M12 Step 7 M12 completion audit
+Mission: C13.M12 Completed
 Campaign: C13 M12 Local Retrieval
-Status: ready
+Status: completed
 
 ## Objective
 
-Execute M12 campaign Step 7 from `docs/campaigns/m12-local-retrieval.md`:
-close M12 after retrieval contracts, document snapshot, deterministic ranking,
-context packing, assistant retrieval surface, and smoke evidence are
+M12 is closed after retrieval contracts, document snapshot, deterministic
+ranking, context packing, assistant retrieval surface, and smoke evidence were
 reproducibly verified.
 
 ## Scope
@@ -29,10 +28,11 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- M12 status changes from `IN-PROGRESS` to `DONE` in `MILESTONE_CATALOG.md`.
-- Catalog version banner is bumped.
+- M12 status is `DONE` in `MILESTONE_CATALOG.md`.
+- Catalog version banner is `v0.26`.
 - Catalog change log records M12 local retrieval completion.
 - Campaign closeout records commit SHAs for Steps 1-6.
+- No milestone remains in progress.
 
 ## Baseline to verify
 
@@ -51,8 +51,8 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m12-local-retrieval`. Step 6 added
-`make retrieval-smoke`, wired retrieval smoke into aggregate gates and mission
-verification, and kept the gates green. Memory-unsafe Rust remains allowed by
-project identity; M12 local retrieval stayed deterministic, bounded,
-non-executing, and graph-mutation-free.
+Campaign branch: `campaign/m12-local-retrieval`. M12 added local retrieval
+contracts, deterministic ranking, context packing, assistant retrieval routing,
+and retrieval smoke evidence. Memory-unsafe Rust remains allowed by project
+identity; M12 local retrieval stayed deterministic, bounded, non-executing,
+and graph-mutation-free.
