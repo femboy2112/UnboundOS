@@ -1,25 +1,20 @@
 # Current Mission
 
-Mission: C12.M11 Step 5 Assistant smoke evidence and gates
+Mission: C12.M11 Step 6 M11 completion audit
 Campaign: C12 M11 IDE Assistant
 Status: ready
 
 ## Objective
 
-Execute M11 campaign Step 5 from `docs/campaigns/m11-ide-assistant.md`:
-make assistant explanation and action-buffer evidence reproducible from
-checkout.
+Execute M11 campaign Step 6 from `docs/campaigns/m11-ide-assistant.md`:
+close M11 after assistant action-buffer, graph explanation, SSOD explanation,
+unified explain surface, and smoke evidence are reproducibly verified.
 
 ## Scope
 
 Allowed changes:
 
-- `Makefile`
-- `scripts/**`
-- `crates/llm/src/assistant.rs`
-- `crates/llm/src/**`
-- `crates/graph/src/**`
-- `kernel/src/ssod.rs`
+- `MILESTONE_CATALOG.md`
 - `docs/campaigns/m11-ide-assistant.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -27,17 +22,15 @@ Allowed changes:
 
 Out of scope:
 
-- Graph mutation, storage behavior changes, QEMU harness changes beyond
-  existing aggregate gates, thread/queue, eval, or execution-hook changes.
+- Implementation changes outside campaign/catalog/control closeout files.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- `make assistant-smoke` or equivalent source-level check is available.
-- Smoke proves graph explanation, SSOD explanation, action-buffer, unified
-  request routing, and no-direct mutation evidence are source-reachable.
-- Assistant smoke is wired into aggregate mission verification.
-- Graph/QEMU aggregate gates remain green.
+- M11 row in `MILESTONE_CATALOG.md` is marked `DONE`.
+- Catalog version banner and change log are updated for M11.
+- M11 campaign closeout records Step 1-5 commit SHAs.
+- `make gates`, `make repo-state`, and mission verification pass.
 
 ## Baseline to verify
 
@@ -51,17 +44,14 @@ status: IN-PROGRESS
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make fmt
-make clippy
-make assistant-smoke
 make gates
+make repo-state
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m11-ide-assistant`. Step 4 added a single explicit
-assistant explain request/response surface for graph and SSOD explanation, with
-optional proposals routed only through `StructuredActionBuffer`. Memory-unsafe
-Rust remains allowed by project identity, but M11 assistant explanation/action
-buffer work should be safe, deterministic, bounded, and non-executing.
+Campaign branch: `campaign/m11-ide-assistant`. Step 5 added reproducible
+assistant smoke evidence, wired it into `make gates` and mission verification,
+and kept the graph/QEMU aggregate gates green. Memory-unsafe Rust remains
+allowed by project identity; M11 did not require new unsafe code.

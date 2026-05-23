@@ -27,6 +27,7 @@ help:
 	@echo "  make toy-transformer-smoke # source-level M8 toy transformer smoke"
 	@echo "  make umdl-smoke      # source-level M9 UMDL loader smoke"
 	@echo "  make quantized-smoke # source-level M10 quantized inference smoke"
+	@echo "  make assistant-smoke # source-level M11 assistant explanation smoke"
 	@echo "  make qemu-fault-de   # assert divide-by-zero SSOD path"
 	@echo "  make qemu-fault-ud   # assert invalid-opcode SSOD path"
 	@echo "  make qemu-fault-pf   # assert page-fault SSOD path"
@@ -124,6 +125,10 @@ umdl-smoke:
 .PHONY: quantized-smoke
 quantized-smoke:
 	python3 scripts/check_quantized_smoke.py
+
+.PHONY: assistant-smoke
+assistant-smoke:
+	python3 scripts/check_assistant_smoke.py
 
 .PHONY: address-scan
 address-scan:

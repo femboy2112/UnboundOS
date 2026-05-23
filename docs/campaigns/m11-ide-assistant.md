@@ -202,7 +202,7 @@ Commit and push.
 
 # Step 5 — Assistant smoke evidence and gates
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Make assistant explanation and action-buffer evidence reproducible from
@@ -239,6 +239,8 @@ Commit and push.
 ---
 
 # Step 6 — M11 completion audit
+
+Status: Active.
 
 Purpose:
   Close M11 after assistant action-buffer, graph explanation, SSOD explanation,

@@ -42,6 +42,7 @@ STATIC_COMMANDS = [
     Command("toy transformer smoke", ["python3", "scripts/check_toy_transformer_smoke.py"]),
     Command("UMDL smoke", ["python3", "scripts/check_umdl_smoke.py"]),
     Command("quantized inference smoke", ["python3", "scripts/check_quantized_smoke.py"]),
+    Command("assistant smoke", ["python3", "scripts/check_assistant_smoke.py"]),
 ]
 
 RUST_COMMANDS = [

@@ -17,7 +17,7 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-TOTAL=6
+TOTAL=7
 PASS=()
 FAILED=""
 
@@ -53,8 +53,9 @@ step 3 "cargo test --workspace --exclude kernel" \
     cargo test --workspace --exclude kernel
 step 4 "address-scan persistent fixtures" \
     python3 scripts/address_scan.py tests/golden_graphs tests/golden_models
-step 5 "fidelity matrix" bash scripts/fidelity_check.sh
-step 6 "qemu-smoke heartbeat" qemu_smoke
+step 5 "assistant-smoke" python3 scripts/check_assistant_smoke.py
+step 6 "fidelity matrix" bash scripts/fidelity_check.sh
+step 7 "qemu-smoke heartbeat" qemu_smoke
 
 rm -f /tmp/gates-$$.log
 

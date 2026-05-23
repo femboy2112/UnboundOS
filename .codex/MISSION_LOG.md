@@ -4,7 +4,24 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C12.M11 Step 5 Assistant smoke evidence and gates: ready.
+- C12.M11 Step 6 M11 completion audit: ready.
+
+## 2026-05-23T08:43:12Z - C12.M11 Step 5 Assistant smoke evidence and gates
+
+- Status: completed
+- Summary: Added `make assistant-smoke` and
+  `scripts/check_assistant_smoke.py`, wired assistant smoke into
+  `scripts/verify.py` and `scripts/gates.sh`, and proved graph explanation,
+  SSOD explanation, action-buffer, unified request routing, and no-direct
+  mutation evidence are source-reachable.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `make assistant-smoke`, `make gates`, and
+  `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code, graph mutation, storage behavior
+  change, QEMU harness behavior change, hidden execution, queue/thread, or eval
+  path.
+- Blockers: none.
 
 ## 2026-05-23T08:40:47Z - C12.M11 Step 4 Assistant explanation surface
 
