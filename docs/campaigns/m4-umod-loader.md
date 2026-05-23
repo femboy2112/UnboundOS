@@ -325,6 +325,8 @@ Commit and push.
 
 # Step 7 — M4 completion audit
 
+Status: Completed.
+
 Purpose:
   Close M4 after persistent UMOD parsing, 22-check verification, compile-path
   execution, and fixture coverage are all reproducibly verified.
@@ -353,3 +355,17 @@ python3 scripts/verify.py --mission current
 ```
 
 Commit and push.
+
+## Closeout
+
+M4 is complete. Checkpoint commits:
+
+- Step 1 UMOD parser header and resource refs: `370a2f8`
+- Step 2 Section table bounds and structural checks: `b6cbd03`
+- Step 3 Node and wire semantic verifier checks: `b67eca1`
+- Step 4 Capabilities, resources, constants, and scheduling checks: `cd85b47`
+- Step 5 Persistent UMOD compile path: `4da106e`
+- Step 6 Golden and malformed fixture coverage: `51efb09`
+
+`/go` must stop here until the operator opens the final M4 PR or rotates the
+control files to M5.

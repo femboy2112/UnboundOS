@@ -4,7 +4,20 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C5.M4 Step 7 M4 completion audit: ready.
+- No active mission. M4 is complete; next action is final M4 PR or M5
+  operator rotation.
+
+## 2026-05-23T06:52:36Z - C5.M4 Step 7 M4 completion audit
+
+- Status: completed
+- Summary: Marked M4 `DONE` in `MILESTONE_CATALOG.md`, bumped the catalog to
+  `v0.10`, recorded M4 closeout in the catalog change log, and appended the
+  Step 1-6 checkpoint SHAs to `docs/campaigns/m4-umod-loader.md`.
+- Verification: `make gates`, `make repo-state`, and `python3
+  scripts/verify.py --mission current`.
+- Repo-state: expected STOP because no milestone is `IN-PROGRESS` after M4
+  closeout.
+- Blockers: none for M4; next action is final M4 PR or M5 rotation.
 
 ## 2026-05-23T06:51:16Z - C5.M4 Step 6 Golden and malformed fixture coverage
 

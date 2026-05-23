@@ -2,7 +2,7 @@
 
 Campaign: C5 M4 UMOD Loader
 Active mission: C5.M4 Step 7 M4 completion audit
-Status: ready
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -32,7 +32,12 @@ See `.codex/CURRENT_MISSION.md`.
 4. C5.M4 Step 4 Capabilities, resources, constants, and scheduling checks. Completed.
 5. C5.M4 Step 5 Persistent UMOD compile path. Completed.
 6. C5.M4 Step 6 Golden and malformed fixture coverage. Completed.
-7. C5.M4 Step 7 M4 completion audit. Active.
+7. C5.M4 Step 7 M4 completion audit. Completed.
+
+## Closeout
+
+M4 is complete. `/go` must stop here until the operator opens the final M4 PR
+or rotates the control files to M5.
 
 ## Required Preflight For `go`
 

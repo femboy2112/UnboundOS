@@ -2,7 +2,7 @@
 
 Mission: C5.M4 Step 7 M4 completion audit
 Campaign: C5 M4 UMOD Loader
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -59,3 +59,6 @@ Campaign branch: `campaign/m4-umod-loader`. Step 6 registered the valid
 source -> transform -> sink golden fixture, added malformed UMOD corpus cases
 for the required failure families, and exercised the fixture set from graph
 crate tests in the verification bundle.
+
+Stop reason: M4 campaign complete. Await operator action to open the final M4
+PR or rotate mission state to M5.
