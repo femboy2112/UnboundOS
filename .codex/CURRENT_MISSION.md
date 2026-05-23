@@ -1,46 +1,44 @@
 # Current Mission
 
-Mission: C8.M7 Step 5 M7 completion audit
-Campaign: C8 M7 Tokenizer
-Status: completed
+Mission: C9.M8 Step 1 Toy model architecture contract
+Campaign: C9 M8 Toy Transformer
+Status: ready
 
 ## Objective
 
-Execute M7 campaign Step 5 from `docs/campaigns/m7-tokenizer.md`: close M7
-after tokenizer metadata, encode/decode, round-trip tests, and smoke evidence
-are reproducibly verified.
+Execute M8 campaign Step 1 from `docs/campaigns/m8-toy-transformer.md`:
+define the hardcoded toy model metadata, deterministic generation config, and
+caller-provided buffer contracts.
 
 ## Scope
 
 Allowed changes:
 
-- `MILESTONE_CATALOG.md`
-- `docs/campaigns/m7-tokenizer.md`
+- `crates/llm/src/lib.rs`
+- `crates/llm/src/toy_transformer.rs`
+- `docs/campaigns/m8-toy-transformer.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- Implementation changes.
-- Scripts, Makefile, UMDL loader, tensor descriptors, model execution, sampler,
-  storage, or QEMU harness changes.
+- Token generation implementation beyond metadata/config validation.
+- UMDL loader, tensor descriptors, sampler, SIMD kernels, storage, or QEMU
+  harness changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- M7 row in `MILESTONE_CATALOG.md` changes from `IN-PROGRESS` to `DONE`.
-- Catalog version banner is bumped.
-- `MILESTONE_CATALOG.md` change log records the M7 closeout.
-- `docs/campaigns/m7-tokenizer.md` has a `## Closeout` section naming the
-  Step 1-4 checkpoint commits.
-- `make gates`, `make repo-state`, and `python3 scripts/verify.py --mission
-  current` prove the closeout state.
+- Toy model module defines fixed-width model/config metadata.
+- M8 exposes exactly one supported toy architecture.
+- Structured errors exist for output buffer overflow and unsupported config.
+- No hidden allocation or hidden execution path is introduced.
 
 ## Baseline to verify
 
 ```
-branch: campaign/m7-tokenizer
+branch: campaign/m8-toy-transformer
 status: IN-PROGRESS
 ```
 
@@ -49,15 +47,14 @@ status: IN-PROGRESS
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make gates
-make repo-state
+make fmt
+make clippy
+cargo test -p llm
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m7-tokenizer`. Step 4 added `make tokenizer-smoke`
-and wired tokenizer smoke into aggregate mission verification.
-
-Stop reason: M7 campaign complete. Await operator action to open the final M7
-PR or rotate mission state to M8.
+Campaign branch: `campaign/m8-toy-transformer`. M8 should not need new unsafe
+code. If a later model loader or SIMD kernel requires unsafe access, it must be
+bounded, inspectable, deterministic, and not undefined by design.

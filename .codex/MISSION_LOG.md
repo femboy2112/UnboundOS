@@ -4,7 +4,16 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- none.
+- C9.M8 Step 1 Toy model architecture contract: ready.
+
+## 2026-05-23T07:41:48Z - C9.M8 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m8-toy-transformer`, marked M8 `IN-PROGRESS`,
+  created the M8 campaign plan, and rotated `.codex` state to Step 1 for a
+  single deterministic hardcoded toy model path.
+- Verification: pending below for the active Step 1 mission state.
+- Blockers: none.
 
 ## 2026-05-23T07:37:59Z - C8.M7 Step 5 M7 completion audit
 
