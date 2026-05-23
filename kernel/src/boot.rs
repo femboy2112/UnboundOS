@@ -99,10 +99,11 @@ pub unsafe fn run() -> ! {
     }
 
     // spec §3.2 step 11: initialize framebuffer if available.
-    // TODO M2 (spec §3.7, §3.9): once framebuffer init succeeds,
-    // call `heartbeat::finalize_framebuffer_fallback()` so a
-    // UART-failed boot still surfaces BOOT_NO_SERIAL and
-    // BOOT_HEARTBEAT_BUFFER_PRESENT to the screen.
+    // TODO M5 (spec §3.7, §3.9): pass the real bootloader framebuffer surface
+    // here once handoff parsing exists. Until then, this keeps headless boot
+    // non-blocking while preserving the real fallback call path for callers
+    // that can provide a bounded `TextSurface`.
+    heartbeat::finalize_framebuffer_fallback(None);
 
     // spec §3.2 step 12: initialize permanent kernel structures.
     // TODO M3 (spec §4.4–§4.11): KernelArena, GraphArena,
@@ -117,7 +118,25 @@ pub unsafe fn run() -> ! {
     // TODO M3 (spec §5.9): cooperative scheduler.
 
     heartbeat::emit("UNBOUNDOS_BOOT_OK");
+    qemu_exit_on_boot_ok_for_smoke();
     ssod::halt_idle()
+}
+
+fn qemu_exit_on_boot_ok_for_smoke() {
+    if option_env!("UNBOUNDOS_QEMU_EXIT_ON_BOOT_OK") != Some("1") {
+        return;
+    }
+    // SAFETY: this is QEMU smoke-test plumbing selected at compile time by the
+    // no-serial harness. Port 0xF4 is the configured isa-debug-exit device in
+    // scripts/qemu.sh and is not touched in normal builds.
+    unsafe {
+        core::arch::asm!(
+            "out dx, al",
+            in("dx") 0xF4_u16,
+            in("al") 0x10_u8,
+            options(nomem, nostack, preserves_flags)
+        );
+    }
 }
 
 fn emit_m2_memory_diagnostics() {

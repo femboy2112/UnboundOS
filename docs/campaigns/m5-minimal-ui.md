@@ -107,6 +107,8 @@ Commit and push.
 
 # Step 2 — Boot diagnostic framebuffer fallback
 
+Status: Completed.
+
 Purpose:
   Wire the heartbeat fallback hook so a framebuffer surface can display
   `BOOT_NO_SERIAL`, `BOOT_HEARTBEAT_BUFFER_PRESENT`, and the recorded boot
@@ -118,6 +120,8 @@ kernel/src/boot.rs
 kernel/src/heartbeat.rs
 kernel/src/boot_diag.rs
 kernel/src/framebuffer.rs
+Makefile
+scripts/qemu.sh
 docs/campaigns/m5-minimal-ui.md
 ```
 
@@ -126,6 +130,8 @@ Required work:
     text output.
   - Preserve serial heartbeat order and normal boot behavior.
   - Do not require a framebuffer for successful headless boot.
+  - Ensure the no-serial QEMU harness verifies boot completion without relying
+    on serial-log heartbeats.
 
 Validation:
 ```

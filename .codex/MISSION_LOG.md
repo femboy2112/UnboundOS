@@ -4,7 +4,22 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C6.M5 Step 2 Boot diagnostic framebuffer fallback: ready.
+- C6.M5 Step 3 Minimal graph-state display model: ready.
+
+## 2026-05-23T07:06:21Z - C6.M5 Step 2 Boot diagnostic framebuffer fallback
+
+- Status: completed
+- Summary: Replaced the TODO-only framebuffer fallback with a real
+  `TextSurface` call path, preserved headless boot by passing `None` until real
+  framebuffer handoff exists, and repaired `make qemu-no-serial` to verify boot
+  completion via QEMU debug-exit instead of a disabled serial log.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `make qemu-headless`, `make
+  qemu-no-serial`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: unsafe is allowed by project identity; the new unsafe
+  boundaries are explicit and bounded (`boot_diag::snapshot` under boot-phase
+  exclusivity and test-only port `0xF4` debug-exit for no-serial QEMU smoke).
+- Blockers: none.
 
 ## 2026-05-23T06:59:40Z - C6.M5 Step 1 Framebuffer text surface primitives
 

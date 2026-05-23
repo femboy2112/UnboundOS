@@ -1,23 +1,21 @@
 # Current Mission
 
-Mission: C6.M5 Step 2 Boot diagnostic framebuffer fallback
+Mission: C6.M5 Step 3 Minimal graph-state display model
 Campaign: C6 M5 Minimal UI
 Status: ready
 
 ## Objective
 
-Execute M5 campaign Step 2 from `docs/campaigns/m5-minimal-ui.md`: wire the
-heartbeat fallback hook so a framebuffer surface can display `BOOT_NO_SERIAL`,
-`BOOT_HEARTBEAT_BUFFER_PRESENT`, and the recorded boot diagnostic buffer when
-UART is unavailable.
+Execute M5 campaign Step 3 from `docs/campaigns/m5-minimal-ui.md`: provide a
+read-only UI model that can display verified graph state without constructing,
+mutating, or bypassing graph runtime handles.
 
 ## Scope
 
 Allowed changes:
 
-- `kernel/src/boot.rs`
-- `kernel/src/heartbeat.rs`
-- `kernel/src/boot_diag.rs`
+- `crates/graph/src/lib.rs`
+- `crates/graph/src/loader.rs`
 - `kernel/src/framebuffer.rs`
 - `docs/campaigns/m5-minimal-ui.md`
 - `.codex/CURRENT_MISSION.md`
@@ -26,16 +24,17 @@ Allowed changes:
 
 Out of scope:
 
-- Graph runtime or verifier changes.
+- Public runtime graph construction changes.
 - Storage, LLM, or SIMD changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- The TODO-only framebuffer fallback is replaced with a real call path through
-  framebuffer text output.
-- Serial heartbeat order and normal boot behavior remain unchanged.
-- Headless boot does not require a framebuffer.
+- Only read-only, symbolic graph display facts needed by the minimal IDE
+  surface are exposed.
+- Framebuffer rendering can display graph id, node count, wire count, and last
+  active/completed-node diagnostics where available.
+- Private runtime construction remains inside `loader.rs`.
 
 ## Baseline to verify
 
@@ -51,14 +50,12 @@ python3 scripts/status.py
 python3 scripts/mission.py validate
 make fmt
 make clippy
-make qemu-headless
-make qemu-no-serial
+cargo test -p graph
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m5-minimal-ui`. Step 1 added boot-passive
-framebuffer text primitives over caller-provided pixel memory. Unsafe memory
-access remains allowed for real hardware/MMIO boundaries, but must be bounded,
-inspectable, deterministic, and not undefined by design.
+Campaign branch: `campaign/m5-minimal-ui`. Step 2 wired the framebuffer
+fallback call path, preserved normal serial heartbeat boot, and made
+`make qemu-no-serial` prove boot completion without depending on serial output.

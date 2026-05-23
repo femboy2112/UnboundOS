@@ -72,6 +72,12 @@ impl<'a> TextSurface<'a> {
         }
     }
 
+    pub fn write_bytes_ascii(&mut self, bytes: &[u8]) {
+        for byte in bytes {
+            self.write_byte(*byte);
+        }
+    }
+
     pub fn write_byte(&mut self, byte: u8) {
         if byte == b'\n' {
             self.newline();

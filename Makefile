@@ -8,6 +8,7 @@ KERNEL      := target/x86_64-unboundos/release/kernel
 IMAGE       := /tmp/unboundos.img
 SERIAL_LOG  := /tmp/unboundos-serial.log
 FORCE_IMAGE := /tmp/unboundos-forced-fault.img
+NO_SERIAL_IMAGE := /tmp/unboundos-no-serial.img
 
 .PHONY: help
 help:
@@ -59,8 +60,9 @@ qemu-headless: image
 	./scripts/qemu.sh --headless
 
 .PHONY: qemu-no-serial
-qemu-no-serial: image
-	./scripts/qemu.sh --headless --no-serial
+qemu-no-serial:
+	UNBOUNDOS_QEMU_EXIT_ON_BOOT_OK=1 $(MAKE) image IMAGE=$(NO_SERIAL_IMAGE)
+	./scripts/qemu.sh --headless --no-serial --image $(NO_SERIAL_IMAGE)
 
 .PHONY: qemu-m2-dump
 qemu-m2-dump: image

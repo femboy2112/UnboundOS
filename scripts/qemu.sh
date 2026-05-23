@@ -96,6 +96,19 @@ fi
 echo "[qemu] cpu=$QEMU_CPU ram=$QEMU_RAM image=$IMAGE"
 [ "$NO_SERIAL" -eq 0 ] && echo "[qemu] serial → $SERIAL_LOG"
 
+if [ "$NO_SERIAL" -eq 1 ]; then
+    set +e
+    timeout 60s qemu-system-x86_64 "${ARGS[@]}"
+    code=$?
+    set -e
+    if [ "$code" -eq 33 ]; then
+        echo "[qemu] no-serial boot reached debug-exit BOOT_OK"
+        exit 0
+    fi
+    echo "[qemu] no-serial boot did not reach debug-exit BOOT_OK (exit $code)" >&2
+    exit 1
+fi
+
 assert_heartbeat_order() {
     local log="$1"
     local expected=(

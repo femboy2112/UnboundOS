@@ -6,7 +6,7 @@
 //! fails at startup, the buffer remains the only record until the
 //! framebuffer comes up (spec §3.9).
 
-use crate::{boot_diag, serial};
+use crate::{boot_diag, framebuffer::TextSurface, serial};
 
 const NEWLINE: &str = "\n";
 
@@ -53,37 +53,27 @@ pub fn emit_kv_str(key: &str, value: &str) {
     boot_diag::record(NEWLINE);
 }
 
-/// Spec §3.9 fallback finalization. Called by the framebuffer
-/// driver once `framebuffer::init` succeeds. When the UART probe
-/// failed at startup, this prints `BOOT_NO_SERIAL` and
-/// `BOOT_HEARTBEAT_BUFFER_PRESENT` to the framebuffer and dumps
-/// `boot_diag::snapshot()`.
-///
-/// TODO M2 (spec §3.9, §3.7): the framebuffer driver does not yet
-/// exist. Once `framebuffer::print` and a glyph routine land, this
-/// function fills in:
-///
-/// ```text
-///   framebuffer::print("BOOT_NO_SERIAL\n");
-///   framebuffer::print("BOOT_HEARTBEAT_BUFFER_PRESENT\n");
-///   framebuffer::print_bytes(unsafe { boot_diag::snapshot() });
-/// ```
-///
-/// The two strings live in `boot_diag` as source-visible symbols and
-/// are collected here so the source-level /boot-heartbeat-check finds
-/// them before M2 lands.
+/// Spec §3.9 fallback finalization. Called once framebuffer memory is
+/// available. When the UART probe failed at startup, this prints
+/// `BOOT_NO_SERIAL`, `BOOT_HEARTBEAT_BUFFER_PRESENT`, and the recorded
+/// boot diagnostic buffer to the caller-provided framebuffer surface.
 pub const FRAMEBUFFER_FALLBACK_MARKERS: [&str; 2] = [
     boot_diag::BOOT_NO_SERIAL_MARKER,
     boot_diag::BOOT_HEARTBEAT_BUFFER_PRESENT,
 ];
 
-pub fn finalize_framebuffer_fallback() {
+pub fn finalize_framebuffer_fallback(surface: Option<&mut TextSurface<'_>>) {
     if serial::is_available() {
         return;
     }
-    unimplemented!(
-        "M2 framebuffer fallback: emit FRAMEBUFFER_FALLBACK_MARKERS \
-         (BOOT_NO_SERIAL / BOOT_HEARTBEAT_BUFFER_PRESENT) and dump \
-         boot_diag::snapshot() to the framebuffer per spec §3.9"
-    );
+    let Some(surface) = surface else {
+        return;
+    };
+    surface.write_str(FRAMEBUFFER_FALLBACK_MARKERS[0]);
+    surface.write_str(FRAMEBUFFER_FALLBACK_MARKERS[1]);
+    // SAFETY: fallback finalization is a boot-phase display operation. The
+    // natural caller runs after framebuffer setup on the single boot CPU, so no
+    // concurrent heartbeat recorder is in flight while the snapshot is read.
+    let snapshot = unsafe { boot_diag::snapshot() };
+    surface.write_bytes_ascii(snapshot);
 }
