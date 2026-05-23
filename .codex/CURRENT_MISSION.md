@@ -1,22 +1,21 @@
 # Current Mission
 
-Mission: C6.M5 Step 3 Minimal graph-state display model
+Mission: C6.M5 Step 4 UI smoke evidence and gates
 Campaign: C6 M5 Minimal UI
 Status: ready
 
 ## Objective
 
-Execute M5 campaign Step 3 from `docs/campaigns/m5-minimal-ui.md`: provide a
-read-only UI model that can display verified graph state without constructing,
-mutating, or bypassing graph runtime handles.
+Execute M5 campaign Step 4 from `docs/campaigns/m5-minimal-ui.md`: make the
+minimal UI evidence reproducible from checkout.
 
 ## Scope
 
 Allowed changes:
 
-- `crates/graph/src/lib.rs`
-- `crates/graph/src/loader.rs`
-- `kernel/src/framebuffer.rs`
+- `Makefile`
+- `scripts/**`
+- `kernel/src/**`
 - `docs/campaigns/m5-minimal-ui.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -24,17 +23,16 @@ Allowed changes:
 
 Out of scope:
 
-- Public runtime graph construction changes.
+- Graph runtime or verifier changes.
 - Storage, LLM, or SIMD changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- Only read-only, symbolic graph display facts needed by the minimal IDE
-  surface are exposed.
-- Framebuffer rendering can display graph id, node count, wire count, and last
-  active/completed-node diagnostics where available.
-- Private runtime construction remains inside `loader.rs`.
+- A smoke target or source-level check proves framebuffer text and graph-state
+  rendering are reachable.
+- QEMU headless gates remain green.
+- No graphical-only CI requirement is added.
 
 ## Baseline to verify
 
@@ -50,12 +48,13 @@ python3 scripts/status.py
 python3 scripts/mission.py validate
 make fmt
 make clippy
-cargo test -p graph
+make gates
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m5-minimal-ui`. Step 2 wired the framebuffer
-fallback call path, preserved normal serial heartbeat boot, and made
-`make qemu-no-serial` prove boot completion without depending on serial output.
+Campaign branch: `campaign/m5-minimal-ui`. Step 3 exposed a copied,
+read-only graph display snapshot from compiled graph handles and added
+framebuffer text rendering for graph id, node count, wire count, active-node,
+and last-completed-node facts.

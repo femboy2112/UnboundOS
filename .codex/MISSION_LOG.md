@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C6.M5 Step 3 Minimal graph-state display model: ready.
+- C6.M5 Step 4 UI smoke evidence and gates: ready.
+
+## 2026-05-23T07:08:52Z - C6.M5 Step 3 Minimal graph-state display model
+
+- Status: completed
+- Summary: Added a copied read-only `GraphDisplayState` snapshot on
+  `GraphRuntimeHandle`, kept its constructor crate-private, preserved runtime
+  construction inside `loader.rs`, and added framebuffer text rendering for
+  graph id, node count, wire count, active node, and last completed node.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p graph`, and `python3
+  scripts/verify.py --mission current`.
+- Review: `graph-verifier-auditor` checks passed; no public runtime
+  constructor, verifier bypass, or graph mutation surface was added.
+- Blockers: none.
 
 ## 2026-05-23T07:06:21Z - C6.M5 Step 2 Boot diagnostic framebuffer fallback
 

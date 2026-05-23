@@ -60,14 +60,72 @@ impl<'bytes> VerifiedGraph<'bytes> {
 /// outside `loader.rs`.
 #[derive(Debug)]
 pub struct GraphRuntimeHandle {
-    _phantom: core::marker::PhantomData<*const ()>,
+    display_state: GraphDisplayState,
 }
 
 impl GraphRuntimeHandle {
-    pub(crate) const fn new_internal() -> Self {
+    pub(crate) const fn new_internal(display_state: GraphDisplayState) -> Self {
+        Self { display_state }
+    }
+
+    #[must_use]
+    pub const fn display_state(&self) -> GraphDisplayState {
+        self.display_state
+    }
+}
+
+/// Read-only facts for diagnostics and minimal UI display. This is a copied
+/// symbolic snapshot, not a runtime graph constructor or mutation surface.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct GraphDisplayState {
+    graph_id: u64,
+    node_count: u32,
+    wire_count: u32,
+    active_node: Option<u32>,
+    last_completed_node: Option<u32>,
+}
+
+impl GraphDisplayState {
+    #[must_use]
+    pub(crate) const fn new(
+        graph_id: u64,
+        node_count: u32,
+        wire_count: u32,
+        active_node: Option<u32>,
+        last_completed_node: Option<u32>,
+    ) -> Self {
         Self {
-            _phantom: core::marker::PhantomData,
+            graph_id,
+            node_count,
+            wire_count,
+            active_node,
+            last_completed_node,
         }
+    }
+
+    #[must_use]
+    pub const fn graph_id(&self) -> u64 {
+        self.graph_id
+    }
+
+    #[must_use]
+    pub const fn node_count(&self) -> u32 {
+        self.node_count
+    }
+
+    #[must_use]
+    pub const fn wire_count(&self) -> u32 {
+        self.wire_count
+    }
+
+    #[must_use]
+    pub const fn active_node(&self) -> Option<u32> {
+        self.active_node
+    }
+
+    #[must_use]
+    pub const fn last_completed_node(&self) -> Option<u32> {
+        self.last_completed_node
     }
 }
 

@@ -78,6 +78,64 @@ impl<'a> TextSurface<'a> {
         }
     }
 
+    pub fn write_hex_u64(&mut self, value: u64) {
+        self.write_str("0X");
+        let mut index = 16;
+        while index > 0 {
+            index -= 1;
+            let nibble = ((value >> (index * 4)) & 0xF) as u8;
+            self.write_byte(if nibble < 10 {
+                b'0' + nibble
+            } else {
+                b'A' + (nibble - 10)
+            });
+        }
+    }
+
+    pub fn write_dec_u32(&mut self, value: u32) {
+        let mut digits = [0u8; 10];
+        let mut cursor = digits.len();
+        let mut remaining = value;
+        loop {
+            cursor -= 1;
+            digits[cursor] = b'0' + (remaining % 10) as u8;
+            remaining /= 10;
+            if remaining == 0 {
+                break;
+            }
+        }
+        self.write_bytes_ascii(&digits[cursor..]);
+    }
+
+    pub fn write_optional_node(&mut self, node_id: Option<u32>) {
+        if let Some(id) = node_id {
+            self.write_dec_u32(id);
+        } else {
+            self.write_str("NONE");
+        }
+    }
+
+    pub fn render_graph_state(
+        &mut self,
+        graph_id: u64,
+        node_count: u32,
+        wire_count: u32,
+        active_node: Option<u32>,
+        last_completed_node: Option<u32>,
+    ) {
+        self.write_str("GRAPH_ID=");
+        self.write_hex_u64(graph_id);
+        self.write_str("\nNODES=");
+        self.write_dec_u32(node_count);
+        self.write_str("\nWIRES=");
+        self.write_dec_u32(wire_count);
+        self.write_str("\nACTIVE_NODE=");
+        self.write_optional_node(active_node);
+        self.write_str("\nLAST_COMPLETED_NODE=");
+        self.write_optional_node(last_completed_node);
+        self.write_byte(b'\n');
+    }
+
     pub fn write_byte(&mut self, byte: u8) {
         if byte == b'\n' {
             self.newline();

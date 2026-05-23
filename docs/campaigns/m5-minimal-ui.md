@@ -148,6 +148,8 @@ Commit and push.
 
 # Step 3 — Minimal graph-state display model
 
+Status: Completed.
+
 Purpose:
   Provide a read-only UI model that can display verified graph state without
   constructing, mutating, or bypassing graph runtime handles.

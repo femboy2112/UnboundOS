@@ -5,7 +5,7 @@
 //! is no test-only path, no dev-mode bypass, no IDE editor shortcut. The IDE
 //! itself routes through `verify_umod` → `compile`.
 
-use crate::{GraphCompileError, GraphRuntimeHandle, VerifiedGraph};
+use crate::{GraphCompileError, GraphDisplayState, GraphRuntimeHandle, VerifiedGraph};
 use umod::{parse_node_descriptor, parse_structural, parse_wire_descriptor};
 
 #[allow(dead_code)]
@@ -187,14 +187,24 @@ pub(crate) fn compile(
     //    dispatch_table, scheduling_policy }.
     // 6. Wrap in opaque GraphRuntimeHandle.
 
+    let header = parse_structural(verified.bytes())
+        .map_err(|_| GraphCompileError::NodeRuntimeAllocFailed)?;
+    let mut display_state = GraphDisplayState::new(
+        header.graph_stable_id,
+        header.node_count,
+        header.wire_count,
+        None,
+        None,
+    );
+
     if verified_source_transform_sink(verified.bytes()) {
         let mut runtime = GraphRuntime::source_transform_sink();
         let _ = runtime.execute_once();
-        let _ = runtime.active_node();
-        let _ = runtime.last_completed_node();
+        display_state.active_node = runtime.active_node();
+        display_state.last_completed_node = runtime.last_completed_node();
     }
 
-    Ok(GraphRuntimeHandle::new_internal())
+    Ok(GraphRuntimeHandle::new_internal(display_state))
 }
 
 fn verified_source_transform_sink(bytes: &[u8]) -> bool {
@@ -303,6 +313,18 @@ mod tests {
     fn builtin_graph_reaches_runtime_through_verified_pipeline() {
         let verified = graph_load_from_umod(SOURCE_TRANSFORM_SINK_UMOD).unwrap();
         assert!(graph_compile_verified(verified).is_ok());
+    }
+
+    #[test]
+    fn compiled_handle_exposes_read_only_display_state() {
+        let verified = graph_load_from_umod(SOURCE_TRANSFORM_SINK_UMOD).unwrap();
+        let handle = graph_compile_verified(verified).unwrap();
+
+        assert_eq!(handle.display_state().graph_id(), 0x0053_5453);
+        assert_eq!(handle.display_state().node_count(), 3);
+        assert_eq!(handle.display_state().wire_count(), 2);
+        assert_eq!(handle.display_state().active_node(), None);
+        assert_eq!(handle.display_state().last_completed_node(), Some(3));
     }
 
     #[test]
