@@ -2,7 +2,7 @@
 
 Campaign: C3 M2 Arena Memory
 Active mission: C3.M2 Step 5 M2 completion audit
-Status: ready
+Status: completed
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -29,7 +29,12 @@ See `.codex/CURRENT_MISSION.md`.
 2. C3.M2 Step 2 Named M2 arena set. Completed.
 3. C3.M2 Step 3 Deterministic exhaustion diagnostics. Completed.
 4. C3.M2 Step 4 Memory-map and arena dump. Completed.
-5. C3.M2 Step 5 M2 completion audit. Active.
+5. C3.M2 Step 5 M2 completion audit. Completed.
+
+## Closeout
+
+M2 is complete. `/go` must stop here until the operator opens the final M2 PR
+or rotates the control files to M3.
 
 ## Required Preflight For `go`
 

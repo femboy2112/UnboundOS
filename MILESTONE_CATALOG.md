@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.5
+> **Catalog version:** v0.6
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** M2 Arena memory
+> **Active milestone:** none (M2 complete; next milestone opens by operator rotation)
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -27,7 +27,7 @@ archived under `docs/campaigns/` and never edited again.
 |-----|-------|--------|--------|--------------------------------------|----------------------|
 | M0  | Boot heartbeat | §3.2, §1.6, §3.9 | DONE | `make qemu-headless` serial log contains `UNBOUNDOS_BOOT_BEGIN`, `UNBOUNDOS_CPU_PROFILE`, `UNBOUNDOS_MEMMAP_OK`, `UNBOUNDOS_IDT_OK`, `UNBOUNDOS_BOOT_OK` in that order; `make gates` PROCEED | docs/campaigns/m0-boot-heartbeat.md |
 | M1  | Diagnostics core | §3.5, §9, §13.3 | DONE | IDT installed; divide-by-zero, page fault, and invalid opcode forced faults route through SSOD; serial SSOD output includes RIP and reason; `make gates` PROCEED | docs/campaigns/m1-diagnostics-core.md |
-| M2  | Arena memory | §4.2–§4.11, §13.4 | IN-PROGRESS | BootArena, KernelArena, GraphArena, and ScratchArena exist; alignment tests pass; arena exhaustion is deterministic; memory map dump is available; `make gates` PROCEED | docs/campaigns/m2-arena-memory.md |
+| M2  | Arena memory | §4.2–§4.11, §13.4 | DONE | BootArena, KernelArena, GraphArena, and ScratchArena exist; alignment tests pass; arena exhaustion is deterministic; memory map dump is available; `make gates` PROCEED | docs/campaigns/m2-arena-memory.md |
 | M3  | Embedded graph | §5.7, §5.9, §13.5 | TODO | Hardcoded graph source -> transform -> sink executes; epoch readiness works; fan-out test passes; active node diagnostics work | docs/campaigns/m3-embedded-graph.md *(not yet written)* |
 | M4  | UMOD loader | §6, §13.6 | TODO | Persistent graph verifies and executes | docs/campaigns/m4-umod-loader.md *(not yet written)* |
 | M5  | Minimal UI | §3.7, §8, §13.7 | TODO | Framebuffer IDE displays graph | docs/campaigns/m5-minimal-ui.md *(not yet written)* |
@@ -45,6 +45,10 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.6** — M2 completed on `campaign/m2-arena-memory`: bounded arena
+  allocation now has real host-test coverage, the required named arenas exist
+  behind guard-style APIs, exhaustion context routes into SSOD fields, and QEMU
+  asserts the honest M2 memory/arena dump while normal boot remains green.
 - **v0.5** — Opened M2 Arena Memory on `campaign/m2-arena-memory`.
   The campaign owns named bounded arena construction, aligned allocation,
   deterministic exhaustion, and a serial memory-map/arena diagnostic dump.

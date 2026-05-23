@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C3.M2 Step 5 M2 completion audit: ready.
+- M2 campaign complete. Await operator action to open the final M2 PR or rotate
+  mission state to M3.
+
+## 2026-05-23T01:32:37Z - C3.M2 Step 5 M2 completion audit
+
+- Status: completed
+- Summary: Marked M2 `DONE` in `MILESTONE_CATALOG.md`, bumped the catalog to
+  `v0.6`, recorded the M2 closeout and Step 1-4 commit SHAs in the campaign
+  file, and left M3 as future milestone work.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make qemu-m2-dump`, `make gates`, `make repo-state`, and
+  `python3 scripts/verify.py --mission current`.
+- Repo-state: STOP because no milestone is `IN-PROGRESS`, which is the expected
+  closed-M2 state.
+- Blockers: none for M2; next action is M3 rotation.
 
 ## 2026-05-23T01:30:50Z - C3.M2 Step 4 Memory-map and arena dump
 

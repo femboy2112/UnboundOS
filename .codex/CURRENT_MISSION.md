@@ -2,7 +2,7 @@
 
 Mission: C3.M2 Step 5 M2 completion audit
 Campaign: C3 M2 Arena Memory
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -59,3 +59,6 @@ python3 scripts/verify.py --mission current
 
 Campaign branch: `campaign/m2-arena-memory`. The next milestone is M3 Embedded
 Graph.
+
+Stop reason: M2 campaign complete. Await operator action to open the final M2
+PR or rotate mission state to M3.

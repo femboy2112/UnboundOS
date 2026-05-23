@@ -122,6 +122,31 @@ python3 scripts/verify.py --mission current
 
 Commit and push.
 
+## Closeout
+
+M2 completed on branch `campaign/m2-arena-memory`.
+
+Step commits:
+
+- Step 1 — Bounded arena core and alignment checks: `cca58a5`
+- Step 2 — Named M2 arena set: `fe44f42`
+- Step 3 — Deterministic exhaustion diagnostics: `a6fe8a3`
+- Step 4 — Memory-map and arena dump: `fae0771`
+
+Final gates:
+
+- `python3 scripts/verify.py --mission current`: ran seven arena host tests
+  covering alignment, invalid alignment, overflow, exhaustion context, reset,
+  named descriptors, and named guard methods.
+- `make qemu-m2-dump`: asserted `UNBOUNDOS_M2_MEMORY_DUMP_BEGIN`,
+  `m2_memmap_status=unavailable`, the four required arena names, and
+  `UNBOUNDOS_M2_MEMORY_DUMP_END`.
+- `make gates`: PROCEED.
+
+Boundary note: M2 makes the arena contract and diagnostics real but does not
+claim graph execution, UMOD loading, storage, UI, LLM, or real Limine
+memory-map parsing in the current smoke profile.
+
 ---
 
 # Step 2 — Named M2 arena set
