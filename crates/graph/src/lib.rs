@@ -28,6 +28,8 @@
 pub mod loader;
 pub mod verifier;
 
+pub const BUILTIN_SOURCE_TRANSFORM_SINK_UMOD: &[u8] = b"UMODUNBOUNDOS_BUILTIN_STS_V1";
+
 /// Output of the verifier. Bytes have been checked against all 22
 /// spec §5.6 rules; semantic validity is guaranteed. Compilation
 /// into a runtime graph is the next step and may still fail on
@@ -36,7 +38,7 @@ pub mod verifier;
 pub struct VerifiedGraph<'bytes> {
     /// Borrow of the original bytes. The lifetime ensures the caller
     /// cannot mutate the buffer between verify and compile.
-    _bytes: &'bytes [u8],
+    bytes: &'bytes [u8],
 }
 
 impl<'bytes> VerifiedGraph<'bytes> {
@@ -44,7 +46,11 @@ impl<'bytes> VerifiedGraph<'bytes> {
     /// Marked `pub(crate)` so it is unreachable from outside the
     /// graph crate.
     pub(crate) fn new_internal(bytes: &'bytes [u8]) -> Self {
-        Self { _bytes: bytes }
+        Self { bytes }
+    }
+
+    pub(crate) fn bytes(&self) -> &'bytes [u8] {
+        self.bytes
     }
 }
 
@@ -54,6 +60,14 @@ impl<'bytes> VerifiedGraph<'bytes> {
 #[derive(Debug)]
 pub struct GraphRuntimeHandle {
     _phantom: core::marker::PhantomData<*const ()>,
+}
+
+impl GraphRuntimeHandle {
+    pub(crate) const fn new_internal() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 
 /// Verifier failures. One variant per check in spec §5.6 plus a few

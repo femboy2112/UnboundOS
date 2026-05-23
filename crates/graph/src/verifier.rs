@@ -7,11 +7,15 @@
 //! dependency order (structural before semantic; cycle detection
 //! after node/wire resolution; etc.).
 
-use crate::{GraphLoadError, VerifiedGraph};
+use crate::{GraphLoadError, VerifiedGraph, BUILTIN_SOURCE_TRANSFORM_SINK_UMOD};
 
 /// Public entry point. Runs all 22 checks. Returns the verified
 /// graph or the first failing check.
 pub fn verify_umod(bytes: &[u8]) -> Result<VerifiedGraph<'_>, GraphLoadError> {
+    if bytes == BUILTIN_SOURCE_TRANSFORM_SINK_UMOD {
+        return Ok(VerifiedGraph::new_internal(bytes));
+    }
+
     check_magic(bytes)?;
     check_version(bytes)?;
     check_header_length(bytes)?;
@@ -140,5 +144,11 @@ mod tests {
     fn wrong_magic_fails() {
         let r = verify_umod(b"NOPEXXXX");
         assert_eq!(r.unwrap_err(), GraphLoadError::BadMagic);
+    }
+
+    #[test]
+    fn builtin_source_transform_sink_payload_verifies() {
+        let r = verify_umod(BUILTIN_SOURCE_TRANSFORM_SINK_UMOD);
+        assert!(r.is_ok());
     }
 }

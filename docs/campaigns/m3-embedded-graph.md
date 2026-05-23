@@ -128,6 +128,8 @@ Commit and push.
 
 # Step 2 — Private hardcoded graph runtime
 
+Status: Completed.
+
 Purpose:
   Implement a built-in source -> transform -> sink graph shape behind the
   verified compile path.

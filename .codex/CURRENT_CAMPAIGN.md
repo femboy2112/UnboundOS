@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C4 M3 Embedded Graph
-Active mission: C4.M3 Step 2 Private hardcoded graph runtime
+Active mission: C4.M3 Step 3 Fan-out execution proof
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -26,8 +26,8 @@ See `.codex/CURRENT_MISSION.md`.
 ## Macro Sequence
 
 1. C4.M3 Step 1 Runtime epoch readiness primitives. Completed.
-2. C4.M3 Step 2 Private hardcoded graph runtime. Active.
-3. C4.M3 Step 3 Fan-out execution proof. Pending.
+2. C4.M3 Step 2 Private hardcoded graph runtime. Completed.
+3. C4.M3 Step 3 Fan-out execution proof. Active.
 4. C4.M3 Step 4 Active node diagnostics. Pending.
 5. C4.M3 Step 5 M3 completion audit. Pending.
 

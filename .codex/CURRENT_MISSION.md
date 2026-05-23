@@ -1,14 +1,14 @@
 # Current Mission
 
-Mission: C4.M3 Step 2 Private hardcoded graph runtime
+Mission: C4.M3 Step 3 Fan-out execution proof
 Campaign: C4 M3 Embedded Graph
 Status: ready
 
 ## Objective
 
-Execute M3 campaign Step 2 from `docs/campaigns/m3-embedded-graph.md`:
-implement a built-in source -> transform -> sink graph shape behind the
-verified compile path.
+Execute M3 campaign Step 3 from `docs/campaigns/m3-embedded-graph.md`: prove
+one producer output can be observed by multiple consumers without either
+consumer erasing readiness for the other.
 
 ## Scope
 
@@ -16,7 +16,6 @@ Allowed changes:
 
 - `crates/graph/src/lib.rs`
 - `crates/graph/src/loader.rs`
-- `crates/graph/src/verifier.rs`
 - `docs/campaigns/m3-embedded-graph.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -25,16 +24,14 @@ Allowed changes:
 Out of scope:
 
 - Direct public `GraphRuntime` construction.
-- Boot hook, storage, UI, LLM, or persistent artifact format expansion beyond
-  the minimal symbolic built-in fixture.
+- Boot hook, storage, UI, LLM, or persistent artifact format changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- A symbolic built-in graph payload passes `graph_load_from_umod`.
-- `graph_compile_verified` builds private runtime structures for that verified
-  graph.
-- A graph-crate test executes source -> transform -> sink once.
+- A graph-crate test proves two consumers can observe the same produced wire
+  epoch independently.
+- Neither consumer observation clears readiness for the other.
 - No public bypass around `graph_load_from_umod -> graph_compile_verified` is
   added.
 
@@ -57,5 +54,5 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m3-embedded-graph`. Step 1 added private epoch
-readiness primitives and tests.
+Campaign branch: `campaign/m3-embedded-graph`. Step 2 added the private
+source -> transform -> sink runtime test through the verified graph pipeline.

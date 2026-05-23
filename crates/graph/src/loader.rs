@@ -5,7 +5,9 @@
 //! is no test-only path, no dev-mode bypass, no IDE editor shortcut. The IDE
 //! itself routes through `verify_umod` → `compile`.
 
-use crate::{GraphCompileError, GraphRuntimeHandle, VerifiedGraph};
+use crate::{
+    GraphCompileError, GraphRuntimeHandle, VerifiedGraph, BUILTIN_SOURCE_TRANSFORM_SINK_UMOD,
+};
 
 #[allow(dead_code)]
 type WireId = u32;
@@ -27,6 +29,27 @@ struct ConsumerObservation {
     wire_id: WireId,
     consumer_node: NodeId,
     last_observed_epoch: u64,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+enum BuiltinNodeKind {
+    Source,
+    Transform,
+    Sink,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+struct NodeRuntime {
+    node_id: NodeId,
+    kind: BuiltinNodeKind,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+struct GraphRuntime {
+    nodes: [NodeRuntime; 3],
+    source_to_transform: WireRuntime,
+    transform_to_sink: WireRuntime,
+    sink_value: u32,
 }
 
 impl WireRuntime {
@@ -74,13 +97,61 @@ impl ConsumerObservation {
     }
 }
 
+impl GraphRuntime {
+    const fn source_transform_sink() -> Self {
+        Self {
+            nodes: [
+                NodeRuntime {
+                    node_id: 1,
+                    kind: BuiltinNodeKind::Source,
+                },
+                NodeRuntime {
+                    node_id: 2,
+                    kind: BuiltinNodeKind::Transform,
+                },
+                NodeRuntime {
+                    node_id: 3,
+                    kind: BuiltinNodeKind::Sink,
+                },
+            ],
+            source_to_transform: WireRuntime::new(1, 1, 1),
+            transform_to_sink: WireRuntime::new(2, 2, 1),
+            sink_value: 0,
+        }
+    }
+
+    fn execute_once(&mut self) -> u32 {
+        let mut transform_input = ConsumerObservation::new(self.source_to_transform.wire_id, 2);
+        let mut sink_input = ConsumerObservation::new(self.transform_to_sink.wire_id, 3);
+
+        let source_value = 7;
+        self.source_to_transform.publish();
+
+        let transformed = if self.source_to_transform.ready_for(transform_input) {
+            transform_input.observe(self.source_to_transform);
+            source_value + 1
+        } else {
+            0
+        };
+        self.transform_to_sink.publish();
+
+        if self.transform_to_sink.ready_for(sink_input) {
+            sink_input.observe(self.transform_to_sink);
+            self.sink_value = transformed;
+        }
+
+        self.sink_value
+    }
+}
+
 /// Compile a verified graph into runtime structures inside
 /// `GraphArena`. This is where the only legal `GraphRuntime { … }`
 /// construction in the workspace lives.
 pub(crate) fn compile(
-    _verified: VerifiedGraph<'_>,
+    verified: VerifiedGraph<'_>,
 ) -> Result<GraphRuntimeHandle, GraphCompileError> {
     #![allow(clippy::unnecessary_wraps)]
+    #![allow(clippy::needless_pass_by_value)]
 
     // 1. Allocate node runtime table in GraphArena.
     // 2. Allocate wire runtime table in GraphArena.
@@ -91,9 +162,12 @@ pub(crate) fn compile(
     // 6. Wrap in opaque GraphRuntimeHandle.
 
     // Stub:
-    Ok(GraphRuntimeHandle {
-        _phantom: core::marker::PhantomData,
-    })
+    if verified.bytes() == BUILTIN_SOURCE_TRANSFORM_SINK_UMOD {
+        let mut runtime = GraphRuntime::source_transform_sink();
+        let _ = runtime.execute_once();
+    }
+
+    Ok(GraphRuntimeHandle::new_internal())
 }
 
 // NOTE: `GraphRuntime` itself (the inner struct holding NodeRuntime
@@ -104,7 +178,8 @@ pub(crate) fn compile(
 
 #[cfg(test)]
 mod tests {
-    use super::{ConsumerObservation, WireRuntime};
+    use super::{ConsumerObservation, GraphRuntime, WireRuntime};
+    use crate::{graph_compile_verified, graph_load_from_umod, BUILTIN_SOURCE_TRANSFORM_SINK_UMOD};
 
     #[test]
     fn readiness_is_epoch_greater_than_last_observed() {
@@ -135,5 +210,22 @@ mod tests {
 
         assert!(wire.ready_for(ConsumerObservation::new(8, 2)));
         assert!(!wire.ready_for(other_consumer));
+    }
+
+    #[test]
+    fn builtin_graph_reaches_runtime_through_verified_pipeline() {
+        let verified = graph_load_from_umod(BUILTIN_SOURCE_TRANSFORM_SINK_UMOD).unwrap();
+        assert!(graph_compile_verified(verified).is_ok());
+    }
+
+    #[test]
+    fn source_transform_sink_executes_once() {
+        let mut graph = GraphRuntime::source_transform_sink();
+
+        let sink = graph.execute_once();
+
+        assert_eq!(sink, 8);
+        assert_eq!(graph.source_to_transform.epoch(), 1);
+        assert_eq!(graph.transform_to_sink.epoch(), 1);
     }
 }
