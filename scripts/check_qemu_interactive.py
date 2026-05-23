@@ -21,6 +21,8 @@ TIMEOUT_SECONDS = 30.0
 COMMANDS: tuple[tuple[str, str], ...] = (
     ("help", "OK help commands=ping,graph,tokenize,toy,quant,retrieve,assistant,ssod,cpu,exit"),
     ("ping", "OK pong"),
+    ("  ping  ", "OK pong"),
+    ("unknown", "ERR unknown_command"),
     ("graph", "OK graph graph_id=0x0000000000535453 nodes=3 wires=2 last_completed=3"),
     ("tokenize", "OK tokenize text=hello tokens=5"),
     ("toy", "OK toy text="),
@@ -35,7 +37,11 @@ COMMANDS: tuple[tuple[str, str], ...] = (
         "OK ssod ssod reason=page_fault rip=0xffff800000001234 fault_family=cpu_exception vector=0x0e error_code=0x0000000000000002",
     ),
     ("cpu", "OK cpu tier=Sse2"),
+    ("graph", "OK graph graph_id=0x0000000000535453 nodes=3 wires=2 last_completed=3"),
+    ("retrieve", "OK retrieve count=2 context_len=111 top=index:spec-13.1"),
 )
+
+OVERLONG_COMMAND = "x" * 81
 
 
 def run_make_image() -> None:
@@ -97,6 +103,8 @@ def main() -> int:
         for command, expected in COMMANDS:
             os.write(master_fd, command.encode() + b"\n")
             read_until(master_fd, expected, deadline, transcript)
+        os.write(master_fd, OVERLONG_COMMAND.encode())
+        read_until(master_fd, "ERR command_too_long", deadline, transcript)
         os.write(master_fd, b"exit\n")
         read_until(master_fd, "OK halt", deadline, transcript)
     except Exception as exc:
