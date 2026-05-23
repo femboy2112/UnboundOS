@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.8
+> **Catalog version:** v0.9
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** none (M3 complete; next milestone opens by operator rotation)
+> **Active milestone:** M4 UMOD loader
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -29,7 +29,7 @@ archived under `docs/campaigns/` and never edited again.
 | M1  | Diagnostics core | §3.5, §9, §13.3 | DONE | IDT installed; divide-by-zero, page fault, and invalid opcode forced faults route through SSOD; serial SSOD output includes RIP and reason; `make gates` PROCEED | docs/campaigns/m1-diagnostics-core.md |
 | M2  | Arena memory | §4.2–§4.11, §13.4 | DONE | BootArena, KernelArena, GraphArena, and ScratchArena exist; alignment tests pass; arena exhaustion is deterministic; memory map dump is available; `make gates` PROCEED | docs/campaigns/m2-arena-memory.md |
 | M3  | Embedded graph | §5.7, §5.9, §13.5 | DONE | Hardcoded graph source -> transform -> sink executes through the verified graph path; epoch readiness works; fan-out test passes; active node diagnostics work; `make gates` PROCEED | docs/campaigns/m3-embedded-graph.md |
-| M4  | UMOD loader | §6, §13.6 | TODO | Persistent graph verifies and executes | docs/campaigns/m4-umod-loader.md *(not yet written)* |
+| M4  | UMOD loader | §6, §13.6 | IN-PROGRESS | Persistent graph verifies and executes through `graph_load_from_umod -> graph_compile_verified`; malformed UMODs return structured errors; `make gates` PROCEED | docs/campaigns/m4-umod-loader.md |
 | M5  | Minimal UI | §3.7, §8, §13.7 | TODO | Framebuffer IDE displays graph | docs/campaigns/m5-minimal-ui.md *(not yet written)* |
 | M6  | Storage stage 1 | §7, §13.8 | TODO | Raw sector read works with timeout | docs/campaigns/m6-storage-stage-1.md *(not yet written)* |
 | M7  | Tokenizer | §10.6, §13.9 | TODO | Bare-metal tokenizer runs | docs/campaigns/m7-tokenizer.md *(not yet written)* |
@@ -45,6 +45,10 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.9** — Opened M4 UMOD Loader on `campaign/m4-umod-loader`.
+  The campaign owns persistent UMOD parsing, all 22 graph verifier checks,
+  non-vacuous golden/malformed coverage, and execution through the existing
+  single verifier gate.
 - **v0.8** — M3 completed on `campaign/m3-embedded-graph`: the built-in
   symbolic graph verifies through `graph_load_from_umod`, compiles only through
   the loader, executes source -> transform -> sink, and has tests for epoch

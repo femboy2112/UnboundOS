@@ -4,7 +4,16 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-*(none; M3 campaign complete)*
+- C5.M4 Step 1 UMOD parser header and resource refs: ready.
+
+## 2026-05-23T02:06:17Z - C5.M4 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m4-umod-loader`, marked M4 `IN-PROGRESS`,
+  created the M4 campaign plan, and rotated `.codex` state to Step 1 while
+  preserving the single verifier gate.
+- Verification: pending below for the active Step 1 mission state.
+- Blockers: none.
 
 ## 2026-05-23T01:57:15Z - C4.M3 Step 5 M3 completion audit
 

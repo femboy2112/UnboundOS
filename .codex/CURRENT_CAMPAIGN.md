@@ -1,8 +1,8 @@
 # Current Campaign
 
-Campaign: C4 M3 Embedded Graph
-Active mission: C4.M3 Step 5 M3 completion audit
-Status: completed
+Campaign: C5 M4 UMOD Loader
+Active mission: C5.M4 Step 1 UMOD parser header and resource refs
+Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -11,13 +11,14 @@ mission state after each completed mission.
 Publish policy: commit and push the campaign branch after each completed
 mission.
 Main policy: never merge to main, never push main, or force-push.
-Campaign branch: campaign/m3-embedded-graph
+Campaign branch: campaign/m4-umod-loader
 
 ## Campaign Objective
 
-Close M3 by proving the spec §13.5 embedded-graph exit criteria while
-preserving H2: source -> transform -> sink executes, epoch readiness works,
-fan-out works, and active node diagnostics work.
+Close M4 by proving the spec §13.6 UMOD-loader exit criteria while preserving
+H2: persistent UMOD parses, all 22 verifier checks are non-vacuous, malformed
+UMODs return structured errors, and valid UMOD compiles through the verified
+graph path.
 
 ## Active Mission
 
@@ -25,21 +26,18 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C4.M3 Step 1 Runtime epoch readiness primitives. Completed.
-2. C4.M3 Step 2 Private hardcoded graph runtime. Completed.
-3. C4.M3 Step 3 Fan-out execution proof. Completed.
-4. C4.M3 Step 4 Active node diagnostics. Completed.
-5. C4.M3 Step 5 M3 completion audit. Completed.
-
-## Closeout
-
-M3 is complete. `/go` must stop here until the operator opens the final M3 PR
-or rotates the control files to M4.
+1. C5.M4 Step 1 UMOD parser header and resource refs. Active.
+2. C5.M4 Step 2 Section table bounds and structural checks. Pending.
+3. C5.M4 Step 3 Node and wire semantic verifier checks. Pending.
+4. C5.M4 Step 4 Capabilities, resources, constants, and scheduling checks. Pending.
+5. C5.M4 Step 5 Persistent UMOD compile path. Pending.
+6. C5.M4 Step 6 Golden and malformed fixture coverage. Pending.
+7. C5.M4 Step 7 M4 completion audit. Pending.
 
 ## Required Preflight For `go`
 
 1. Read `CLAUDE.md`.
-2. Read `docs/campaigns/m3-embedded-graph.md`.
+2. Read `docs/campaigns/m4-umod-loader.md`.
 3. Read `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf` or the
    extracted requirements in `.codex/PROJECT_PLAN.md`.
 4. Read `.codex/CURRENT_CAMPAIGN.md`.
@@ -56,6 +54,6 @@ unless the mission explicitly permits that skip.
 
 ## Campaign Source
 
-The detailed M3 step contract is `docs/campaigns/m3-embedded-graph.md`.
+The detailed M4 step contract is `docs/campaigns/m4-umod-loader.md`.
 Step allowed-file blocks are binding for implementation files; `.codex/*`
 files may be edited only for required mission-state closeout.
