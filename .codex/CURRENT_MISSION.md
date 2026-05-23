@@ -1,46 +1,46 @@
 # Current Mission
 
-Mission: C10.M9 Step 6 M9 completion audit
-Campaign: C10 M9 UMDL Loader
-Status: completed
+Mission: C11.M10 Step 1 Scalar quantized kernel contracts
+Campaign: C11 M10 Quantized Inference
+Status: ready
 
 ## Objective
 
-Execute M9 campaign Step 6 from `docs/campaigns/m9-umdl-loader.md`: close M9
-after UMDL parsing, validation, load-view, arena reservation, and smoke
-evidence are reproducibly verified.
+Execute M10 campaign Step 1 from `docs/campaigns/m10-quantized-inference.md`:
+add scalar quantized kernel contracts and deterministic tests without touching
+SIMD-specific backends.
 
 ## Scope
 
 Allowed changes:
 
-- `MILESTONE_CATALOG.md`
-- `docs/campaigns/m9-umdl-loader.md`
-- `.codex/CURRENT_CAMPAIGN.md`
-- `.codex/CURRENT_MISSION.md`
-- `.codex/MISSION_LOG.md`
+- `crates/llm/src/lib.rs`
+- `crates/llm/src/dispatch.rs`
+- `crates/llm/src/kernels/**`
+- `docs/campaigns/m10-quantized-inference.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- Implementation changes outside M9 closeout metadata.
-- Sampler, tensor kernel, graph mutation, storage, or QEMU harness changes.
+- Dispatch routing changes beyond module exposure.
+- SIMD-specific backend symbols, graph mutation, storage, or QEMU harness
+  changes.
 - LLM sampler, SIMD kernels, storage, QEMU harness, or graph mutation changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- Row M9 `Status` changes from `IN-PROGRESS` to `DONE`.
-- Catalog version banner is bumped.
-- M9 change-log and campaign closeout record Step 1-5 checkpoint commits.
+- Scalar quantized kernel module exists with caller-provided buffer contracts.
+- Deterministic tiny quantized projection tests pass.
+- No unsafe code or backend-specific SIMD symbols are introduced.
 
 ## Baseline to verify
 
 ```
-branch: campaign/m9-umdl-loader
-status: DONE
+branch: campaign/m10-quantized-inference
+status: IN-PROGRESS
 ```
 
 ## Verification Commands
@@ -48,20 +48,15 @@ status: DONE
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make gates
-make repo-state
+make fmt
+make clippy
+cargo test -p llm
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m9-umdl-loader`. Memory-unsafe Rust remains allowed
-by project identity, but UMDL persistent-format parsing should be safe,
-fixed-width, deterministic, and free of host paths or raw pointers. Step 1
-added little-endian header parsing and malformed-header tests. Step 2 added
-overflow-safe section bounds, non-overlap checks, and deterministic checksum
-validation. Step 3 added tokenizer metadata and tensor descriptor parsing and
-validation. Step 4 added a read-only loaded model view, explicit arena
-reservation accounting, and SIMD/profile budget validation. Step 5 added
-`make umdl-smoke`, a deterministic fixture generator, malformed corpus entry,
-and aggregate verification wiring.
+Campaign branch: `campaign/m10-quantized-inference`. Memory-unsafe Rust
+remains allowed by project identity, but Step 1 starts with safe scalar kernel
+contracts. Any later SIMD unsafe must be isolated under `crates/llm/src/kernels`
+and selected only through dispatch.

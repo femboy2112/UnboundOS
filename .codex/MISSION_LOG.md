@@ -4,7 +4,19 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-*(none)*
+- C11.M10 Step 1 Scalar quantized kernel contracts: ready.
+
+## 2026-05-23T08:12:15Z - C11.M10 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m10-quantized-inference`, marked M10
+  `IN-PROGRESS`, created the M10 campaign plan, and rotated `.codex` state to
+  Step 1 for scalar quantized kernel contracts.
+- Verification: pending below for the active Step 1 mission state.
+- Memory-unsafety audit: M10 keeps unsafe Rust allowed by project identity, but
+  starts with safe scalar kernels; future SIMD unsafe must stay isolated under
+  the kernel/dispatch boundary.
+- Blockers: none.
 
 ## 2026-05-23T08:10:57Z - C10.M9 Step 6 M9 completion audit
 

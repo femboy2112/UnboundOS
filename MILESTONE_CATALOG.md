@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.20
+> **Catalog version:** v0.21
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** none
+> **Active milestone:** M10 Quantized inference
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -35,7 +35,7 @@ archived under `docs/campaigns/` and never edited again.
 | M7  | Tokenizer | §10.7, §13.7 | DONE | Bare-metal tokenizer round trip works for the initially supported tokenizer family; `make gates` PROCEED | docs/campaigns/m7-tokenizer.md |
 | M8  | Toy transformer | §10.8, §13.7 | DONE | Hardcoded tiny model generates deterministic token output; `make gates` PROCEED | docs/campaigns/m8-toy-transformer.md |
 | M9  | UMDL loader | §10, §13.11 | DONE | Model package validates and loads; `make gates` PROCEED | docs/campaigns/m9-umdl-loader.md |
-| M10 | Quantized inference | §10, §11, §13.12 | TODO | Small quantized model streams tokens | docs/campaigns/m10-quantized-inference.md *(not yet written)* |
+| M10 | Quantized inference | §10, §11, §13.12 | IN-PROGRESS | Small quantized model streams tokens; `make gates` PROCEED | docs/campaigns/m10-quantized-inference.md |
 | M11 | IDE assistant | §10, §13.1 | TODO | Local assistant explains graph and SSOD | docs/campaigns/m11-ide-assistant.md *(not yet written)* |
 | M12 | Local retrieval | §10, §13.1 | TODO | Assistant searches local docs | docs/campaigns/m12-local-retrieval.md *(not yet written)* |
 
@@ -45,6 +45,11 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.21** — Opened M10 Quantized inference on
+  `campaign/m10-quantized-inference`. The campaign owns scalar quantized kernel
+  contracts, dispatch-table routing, deterministic token streaming from a
+  validated model view, and smoke evidence before any SIMD-specific backend is
+  introduced.
 - **v0.20** — M9 completed on `campaign/m9-umdl-loader`: UMDL headers,
   sections, checksums, tokenizer metadata, tensor descriptors, loaded-model
   views, arena reservations, SIMD requirements, and profile RAM budgets now

@@ -1,8 +1,8 @@
 # Current Campaign
 
-Campaign: C10 M9 UMDL Loader
-Active mission: C10.M9 Step 6 M9 completion audit
-Status: completed
+Campaign: C11 M10 Quantized Inference
+Active mission: C11.M10 Step 1 Scalar quantized kernel contracts
+Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -11,12 +11,12 @@ mission state after each completed mission.
 Publish policy: commit and push the campaign branch after each completed
 mission.
 Main policy: never merge to main, never push main, or force-push.
-Campaign branch: campaign/m9-umdl-loader
+Campaign branch: campaign/m10-quantized-inference
 
 ## Campaign Objective
 
-Close M9 by proving the spec §13.11 local-LLM criterion: a model package
-validates and loads.
+Close M10 by proving the spec §13.12 local-LLM criterion: a small quantized
+model streams tokens.
 
 ## Active Mission
 
@@ -24,17 +24,17 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C10.M9 Step 1 UMDL header parse and fixed-width contract. Completed.
-2. C10.M9 Step 2 Section bounds and checksum validation. Completed.
-3. C10.M9 Step 3 Tokenizer and tensor descriptor validation. Completed.
-4. C10.M9 Step 4 Model load view and arena reservation contract. Completed.
-5. C10.M9 Step 5 UMDL smoke fixtures and gates. Completed.
-6. C10.M9 Step 6 M9 completion audit. Completed.
+1. C11.M10 Step 1 Scalar quantized kernel contracts. Active.
+2. C11.M10 Step 2 Dispatch-selected scalar kernel table. Pending.
+3. C11.M10 Step 3 Deterministic quantized token step. Pending.
+4. C11.M10 Step 4 Streaming token surface. Pending.
+5. C11.M10 Step 5 Quantized inference smoke evidence and gates. Pending.
+6. C11.M10 Step 6 M10 completion audit. Pending.
 
 ## Required Preflight For `go`
 
 1. Read `CLAUDE.md`.
-2. Read `docs/campaigns/m9-umdl-loader.md`.
+2. Read `docs/campaigns/m10-quantized-inference.md`.
 3. Read `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf` or the
    extracted requirements in `.codex/PROJECT_PLAN.md`.
 4. Read `.codex/CURRENT_CAMPAIGN.md`.
@@ -51,6 +51,6 @@ unless the mission explicitly permits that skip.
 
 ## Campaign Source
 
-The detailed M9 step contract is `docs/campaigns/m9-umdl-loader.md`.
+The detailed M10 step contract is `docs/campaigns/m10-quantized-inference.md`.
 Step allowed-file blocks are binding for implementation files; `.codex/*`
 files may be edited only for required mission-state closeout.
