@@ -17,6 +17,10 @@ pub const UMOD_FORMAT_MAJOR: u16 = 1;
 pub const UMOD_FORMAT_MINOR: u16 = 0;
 pub const UMOD_HEADER_LEN: usize = 0x40;
 pub const UMOD_HEADER_LEN_U32: u32 = 0x40;
+pub const UMOD_SECTION_DESCRIPTOR_LEN: usize = 0x20;
+pub const UMOD_SECTION_DESCRIPTOR_LEN_U64: u64 = 0x20;
+pub const UMOD_MAX_NODE_COUNT: u32 = 4096;
+pub const UMOD_MAX_WIRE_COUNT: u32 = 16_384;
 
 /// Header at file offset 0. Spec §6.3, exact byte offsets.
 #[repr(C)]
@@ -70,6 +74,17 @@ pub struct SectionDescriptor {
 }
 
 const _: () = assert!(core::mem::size_of::<SectionDescriptor>() == 0x20);
+
+/// Decoded section descriptor. Parsed from little-endian bytes without
+/// reinterpreting the input buffer.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct ParsedSectionDescriptor {
+    pub kind: u32,
+    pub flags: u32,
+    pub offset: u64,
+    pub length: u64,
+    pub checksum: u64,
+}
 
 /// Node descriptor — spec §6.5. `node_type_id` is `u64` to match the
 /// spec table and Appendix A's `NodeTypeId = u64`. The `pad_*` fields
@@ -256,6 +271,161 @@ pub fn parse_header(bytes: &[u8]) -> Result<ParsedUmodHeader, UmodParseError> {
     })
 }
 
+/// Parse and structurally validate a UMOD header and section table.
+///
+/// # Errors
+///
+/// Returns a `UmodParseError` if the header is invalid, the declared file
+/// length cannot be represented by the provided buffer, the section table is
+/// outside the file, node/wire counts exceed configured limits, or any section
+/// is out of bounds or illegally overlaps another.
+pub fn parse_structural(bytes: &[u8]) -> Result<ParsedUmodHeader, UmodParseError> {
+    let header = parse_header(bytes)?;
+    validate_file_length(bytes, header)?;
+    validate_count_limits(header)?;
+    validate_section_table_bounds(header)?;
+
+    let mut index = 0;
+    while index < header.section_count {
+        let section = parse_section_descriptor(bytes, header, index)?;
+        validate_section_bounds(header, index, section)?;
+        validate_section_non_overlap(bytes, header, index, section)?;
+        index = index.saturating_add(1);
+    }
+
+    Ok(header)
+}
+
+/// Decode one section descriptor by index.
+///
+/// # Errors
+///
+/// Returns `UmodParseError::SectionTableOutOfBounds` if the descriptor slot is
+/// outside the declared file.
+pub fn parse_section_descriptor(
+    bytes: &[u8],
+    header: ParsedUmodHeader,
+    index: u32,
+) -> Result<ParsedSectionDescriptor, UmodParseError> {
+    if index >= header.section_count {
+        return Err(UmodParseError::SectionOutOfBounds { index });
+    }
+    let offset = section_descriptor_offset(header, index)?;
+    Ok(ParsedSectionDescriptor {
+        kind: read_u32_le(bytes, offset).ok_or(UmodParseError::SectionTableOutOfBounds)?,
+        flags: read_u32_le(bytes, offset + 0x04).ok_or(UmodParseError::SectionTableOutOfBounds)?,
+        offset: read_u64_le(bytes, offset + 0x08).ok_or(UmodParseError::SectionTableOutOfBounds)?,
+        length: read_u64_le(bytes, offset + 0x10).ok_or(UmodParseError::SectionTableOutOfBounds)?,
+        checksum: read_u64_le(bytes, offset + 0x18)
+            .ok_or(UmodParseError::SectionTableOutOfBounds)?,
+    })
+}
+
+fn validate_file_length(bytes: &[u8], header: ParsedUmodHeader) -> Result<(), UmodParseError> {
+    let actual = u64::try_from(bytes.len()).map_err(|_| UmodParseError::FileLengthOutOfBounds {
+        declared: header.file_length_bytes,
+        actual: u64::MAX,
+    })?;
+    if header.file_length_bytes < u64::from(header.header_length)
+        || header.file_length_bytes > actual
+    {
+        return Err(UmodParseError::FileLengthOutOfBounds {
+            declared: header.file_length_bytes,
+            actual,
+        });
+    }
+    Ok(())
+}
+
+fn validate_count_limits(header: ParsedUmodHeader) -> Result<(), UmodParseError> {
+    if header.node_count > UMOD_MAX_NODE_COUNT {
+        return Err(UmodParseError::NodeCountOverflow);
+    }
+    if header.wire_count > UMOD_MAX_WIRE_COUNT {
+        return Err(UmodParseError::WireCountOverflow);
+    }
+    Ok(())
+}
+
+fn validate_section_table_bounds(header: ParsedUmodHeader) -> Result<(), UmodParseError> {
+    let table_end = header
+        .section_table_offset
+        .checked_add(
+            u64::from(header.section_count)
+                .checked_mul(UMOD_SECTION_DESCRIPTOR_LEN_U64)
+                .ok_or(UmodParseError::SectionTableOutOfBounds)?,
+        )
+        .ok_or(UmodParseError::SectionTableOutOfBounds)?;
+    if header.section_table_offset < u64::from(header.header_length)
+        || table_end > header.file_length_bytes
+    {
+        return Err(UmodParseError::SectionTableOutOfBounds);
+    }
+    Ok(())
+}
+
+fn section_descriptor_offset(
+    header: ParsedUmodHeader,
+    index: u32,
+) -> Result<usize, UmodParseError> {
+    let table_offset = usize::try_from(header.section_table_offset)
+        .map_err(|_| UmodParseError::SectionTableOutOfBounds)?;
+    let descriptor_offset = usize::try_from(index)
+        .ok()
+        .and_then(|idx| idx.checked_mul(UMOD_SECTION_DESCRIPTOR_LEN))
+        .and_then(|relative| table_offset.checked_add(relative))
+        .ok_or(UmodParseError::SectionTableOutOfBounds)?;
+    Ok(descriptor_offset)
+}
+
+fn validate_section_bounds(
+    header: ParsedUmodHeader,
+    index: u32,
+    section: ParsedSectionDescriptor,
+) -> Result<(), UmodParseError> {
+    let section_end = section
+        .offset
+        .checked_add(section.length)
+        .ok_or(UmodParseError::SectionOutOfBounds { index })?;
+    if section.offset < u64::from(header.header_length) || section_end > header.file_length_bytes {
+        return Err(UmodParseError::SectionOutOfBounds { index });
+    }
+    Ok(())
+}
+
+fn validate_section_non_overlap(
+    bytes: &[u8],
+    header: ParsedUmodHeader,
+    index: u32,
+    section: ParsedSectionDescriptor,
+) -> Result<(), UmodParseError> {
+    let mut other_index = 0;
+    while other_index < index {
+        let other = parse_section_descriptor(bytes, header, other_index)?;
+        if ranges_overlap(section.offset, section.length, other.offset, other.length) {
+            return Err(UmodParseError::SectionOverlap {
+                first: other_index,
+                second: index,
+            });
+        }
+        other_index = other_index.saturating_add(1);
+    }
+    Ok(())
+}
+
+fn ranges_overlap(first_offset: u64, first_len: u64, second_offset: u64, second_len: u64) -> bool {
+    if first_len == 0 || second_len == 0 {
+        return false;
+    }
+    let Some(first_end) = first_offset.checked_add(first_len) else {
+        return true;
+    };
+    let Some(second_end) = second_offset.checked_add(second_len) else {
+        return true;
+    };
+    first_offset < second_end && second_offset < first_end
+}
+
 fn read_array<const N: usize>(bytes: &[u8], offset: usize) -> Option<[u8; N]> {
     bytes.get(offset..offset.checked_add(N)?)?.try_into().ok()
 }
@@ -291,8 +461,10 @@ pub enum UmodParseError {
     UnsupportedVersion { major: u16, minor: u16 },
     HeaderTooShort,
     BadHeaderLength { declared: u32 },
+    FileLengthOutOfBounds { declared: u64, actual: u64 },
     SectionTableOutOfBounds,
     SectionOutOfBounds { index: u32 },
+    SectionOverlap { first: u32, second: u32 },
     NodeCountOverflow,
     WireCountOverflow,
     HeaderChecksumMismatch,
@@ -313,6 +485,31 @@ mod tests {
         bytes[0x28..0x30].copy_from_slice(&(UMOD_HEADER_LEN as u64).to_le_bytes());
         bytes[0x30..0x38].copy_from_slice(&0xAABB_CCDD_EEFF_0011_u64.to_le_bytes());
         bytes
+    }
+
+    fn one_section_bytes() -> [u8; 0x70] {
+        let mut bytes = [0; 0x70];
+        bytes[0..UMOD_HEADER_LEN].copy_from_slice(&minimal_header());
+        bytes[0x0C..0x10].copy_from_slice(&1_u32.to_le_bytes());
+        bytes[0x28..0x30].copy_from_slice(&0x70_u64.to_le_bytes());
+        write_section(&mut bytes, 0x40, 7, 0, 0x60, 0x10, 0x1234);
+        bytes
+    }
+
+    fn write_section(
+        bytes: &mut [u8],
+        offset: usize,
+        kind: u32,
+        flags: u32,
+        section_offset: u64,
+        length: u64,
+        checksum: u64,
+    ) {
+        bytes[offset..offset + 0x04].copy_from_slice(&kind.to_le_bytes());
+        bytes[offset + 0x04..offset + 0x08].copy_from_slice(&flags.to_le_bytes());
+        bytes[offset + 0x08..offset + 0x10].copy_from_slice(&section_offset.to_le_bytes());
+        bytes[offset + 0x10..offset + 0x18].copy_from_slice(&length.to_le_bytes());
+        bytes[offset + 0x18..offset + 0x20].copy_from_slice(&checksum.to_le_bytes());
     }
 
     #[test]
@@ -384,6 +581,91 @@ mod tests {
         assert_eq!(
             parse_header(&bytes).unwrap_err(),
             UmodParseError::BadHeaderLength { declared: 0x30 }
+        );
+    }
+
+    #[test]
+    fn parse_section_descriptor_decodes_little_endian_fields() {
+        let bytes = one_section_bytes();
+        let header = parse_header(&bytes).expect("valid header");
+
+        let section = parse_section_descriptor(&bytes, header, 0).expect("section");
+
+        assert_eq!(
+            section,
+            ParsedSectionDescriptor {
+                kind: 7,
+                flags: 0,
+                offset: 0x60,
+                length: 0x10,
+                checksum: 0x1234,
+            }
+        );
+    }
+
+    #[test]
+    fn parse_structural_accepts_valid_section_table() {
+        let bytes = one_section_bytes();
+
+        let header = parse_structural(&bytes).expect("structural UMOD");
+
+        assert_eq!(header.section_count, 1);
+    }
+
+    #[test]
+    fn parse_structural_rejects_section_table_outside_file() {
+        let mut bytes = minimal_header();
+        bytes[0x0C..0x10].copy_from_slice(&1_u32.to_le_bytes());
+
+        assert_eq!(
+            parse_structural(&bytes).unwrap_err(),
+            UmodParseError::SectionTableOutOfBounds
+        );
+    }
+
+    #[test]
+    fn parse_structural_rejects_section_outside_file() {
+        let mut bytes = one_section_bytes();
+        write_section(&mut bytes, 0x40, 7, 0, 0x68, 0x10, 0);
+
+        assert_eq!(
+            parse_structural(&bytes).unwrap_err(),
+            UmodParseError::SectionOutOfBounds { index: 0 }
+        );
+    }
+
+    #[test]
+    fn parse_structural_rejects_overlapping_sections() {
+        let mut bytes = [0; 0x90];
+        bytes[0..UMOD_HEADER_LEN].copy_from_slice(&minimal_header());
+        bytes[0x0C..0x10].copy_from_slice(&2_u32.to_le_bytes());
+        bytes[0x28..0x30].copy_from_slice(&0x90_u64.to_le_bytes());
+        write_section(&mut bytes, 0x40, 7, 0, 0x80, 0x10, 0);
+        write_section(&mut bytes, 0x60, 8, 0, 0x88, 0x08, 0);
+
+        assert_eq!(
+            parse_structural(&bytes).unwrap_err(),
+            UmodParseError::SectionOverlap {
+                first: 0,
+                second: 1
+            }
+        );
+    }
+
+    #[test]
+    fn parse_structural_rejects_node_and_wire_count_limits() {
+        let mut bytes = minimal_header();
+        bytes[0x10..0x14].copy_from_slice(&(UMOD_MAX_NODE_COUNT + 1).to_le_bytes());
+        assert_eq!(
+            parse_structural(&bytes).unwrap_err(),
+            UmodParseError::NodeCountOverflow
+        );
+
+        let mut bytes = minimal_header();
+        bytes[0x14..0x18].copy_from_slice(&(UMOD_MAX_WIRE_COUNT + 1).to_le_bytes());
+        assert_eq!(
+            parse_structural(&bytes).unwrap_err(),
+            UmodParseError::WireCountOverflow
         );
     }
 

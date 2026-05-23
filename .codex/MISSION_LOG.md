@@ -4,7 +4,18 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C5.M4 Step 2 Section table bounds and structural checks: ready.
+- C5.M4 Step 3 Node and wire semantic verifier checks: ready.
+
+## 2026-05-23T02:21:56Z - C5.M4 Step 2 Section table bounds and structural checks
+
+- Status: completed
+- Summary: Added fixed-width section descriptor decoding, structural UMOD
+  validation for declared file length, section table bounds, section
+  out-of-file errors, illegal overlaps, and configured node/wire count limits.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p umod`, `cargo test -p
+  graph`, and `python3 scripts/verify.py --mission current`.
+- Blockers: none.
 
 ## 2026-05-23T02:15:38Z - C5.M4 Step 1 UMOD parser header and resource refs
 

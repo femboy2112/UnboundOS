@@ -8,7 +8,7 @@
 //! after node/wire resolution; etc.).
 
 use crate::{GraphLoadError, VerifiedGraph, BUILTIN_SOURCE_TRANSFORM_SINK_UMOD};
-use umod::{parse_header, UmodParseError};
+use umod::{parse_header, parse_structural, UmodParseError};
 
 /// Public entry point. Runs all 22 checks. Returns the verified
 /// graph or the first failing check.
@@ -64,13 +64,19 @@ fn check_header_length(bytes: &[u8]) -> Result<(), GraphLoadError> {
     parse_header(bytes).map_err(map_parse_error)?;
     Ok(())
 }
-fn check_section_table(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+
+fn check_section_table(bytes: &[u8]) -> Result<(), GraphLoadError> {
+    parse_structural(bytes).map_err(map_parse_error)?;
     Ok(())
 }
-fn check_node_count(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+
+fn check_node_count(bytes: &[u8]) -> Result<(), GraphLoadError> {
+    parse_structural(bytes).map_err(map_parse_error)?;
     Ok(())
 }
-fn check_wire_count(_bytes: &[u8]) -> Result<(), GraphLoadError> {
+
+fn check_wire_count(bytes: &[u8]) -> Result<(), GraphLoadError> {
+    parse_structural(bytes).map_err(map_parse_error)?;
     Ok(())
 }
 fn check_node_indices(_bytes: &[u8]) -> Result<(), GraphLoadError> {
@@ -135,11 +141,13 @@ const fn map_parse_error(error: UmodParseError) -> GraphLoadError {
     match error {
         UmodParseError::BadMagic => GraphLoadError::BadMagic,
         UmodParseError::UnsupportedVersion { .. } => GraphLoadError::UnsupportedVersion,
-        UmodParseError::HeaderTooShort => GraphLoadError::ParseTruncated,
-        UmodParseError::BadHeaderLength { .. } => GraphLoadError::BadHeaderLength,
-        UmodParseError::SectionTableOutOfBounds | UmodParseError::SectionOutOfBounds { .. } => {
-            GraphLoadError::BadSectionTable
+        UmodParseError::HeaderTooShort | UmodParseError::FileLengthOutOfBounds { .. } => {
+            GraphLoadError::ParseTruncated
         }
+        UmodParseError::BadHeaderLength { .. } => GraphLoadError::BadHeaderLength,
+        UmodParseError::SectionTableOutOfBounds
+        | UmodParseError::SectionOutOfBounds { .. }
+        | UmodParseError::SectionOverlap { .. } => GraphLoadError::BadSectionTable,
         UmodParseError::NodeCountOverflow => GraphLoadError::NodeCountExceedsLimit,
         UmodParseError::WireCountOverflow => GraphLoadError::WireCountExceedsLimit,
         UmodParseError::HeaderChecksumMismatch => GraphLoadError::ParseHeaderChecksumMismatch,
@@ -163,6 +171,12 @@ mod tests {
         bytes[0x20..0x28].copy_from_slice(&(UMOD_HEADER_LEN as u64).to_le_bytes());
         bytes[0x28..0x30].copy_from_slice(&(UMOD_HEADER_LEN as u64).to_le_bytes());
         bytes
+    }
+
+    fn write_section(bytes: &mut [u8], offset: usize, kind: u32, section_offset: u64, length: u64) {
+        bytes[offset..offset + 0x04].copy_from_slice(&kind.to_le_bytes());
+        bytes[offset + 0x08..offset + 0x10].copy_from_slice(&section_offset.to_le_bytes());
+        bytes[offset + 0x10..offset + 0x18].copy_from_slice(&length.to_le_bytes());
     }
 
     #[test]
@@ -207,5 +221,46 @@ mod tests {
         let r = verify_umod(&bytes);
 
         assert_eq!(r.unwrap_err(), GraphLoadError::BadHeaderLength);
+    }
+
+    #[test]
+    fn section_table_out_of_bounds_fails_structurally() {
+        let mut bytes = minimal_header();
+        bytes[0x0C..0x10].copy_from_slice(&1_u32.to_le_bytes());
+
+        let r = verify_umod(&bytes);
+
+        assert_eq!(r.unwrap_err(), GraphLoadError::BadSectionTable);
+    }
+
+    #[test]
+    fn section_overlap_fails_structurally() {
+        let mut bytes = [0; 0x90];
+        bytes[0..UMOD_HEADER_LEN].copy_from_slice(&minimal_header());
+        bytes[0x0C..0x10].copy_from_slice(&2_u32.to_le_bytes());
+        bytes[0x28..0x30].copy_from_slice(&0x90_u64.to_le_bytes());
+        write_section(&mut bytes, 0x40, 7, 0x80, 0x10);
+        write_section(&mut bytes, 0x60, 8, 0x88, 0x08);
+
+        let r = verify_umod(&bytes);
+
+        assert_eq!(r.unwrap_err(), GraphLoadError::BadSectionTable);
+    }
+
+    #[test]
+    fn node_and_wire_count_limits_fail_structurally() {
+        let mut bytes = minimal_header();
+        bytes[0x10..0x14].copy_from_slice(&(umod::UMOD_MAX_NODE_COUNT + 1).to_le_bytes());
+        assert_eq!(
+            verify_umod(&bytes).unwrap_err(),
+            GraphLoadError::NodeCountExceedsLimit
+        );
+
+        let mut bytes = minimal_header();
+        bytes[0x14..0x18].copy_from_slice(&(umod::UMOD_MAX_WIRE_COUNT + 1).to_le_bytes());
+        assert_eq!(
+            verify_umod(&bytes).unwrap_err(),
+            GraphLoadError::WireCountExceedsLimit
+        );
     }
 }

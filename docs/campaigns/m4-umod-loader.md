@@ -138,6 +138,8 @@ Commit and push.
 
 # Step 2 — Section table bounds and structural checks
 
+Status: Completed.
+
 Purpose:
   Parse section descriptors and make checks 3-6 non-vacuous for section table
   validity, file length, count limits, and overflow behavior.
