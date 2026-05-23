@@ -40,6 +40,13 @@ mb2_header_start:
     .long 0
     .long mb2_header_end - mb2_header_start
     .long -(0xe85250d6 + 0 + (mb2_header_end - mb2_header_start))
+    .short 5
+    .short 0
+    .long 20
+    .long 1024
+    .long 768
+    .long 32
+    .long 0
     .short 0
     .short 0
     .long 8
@@ -64,13 +71,19 @@ _mb2_start:
     mov dword ptr [edi + ecx*8 + 4], 0
     add eax, 0x200000
     inc ecx
-    cmp ecx, 512
+    cmp ecx, 2048
     jne 1b
 
     mov dword ptr [boot_p4], offset boot_p3 + 0x3
     mov dword ptr [boot_p4 + 4], 0
     mov dword ptr [boot_p3], offset boot_p2 + 0x3
     mov dword ptr [boot_p3 + 4], 0
+    mov dword ptr [boot_p3 + 8], offset boot_p2 + 4096 + 0x3
+    mov dword ptr [boot_p3 + 12], 0
+    mov dword ptr [boot_p3 + 16], offset boot_p2 + 8192 + 0x3
+    mov dword ptr [boot_p3 + 20], 0
+    mov dword ptr [boot_p3 + 24], offset boot_p2 + 12288 + 0x3
+    mov dword ptr [boot_p3 + 28], 0
 
     mov eax, cr4
     or eax, 0x20
@@ -128,7 +141,7 @@ boot_p4:
 boot_p3:
     .skip 4096
 boot_p2:
-    .skip 4096
+    .skip 16384
 .align 16
 boot_mb2_magic:
     .skip 4

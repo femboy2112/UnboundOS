@@ -253,10 +253,10 @@ fn trigger_invalid_opcode() {
 }
 
 fn trigger_page_fault() {
-    const UNMAPPED_TEST_ADDRESS: usize = 0x4000_0000;
+    const UNMAPPED_TEST_ADDRESS: usize = 0x1_0000_0000;
     // SAFETY: intentional M1 forced-fault smoke. The M0 Multiboot2 bootstrap
-    // maps the first GiB only, so this read crosses into an unmapped page and
-    // must route through #PF.
+    // maps the first 4 GiB for low-device handoff surfaces, so this read
+    // crosses into an unmapped page and must route through #PF.
     unsafe {
         core::ptr::read_volatile(UNMAPPED_TEST_ADDRESS as *const u64);
     }

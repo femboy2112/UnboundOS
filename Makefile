@@ -34,6 +34,7 @@ help:
 	@echo "  make qemu-fault-pf   # assert page-fault SSOD path"
 	@echo "  make qemu-m2-dump    # assert M2 memory/arena diagnostic dump"
 	@echo "  make qemu-graph-boot # assert initial graph loads during boot"
+	@echo "  make qemu-framebuffer-smoke # capture framebuffer diagnostics from QEMU"
 	@echo "  make fidelity        # run scripts/fidelity_check.sh"
 	@echo "  make address-scan    # scan persistent fixtures"
 	@echo "  make fmt             # cargo fmt --check"
@@ -86,6 +87,10 @@ qemu-m2-dump: image
 .PHONY: qemu-graph-boot
 qemu-graph-boot: image
 	./scripts/qemu.sh --headless --assert-graph-boot
+
+.PHONY: qemu-framebuffer-smoke
+qemu-framebuffer-smoke:
+	python3 scripts/check_qemu_framebuffer.py
 
 .PHONY: qemu-storage-smoke
 qemu-storage-smoke:

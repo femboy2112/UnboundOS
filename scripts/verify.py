@@ -111,6 +111,11 @@ QEMU_COMMANDS = [
         requires=("make", "qemu-system-x86_64"),
     ),
     Command(
+        "qemu framebuffer smoke",
+        ["make", "-s", "qemu-framebuffer-smoke"],
+        requires=("make", "python3", "qemu-system-x86_64"),
+    ),
+    Command(
         "qemu M6 storage marker",
         ["make", "-s", "qemu-storage-smoke"],
         requires=("make", "qemu-system-x86_64"),

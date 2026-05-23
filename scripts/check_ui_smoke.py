@@ -30,6 +30,7 @@ def main() -> int:
     graph_lib = read("crates/graph/src/lib.rs")
     graph_loader = read("crates/graph/src/loader.rs")
     qemu = read("scripts/qemu.sh")
+    qemu_framebuffer = read("scripts/check_qemu_framebuffer.py")
     boot = read("kernel/src/boot.rs")
 
     for label in (
@@ -58,6 +59,8 @@ def main() -> int:
     require(boot, "UNBOUNDOS_GRAPH_OK", "boot graph load", failures)
     require(boot, "graph_load_from_umod(SOURCE_TRANSFORM_SINK_UMOD)", "boot graph verifier gate", failures)
     require(qemu, "assert_graph_boot", "graph boot QEMU assertion", failures)
+    require(qemu_framebuffer, "UNBOUNDOS_FRAMEBUFFER_RENDERED", "framebuffer render QEMU marker", failures)
+    require(qemu_framebuffer, "xp /4096wx", "framebuffer monitor memory check", failures)
 
     if graph_lib.count("pub fn graph_compile_verified") != 1:
         failures.append("graph compile gate: expected exactly one public compile function")

@@ -6,8 +6,10 @@
 //! CLAUDE.md §11 (no silent placeholders); the heartbeat lines themselves are
 //! emitted in §1.6 order.
 
-use crate::{arena, cpu, heartbeat, idt, multiboot2, operator_shell, storage};
-use graph::{graph_compile_verified, graph_load_from_umod, SOURCE_TRANSFORM_SINK_UMOD};
+use crate::{arena, cpu, framebuffer, heartbeat, idt, multiboot2, operator_shell, storage};
+use graph::{
+    graph_compile_verified, graph_load_from_umod, GraphDisplayState, SOURCE_TRANSFORM_SINK_UMOD,
+};
 
 #[derive(Copy, Clone)]
 pub struct BootHandoff {
@@ -83,6 +85,7 @@ pub unsafe fn run(handoff: BootHandoff) -> ! {
     // The current bootable image is GRUB/Multiboot2; Limine remains the
     // spec-primary target for the later bootloader handoff milestone.
     let memory_summary = read_boot_memory_summary(handoff);
+    let framebuffer_info = memory_summary.framebuffer;
     heartbeat::emit_kv_hex("UNBOUNDOS_MEMMAP_OK", memory_summary.usable_bytes);
     let mut m2_arenas = emit_m2_memory_diagnostics(memory_summary);
 
@@ -109,13 +112,6 @@ pub unsafe fn run(handoff: BootHandoff) -> ! {
         cpu::enable_math_features(tier);
     }
 
-    // spec §3.2 step 11: initialize framebuffer if available.
-    // TODO M5 (spec §3.7, §3.9): pass the real bootloader framebuffer surface
-    // here once handoff parsing exists. Until then, this keeps headless boot
-    // non-blocking while preserving the real fallback call path for callers
-    // that can provide a bounded `TextSurface`.
-    heartbeat::finalize_framebuffer_fallback(None);
-
     // spec §3.2 step 12: initialize permanent kernel structures.
     // TODO M3 (spec §4.4–§4.11): KernelArena, GraphArena,
     // ScratchArena, ModelWeightArena, registries.
@@ -124,7 +120,10 @@ pub unsafe fn run(handoff: BootHandoff) -> ! {
 
     // spec §3.2 step 13: load or embed initial graph.
     // The initial graph enters through the only legal verifier/compile gate.
-    initialize_initial_graph();
+    let graph_state = initialize_initial_graph();
+
+    // spec §3.2 step 11: initialize framebuffer if available.
+    render_framebuffer_if_available(framebuffer_info, graph_state);
 
     // spec §3.2 step 14: enter orchestrator or IDE shell.
     // The initial interactive surface is a polling serial operator shell. It
@@ -187,25 +186,89 @@ fn run_m6_storage_smoke_from_env() {
     }
 }
 
-fn initialize_initial_graph() {
+fn initialize_initial_graph() -> Option<GraphDisplayState> {
     heartbeat::emit("UNBOUNDOS_GRAPH_LOAD_BEGIN");
-    match graph_load_from_umod(SOURCE_TRANSFORM_SINK_UMOD).and_then(|verified| {
+    if let Ok(handle) = graph_load_from_umod(SOURCE_TRANSFORM_SINK_UMOD).and_then(|verified| {
         graph_compile_verified(verified).map_err(|_| graph::GraphLoadError::BadSectionTable)
     }) {
-        Ok(handle) => {
-            let state = handle.display_state();
-            heartbeat::emit("UNBOUNDOS_GRAPH_OK");
-            heartbeat::emit_kv_hex("graph_id", state.graph_id());
-            heartbeat::emit_kv_hex("graph_nodes", u64::from(state.node_count()));
-            heartbeat::emit_kv_hex("graph_wires", u64::from(state.wire_count()));
-            if let Some(last_completed) = state.last_completed_node() {
-                heartbeat::emit_kv_hex("graph_last_completed", u64::from(last_completed));
-            } else {
-                heartbeat::emit_kv_str("graph_last_completed", "none");
-            }
+        let state = handle.display_state();
+        heartbeat::emit("UNBOUNDOS_GRAPH_OK");
+        heartbeat::emit_kv_hex("graph_id", state.graph_id());
+        heartbeat::emit_kv_hex("graph_nodes", u64::from(state.node_count()));
+        heartbeat::emit_kv_hex("graph_wires", u64::from(state.wire_count()));
+        if let Some(last_completed) = state.last_completed_node() {
+            heartbeat::emit_kv_hex("graph_last_completed", u64::from(last_completed));
+        } else {
+            heartbeat::emit_kv_str("graph_last_completed", "none");
         }
-        Err(_) => heartbeat::emit("UNBOUNDOS_GRAPH_LOAD_ERROR"),
+        Some(state)
+    } else {
+        heartbeat::emit("UNBOUNDOS_GRAPH_LOAD_ERROR");
+        None
     }
+}
+
+fn render_framebuffer_if_available(
+    info: Option<multiboot2::FramebufferInfo>,
+    graph_state: Option<GraphDisplayState>,
+) {
+    let Some(info) = info else {
+        heartbeat::emit_kv_str("UNBOUNDOS_FRAMEBUFFER", "unavailable");
+        heartbeat::finalize_framebuffer_fallback(None);
+        return;
+    };
+    if info.addr >= multiboot2::IDENTITY_MAPPED_LIMIT_4G {
+        heartbeat::emit_kv_str("UNBOUNDOS_FRAMEBUFFER", "outside_identity_map");
+        heartbeat::finalize_framebuffer_fallback(None);
+        return;
+    }
+    let Some(pixel_count) = usize::try_from(info.pitch)
+        .ok()
+        .and_then(|pitch| pitch.checked_mul(usize::try_from(info.height).ok()?))
+        .map(|bytes| bytes / core::mem::size_of::<u32>())
+    else {
+        heartbeat::emit_kv_str("UNBOUNDOS_FRAMEBUFFER", "invalid_geometry");
+        heartbeat::finalize_framebuffer_fallback(None);
+        return;
+    };
+
+    // SAFETY: Multiboot2 supplied a 32-bpp RGB framebuffer tag and the bootstrap
+    // identity map covers the first 4 GiB. The surface is used only on the boot
+    // CPU before interrupts/concurrency.
+    let pixels =
+        unsafe { core::slice::from_raw_parts_mut(info.addr as usize as *mut u32, pixel_count) };
+    let stride_pixels = usize::try_from(info.pitch).unwrap_or(0) / core::mem::size_of::<u32>();
+    let Ok(mut surface) = framebuffer::TextSurface::new(
+        pixels,
+        usize::try_from(info.width).unwrap_or(0),
+        usize::try_from(info.height).unwrap_or(0),
+        stride_pixels,
+        0x00ff_ff00,
+        0x0000_0000,
+    ) else {
+        heartbeat::emit_kv_str("UNBOUNDOS_FRAMEBUFFER", "surface_rejected");
+        heartbeat::finalize_framebuffer_fallback(None);
+        return;
+    };
+
+    surface.clear();
+    surface.write_str("UNBOUNDOS_FRAMEBUFFER_RENDERED\n");
+    heartbeat::finalize_framebuffer_fallback(Some(&mut surface));
+    if let Some(state) = graph_state {
+        surface.render_graph_state(
+            state.graph_id(),
+            state.node_count(),
+            state.wire_count(),
+            state.active_node(),
+            state.last_completed_node(),
+        );
+    }
+
+    heartbeat::emit("UNBOUNDOS_FRAMEBUFFER_OK");
+    heartbeat::emit_kv_hex("framebuffer_addr", info.addr);
+    heartbeat::emit_kv_hex("framebuffer_width", u64::from(info.width));
+    heartbeat::emit_kv_hex("framebuffer_height", u64::from(info.height));
+    heartbeat::emit("UNBOUNDOS_FRAMEBUFFER_RENDERED");
 }
 
 fn read_boot_memory_summary(handoff: BootHandoff) -> multiboot2::MemorySummary {

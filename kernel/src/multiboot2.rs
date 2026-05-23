@@ -10,6 +10,7 @@ use core::cmp::{max, min};
 pub const BOOTLOADER_MAGIC: u32 = 0x36d7_6289;
 const TAG_TYPE_END: u32 = 0;
 const TAG_TYPE_MMAP: u32 = 6;
+const TAG_TYPE_FRAMEBUFFER: u32 = 8;
 const MIN_INFO_SIZE: usize = 16;
 const MAX_INFO_SIZE: usize = 1024 * 1024;
 const INFO_HEADER_SIZE: usize = 8;
@@ -18,12 +19,23 @@ const MMAP_TAG_HEADER_SIZE: usize = 16;
 const MIN_MMAP_ENTRY_SIZE: u32 = 24;
 
 pub const IDENTITY_MAPPED_LIMIT: u64 = 1024 * 1024 * 1024;
+pub const IDENTITY_MAPPED_LIMIT_4G: u64 = 4 * 1024 * 1024 * 1024;
 pub const M2_BOOT_ARENA_BYTES: u64 = 64 * 1024;
 pub const M2_KERNEL_ARENA_BYTES: u64 = 256 * 1024;
 pub const M2_GRAPH_ARENA_BYTES: u64 = 256 * 1024;
 pub const M2_SCRATCH_ARENA_BYTES: u64 = 128 * 1024;
 pub const M2_ARENA_BYTES: u64 =
     M2_BOOT_ARENA_BYTES + M2_KERNEL_ARENA_BYTES + M2_GRAPH_ARENA_BYTES + M2_SCRATCH_ARENA_BYTES;
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct FramebufferInfo {
+    pub addr: u64,
+    pub pitch: u32,
+    pub width: u32,
+    pub height: u32,
+    pub bpp: u8,
+    pub typ: u8,
+}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct UsableRegion {
@@ -39,6 +51,7 @@ pub struct MemorySummary {
     pub usable_bytes: u64,
     pub usable_regions: u32,
     pub arena_region: Option<UsableRegion>,
+    pub framebuffer: Option<FramebufferInfo>,
 }
 
 impl MemorySummary {
@@ -50,6 +63,7 @@ impl MemorySummary {
             usable_bytes: 0,
             usable_regions: 0,
             arena_region: None,
+            framebuffer: None,
         }
     }
 }
@@ -115,6 +129,7 @@ pub fn summarize_bytes(
         usable_bytes: 0,
         usable_regions: 0,
         arena_region: None,
+        framebuffer: None,
     };
 
     let mut offset = INFO_HEADER_SIZE;
@@ -142,6 +157,9 @@ pub fn summarize_bytes(
                 max_arena_limit,
             );
         }
+        if typ == TAG_TYPE_FRAMEBUFFER {
+            summary.framebuffer = parse_framebuffer_tag(bytes, offset, size);
+        }
 
         let Some(next) = align_up_usize(offset + size, 8) else {
             return MemorySummary::invalid();
@@ -150,6 +168,33 @@ pub fn summarize_bytes(
     }
 
     MemorySummary::invalid()
+}
+
+fn parse_framebuffer_tag(
+    bytes: &[u8],
+    tag_offset: usize,
+    tag_size: usize,
+) -> Option<FramebufferInfo> {
+    if tag_size < 32 {
+        return None;
+    }
+    let addr = read_u64_from(bytes, tag_offset + 8);
+    let pitch = read_u32_from(bytes, tag_offset + 16);
+    let width = read_u32_from(bytes, tag_offset + 20);
+    let height = read_u32_from(bytes, tag_offset + 24);
+    let bpp = bytes[tag_offset + 28];
+    let typ = bytes[tag_offset + 29];
+    if addr == 0 || pitch == 0 || width == 0 || height == 0 || bpp != 32 || typ != 1 {
+        return None;
+    }
+    Some(FramebufferInfo {
+        addr,
+        pitch,
+        width,
+        height,
+        bpp,
+        typ,
+    })
 }
 
 fn parse_mmap_tag(
@@ -302,6 +347,25 @@ mod tests {
     }
 
     #[test]
+    fn parses_framebuffer_tag() {
+        let bytes = info_with_mmap_and_framebuffer(&[(0x0010_0000, 0x0100_0000, 1)]);
+
+        let summary = summarize_bytes(BOOTLOADER_MAGIC, &bytes, 0, IDENTITY_MAPPED_LIMIT);
+
+        assert_eq!(
+            summary.framebuffer.unwrap(),
+            super::FramebufferInfo {
+                addr: 0xfd00_0000,
+                pitch: 4096,
+                width: 1024,
+                height: 768,
+                bpp: 32,
+                typ: 1,
+            }
+        );
+    }
+
+    #[test]
     fn arena_size_constants_cover_four_boot_arenas() {
         assert_eq!(
             M2_ARENA_BYTES,
@@ -313,9 +377,18 @@ mod tests {
     }
 
     fn info_with_mmap(entries: &[(u64, u64, u32)]) -> Vec<u8> {
+        info_with_tags(entries, false)
+    }
+
+    fn info_with_mmap_and_framebuffer(entries: &[(u64, u64, u32)]) -> Vec<u8> {
+        info_with_tags(entries, true)
+    }
+
+    fn info_with_tags(entries: &[(u64, u64, u32)], include_framebuffer: bool) -> Vec<u8> {
         let mmap_tag_size = 16 + entries.len() * 24;
         let aligned_mmap_tag_size = align_up(mmap_tag_size, 8);
-        let total_size = 8 + aligned_mmap_tag_size + 8;
+        let framebuffer_tag_size = if include_framebuffer { 32 } else { 0 };
+        let total_size = 8 + aligned_mmap_tag_size + framebuffer_tag_size + 8;
         let mut bytes = vec![0_u8; total_size];
         write_u32(&mut bytes, 0, total_size as u32);
 
@@ -331,7 +404,18 @@ mod tests {
             write_u32(&mut bytes, entry_offset + 16, typ);
         }
 
-        let end_offset = 8 + aligned_mmap_tag_size;
+        let mut end_offset = 8 + aligned_mmap_tag_size;
+        if include_framebuffer {
+            write_u32(&mut bytes, end_offset, 8);
+            write_u32(&mut bytes, end_offset + 4, 32);
+            write_u64(&mut bytes, end_offset + 8, 0xfd00_0000);
+            write_u32(&mut bytes, end_offset + 16, 4096);
+            write_u32(&mut bytes, end_offset + 20, 1024);
+            write_u32(&mut bytes, end_offset + 24, 768);
+            bytes[end_offset + 28] = 32;
+            bytes[end_offset + 29] = 1;
+            end_offset += framebuffer_tag_size;
+        }
         write_u32(&mut bytes, end_offset, 0);
         write_u32(&mut bytes, end_offset + 4, 8);
         bytes

@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.32
+> **Catalog version:** v0.33
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -47,6 +47,14 @@ stale mission state. Completed campaigns are archived under
 
 ## Change log
 
+- **v0.33** — Added real Multiboot2 framebuffer handoff handling in the GRUB
+  smoke boot path. The Multiboot2 header now requests a 1024x768x32 framebuffer,
+  the bootstrap identity map covers the first 4 GiB for QEMU's linear
+  framebuffer, the kernel parses the framebuffer tag, renders boot diagnostics
+  and graph state through `TextSurface`, and emits framebuffer geometry markers.
+  `make qemu-framebuffer-smoke` boots QEMU, inspects the guest framebuffer
+  memory through the QEMU monitor, and fails if the rendered region is blank;
+  aggregate gates now include this dynamic framebuffer-memory check.
 - **v0.32** — Moved the initial source-transform-sink graph load into the boot
   path before `UNBOUNDOS_BOOT_OK`. The kernel now emits
   `UNBOUNDOS_GRAPH_LOAD_BEGIN`, `UNBOUNDOS_GRAPH_OK`, graph id, node count,
