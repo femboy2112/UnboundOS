@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.14
+> **Catalog version:** v0.15
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** none
+> **Active milestone:** M7 Tokenizer
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -32,7 +32,7 @@ archived under `docs/campaigns/` and never edited again.
 | M4  | UMOD loader | §6, §13.6 | DONE | Persistent graph verifies and executes through `graph_load_from_umod -> graph_compile_verified`; malformed UMODs return structured errors; `make gates` PROCEED | docs/campaigns/m4-umod-loader.md |
 | M5  | Minimal UI | §3.7, §8, §13.7 | DONE | Framebuffer text primitives render boot diagnostics and graph state; `make gates` PROCEED | docs/campaigns/m5-minimal-ui.md |
 | M6  | Storage stage 1 | §7, §13.8 | DONE | Raw sector read works with timeout; graph-visible storage refs remain opaque; `make gates` PROCEED | docs/campaigns/m6-storage-stage-1.md |
-| M7  | Tokenizer | §10.6, §13.9 | TODO | Bare-metal tokenizer runs | docs/campaigns/m7-tokenizer.md *(not yet written)* |
+| M7  | Tokenizer | §10.7, §13.7 | IN-PROGRESS | Bare-metal tokenizer round trip works for the initially supported tokenizer family; `make gates` PROCEED | docs/campaigns/m7-tokenizer.md |
 | M8  | Toy transformer | §10, §13.10 | TODO | Hardcoded tiny model generates text | docs/campaigns/m8-toy-transformer.md *(not yet written)* |
 | M9  | UMDL loader | §10, §13.11 | TODO | Model package validates and loads | docs/campaigns/m9-umdl-loader.md *(not yet written)* |
 | M10 | Quantized inference | §10, §11, §13.12 | TODO | Small quantized model streams tokens | docs/campaigns/m10-quantized-inference.md *(not yet written)* |
@@ -45,6 +45,10 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.15** — Opened M7 Tokenizer on `campaign/m7-tokenizer`.
+  The campaign owns one bare-metal tokenizer family, tokenizer metadata
+  validation, round-trip evidence, and graph-visible node contracts without
+  adding hidden inference loops or direct mutation authority.
 - **v0.14** — M6 completed on `campaign/m6-storage-stage-1`: raw-sector
   read works through an ATA PIO backend with finite timeout diagnostics, QEMU
   proves sector 0 marker reads from a deterministic primary-disk fixture, and

@@ -1,8 +1,8 @@
 # Current Campaign
 
-Campaign: C7 M6 Storage Stage 1
-Active mission: C7.M6 Step 5 M6 completion audit
-Status: completed
+Campaign: C8 M7 Tokenizer
+Active mission: C8.M7 Step 1 Tokenizer registry and metadata contract
+Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -11,12 +11,12 @@ mission state after each completed mission.
 Publish policy: commit and push the campaign branch after each completed
 mission.
 Main policy: never merge to main, never push main, or force-push.
-Campaign branch: campaign/m6-storage-stage-1
+Campaign branch: campaign/m7-tokenizer
 
 ## Campaign Objective
 
-Close M6 by proving the spec §13.8 Storage stage 1 exit criterion: raw sector
-read works with timeout while graph-visible storage references remain opaque.
+Close M7 by proving the spec §13.7 tokenizer exit criterion: tokenizer
+round-trip works for the initially supported tokenizer family.
 
 ## Active Mission
 
@@ -24,21 +24,16 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C7.M6 Step 1 Storage contracts and timeout model. Completed.
-2. C7.M6 Step 2 ATA PIO sector-read primitive. Completed.
-3. C7.M6 Step 3 QEMU raw-sector smoke fixture. Completed.
-4. C7.M6 Step 4 Resource namespace guard evidence. Completed.
-5. C7.M6 Step 5 M6 completion audit. Completed.
-
-## Closeout
-
-M6 is complete. `/go` must stop here until the operator opens the final M6 PR
-or rotates the control files to M7.
+1. C8.M7 Step 1 Tokenizer registry and metadata contract. Active.
+2. C8.M7 Step 2 Raw-byte tokenizer encode path. Pending.
+3. C8.M7 Step 3 Raw-byte detokenizer round trip. Pending.
+4. C8.M7 Step 4 Tokenizer smoke evidence and gates. Pending.
+5. C8.M7 Step 5 M7 completion audit. Pending.
 
 ## Required Preflight For `go`
 
 1. Read `CLAUDE.md`.
-2. Read `docs/campaigns/m6-storage-stage-1.md`.
+2. Read `docs/campaigns/m7-tokenizer.md`.
 3. Read `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf` or the
    extracted requirements in `.codex/PROJECT_PLAN.md`.
 4. Read `.codex/CURRENT_CAMPAIGN.md`.
@@ -55,6 +50,6 @@ unless the mission explicitly permits that skip.
 
 ## Campaign Source
 
-The detailed M6 step contract is `docs/campaigns/m6-storage-stage-1.md`.
+The detailed M7 step contract is `docs/campaigns/m7-tokenizer.md`.
 Step allowed-file blocks are binding for implementation files; `.codex/*`
 files may be edited only for required mission-state closeout.

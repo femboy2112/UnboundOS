@@ -1,46 +1,45 @@
 # Current Mission
 
-Mission: C7.M6 Step 5 M6 completion audit
-Campaign: C7 M6 Storage Stage 1
-Status: completed
+Mission: C8.M7 Step 1 Tokenizer registry and metadata contract
+Campaign: C8 M7 Tokenizer
+Status: ready
 
 ## Objective
 
-Execute M6 campaign Step 5 from `docs/campaigns/m6-storage-stage-1.md`: close
-M6 after raw-sector read, timeout behavior, QEMU smoke evidence, and
-resource-boundary checks are reproducibly verified.
+Execute M7 campaign Step 1 from `docs/campaigns/m7-tokenizer.md`: define the
+supported tokenizer family and fixed-width metadata contract.
 
 ## Scope
 
 Allowed changes:
 
-- `MILESTONE_CATALOG.md`
-- `docs/campaigns/m6-storage-stage-1.md`
+- `crates/umdl/src/lib.rs`
+- `crates/llm/src/lib.rs`
+- `crates/llm/src/tokenizer.rs`
+- `docs/campaigns/m7-tokenizer.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- Implementation changes.
-- Script, fixture, verifier, parser, storage driver, boot path, QEMU harness,
-  FAT32, append-only graph store, or write support.
+- Encode/decode implementation beyond metadata validation.
+- UMDL loader, tensor descriptors, model execution, sampler, storage, or QEMU
+  harness changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- M6 row in `MILESTONE_CATALOG.md` changes from `IN-PROGRESS` to `DONE`.
-- Catalog version banner is bumped.
-- `MILESTONE_CATALOG.md` change log records the M6 closeout.
-- `docs/campaigns/m6-storage-stage-1.md` has a `## Closeout` section naming
-  the Step 1-4 checkpoint commits.
-- `make gates`, `make repo-state`, and `python3 scripts/verify.py --mission
-  current` prove the closeout state.
+- Tokenizer metadata covers tokenizer type, vocabulary size, special token IDs,
+  UTF-8 policy, maximum token byte length, and checksum.
+- M7 supports exactly `RawByteToToken`; BPE and SentencePiece return structured
+  unsupported-family errors.
+- Metadata structs are fixed-width and pointer-free.
 
 ## Baseline to verify
 
 ```
-branch: campaign/m6-storage-stage-1
+branch: campaign/m7-tokenizer
 status: IN-PROGRESS
 ```
 
@@ -50,16 +49,13 @@ status: IN-PROGRESS
 python3 scripts/status.py
 python3 scripts/mission.py validate
 make fmt
-make gates
-make repo-state
+cargo test -p umdl
+cargo test -p llm
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m6-storage-stage-1`. Step 4 added an aggregate
-storage namespace guard and broadened UMOD resource tests so path-shaped
-storage refs remain rejected above the storage adapter boundary.
-
-Stop reason: M6 campaign complete. Await operator action to open the final M6
-PR or rotate mission state to M7.
+Campaign branch: `campaign/m7-tokenizer`. M7 should not need new unsafe code;
+if a later tokenizer table loader does, it must follow the project rule:
+bounded, inspectable, deterministic, and not undefined by design.

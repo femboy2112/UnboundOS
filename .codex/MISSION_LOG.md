@@ -4,7 +4,16 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- none.
+- C8.M7 Step 1 Tokenizer registry and metadata contract: ready.
+
+## 2026-05-23T07:29:08Z - C8.M7 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m7-tokenizer`, marked M7 `IN-PROGRESS`, created
+  the M7 campaign plan, and rotated `.codex` state to Step 1 with one initial
+  tokenizer family: `RawByteToToken`.
+- Verification: pending below for the active Step 1 mission state.
+- Blockers: none.
 
 ## 2026-05-23T07:27:16Z - C7.M6 Step 5 M6 completion audit
 
