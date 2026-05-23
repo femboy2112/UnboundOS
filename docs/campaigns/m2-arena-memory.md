@@ -150,6 +150,7 @@ make fmt
 make clippy
 make kernel
 make qemu-headless
+make qemu-m2-dump
 python3 scripts/verify.py --mission current
 ```
 
@@ -190,6 +191,8 @@ Commit and push.
 ---
 
 # Step 4 — Memory-map and arena dump
+
+Status: Completed.
 
 Purpose:
   Make the M2 diagnostic dump available on serial without claiming a full

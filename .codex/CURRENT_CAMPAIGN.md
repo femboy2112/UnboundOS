@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C3 M2 Arena Memory
-Active mission: C3.M2 Step 4 Memory-map and arena dump
+Active mission: C3.M2 Step 5 M2 completion audit
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -28,8 +28,8 @@ See `.codex/CURRENT_MISSION.md`.
 1. C3.M2 Step 1 Bounded arena core and alignment checks. Completed.
 2. C3.M2 Step 2 Named M2 arena set. Completed.
 3. C3.M2 Step 3 Deterministic exhaustion diagnostics. Completed.
-4. C3.M2 Step 4 Memory-map and arena dump. Active.
-5. C3.M2 Step 5 M2 completion audit. Pending.
+4. C3.M2 Step 4 Memory-map and arena dump. Completed.
+5. C3.M2 Step 5 M2 completion audit. Active.
 
 ## Required Preflight For `go`
 

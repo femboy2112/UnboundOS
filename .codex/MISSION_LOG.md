@@ -4,7 +4,19 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C3.M2 Step 4 Memory-map and arena dump: ready.
+- C3.M2 Step 5 M2 completion audit: ready.
+
+## 2026-05-23T01:30:50Z - C3.M2 Step 4 Memory-map and arena dump
+
+- Status: completed
+- Summary: Added an honest serial M2 memory/arena dump that reports the smoke
+  profile memory map as unavailable while listing the required named arena
+  descriptors, plus a QEMU assertion target for that dump.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `bash -n scripts/qemu.sh`, `make qemu-m2-dump`, `make
+  qemu-headless`, `python3 scripts/verify.py --mission current`, and
+  `make gates`.
+- Blockers: none.
 
 ## 2026-05-23T01:26:10Z - C3.M2 Step 3 Deterministic exhaustion diagnostics
 

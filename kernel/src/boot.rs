@@ -6,7 +6,7 @@
 //! CLAUDE.md §11 (no silent placeholders); the heartbeat lines themselves are
 //! emitted in §1.6 order.
 
-use crate::{cpu, heartbeat, idt, ssod};
+use crate::{arena, cpu, heartbeat, idt, ssod};
 
 // Canonical source-level assertion for spec §3.2 kernel-entry order.
 // Runtime comments below cite the same steps at the implementation site;
@@ -69,12 +69,13 @@ pub unsafe fn run() -> ! {
     heartbeat::emit_kv_str("UNBOUNDOS_CPU_PROFILE", tier.as_str());
 
     // spec §3.2 step 7: ingest memory map.
-    // TODO M1 (spec §3.1, §4.2): consume the Limine memory-map
+    // TODO M2 (spec §3.1, §4.2): consume the Limine memory-map
     // response and classify regions per §4.2. Until then the
     // kernel reports zero registered bytes — honest, since no
     // allocator is wired and no usable RAM has been claimed.
     let mem_bytes: u64 = 0;
     heartbeat::emit_kv_hex("UNBOUNDOS_MEMMAP_OK", mem_bytes);
+    emit_m2_memory_diagnostics();
 
     // spec §3.2 step 6: install early IDT with halt handlers.
     // SAFETY: single boot-path call; no concurrent IDT writers.
@@ -87,7 +88,7 @@ pub unsafe fn run() -> ! {
     idt::trigger_forced_fault_from_env();
 
     // spec §3.2 step 8: initialize boot allocator.
-    // TODO M1 (spec §4.3): bitmap or stack frame allocator over
+    // TODO M2 (spec §4.3): bitmap or stack frame allocator over
     // the memory map ingested in step 7.
 
     // spec §3.2 step 10: enable permitted SIMD/FPU state.
@@ -117,4 +118,19 @@ pub unsafe fn run() -> ! {
 
     heartbeat::emit("UNBOUNDOS_BOOT_OK");
     ssod::halt_idle()
+}
+
+fn emit_m2_memory_diagnostics() {
+    heartbeat::emit("UNBOUNDOS_M2_MEMORY_DUMP_BEGIN");
+    heartbeat::emit_kv_str("m2_memmap_status", "unavailable");
+    heartbeat::emit_kv_hex("m2_memmap_usable_bytes", 0);
+    heartbeat::emit_kv_str("m2_arena_boot", arena::BOOT_ARENA.name);
+    heartbeat::emit_kv_str("m2_arena_boot_status", "uninitialized");
+    heartbeat::emit_kv_str("m2_arena_kernel", arena::KERNEL_ARENA.name);
+    heartbeat::emit_kv_str("m2_arena_kernel_status", "uninitialized");
+    heartbeat::emit_kv_str("m2_arena_graph", arena::GRAPH_ARENA.name);
+    heartbeat::emit_kv_str("m2_arena_graph_status", "uninitialized");
+    heartbeat::emit_kv_str("m2_arena_scratch", arena::SCRATCH_ARENA.name);
+    heartbeat::emit_kv_str("m2_arena_scratch_status", "uninitialized");
+    heartbeat::emit("UNBOUNDOS_M2_MEMORY_DUMP_END");
 }

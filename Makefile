@@ -21,6 +21,7 @@ help:
 	@echo "  make qemu-fault-de   # assert divide-by-zero SSOD path"
 	@echo "  make qemu-fault-ud   # assert invalid-opcode SSOD path"
 	@echo "  make qemu-fault-pf   # assert page-fault SSOD path"
+	@echo "  make qemu-m2-dump    # assert M2 memory/arena diagnostic dump"
 	@echo "  make fidelity        # run scripts/fidelity_check.sh"
 	@echo "  make address-scan    # scan persistent fixtures"
 	@echo "  make fmt             # cargo fmt --check"
@@ -60,6 +61,10 @@ qemu-headless: image
 .PHONY: qemu-no-serial
 qemu-no-serial: image
 	./scripts/qemu.sh --headless --no-serial
+
+.PHONY: qemu-m2-dump
+qemu-m2-dump: image
+	./scripts/qemu.sh --headless --assert-m2-dump
 
 .PHONY: qemu-fault-de
 qemu-fault-de:
