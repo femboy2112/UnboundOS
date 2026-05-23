@@ -4,7 +4,25 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C9.M8 Step 4 Toy transformer smoke evidence and gates: ready.
+- C9.M8 Step 5 M8 completion audit: ready.
+
+## 2026-05-23T07:53:07Z - C9.M8 Step 4 Toy transformer smoke evidence and gates
+
+- Status: completed
+- Summary: Added `make toy-transformer-smoke` and
+  `scripts/check_toy_transformer_smoke.py` to prove deterministic token output,
+  prompt-to-text output, caller-provided buffers, and backend-boundary evidence
+  remain source-reachable from checkout. Wired the smoke into aggregate mission
+  verification.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `make toy-transformer-smoke`, `make gates`, and
+  `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: the M8 toy path smoke fails on `unsafe` in
+  `crates/llm/src/toy_transformer.rs`; unsafe Rust remains allowed at bounded
+  OS/model-kernel boundaries, but this deterministic toy inference path does
+  not need it.
+- Blockers: none.
 
 ## 2026-05-23T07:50:26Z - C9.M8 Step 3 Prompt-to-text toy inference path
 

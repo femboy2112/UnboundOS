@@ -24,6 +24,7 @@ help:
 	@echo "  make qemu-storage-smoke # assert M6 raw sector read under QEMU"
 	@echo "  make ui-smoke        # source-level M5 framebuffer/graph-state smoke"
 	@echo "  make tokenizer-smoke # source-level M7 tokenizer smoke"
+	@echo "  make toy-transformer-smoke # source-level M8 toy transformer smoke"
 	@echo "  make qemu-fault-de   # assert divide-by-zero SSOD path"
 	@echo "  make qemu-fault-ud   # assert invalid-opcode SSOD path"
 	@echo "  make qemu-fault-pf   # assert page-fault SSOD path"
@@ -109,6 +110,10 @@ ui-smoke:
 .PHONY: tokenizer-smoke
 tokenizer-smoke:
 	python3 scripts/check_tokenizer_smoke.py
+
+.PHONY: toy-transformer-smoke
+toy-transformer-smoke:
+	python3 scripts/check_toy_transformer_smoke.py
 
 .PHONY: address-scan
 address-scan:

@@ -167,6 +167,8 @@ Commit and push.
 
 # Step 4 — Toy transformer smoke evidence and gates
 
+Status: Completed.
+
 Purpose:
   Make toy-model deterministic output evidence reproducible from checkout.
 

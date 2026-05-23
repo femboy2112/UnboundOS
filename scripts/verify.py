@@ -39,6 +39,7 @@ STATIC_COMMANDS = [
     ),
     Command("ui smoke", ["python3", "scripts/check_ui_smoke.py"]),
     Command("tokenizer smoke", ["python3", "scripts/check_tokenizer_smoke.py"]),
+    Command("toy transformer smoke", ["python3", "scripts/check_toy_transformer_smoke.py"]),
 ]
 
 RUST_COMMANDS = [
