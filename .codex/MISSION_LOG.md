@@ -4,7 +4,18 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C4.M3 Step 3 Fan-out execution proof: ready.
+- C4.M3 Step 4 Active node diagnostics: ready.
+
+## 2026-05-23T01:49:41Z - C4.M3 Step 3 Fan-out execution proof
+
+- Status: completed
+- Summary: Added a graph-crate fan-out test proving two consumers can observe
+  the same produced wire epoch independently and one consumer observation does
+  not clear readiness for the other.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `python3 scripts/verify.py --mission
+  current`, and `make gates`.
+- Blockers: none.
 
 ## 2026-05-23T01:47:06Z - C4.M3 Step 2 Private hardcoded graph runtime
 

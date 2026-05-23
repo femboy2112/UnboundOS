@@ -162,6 +162,8 @@ Commit and push.
 
 # Step 3 — Fan-out execution proof
 
+Status: Completed.
+
 Purpose:
   Prove one producer output can be observed by multiple consumers without
   either consumer erasing readiness for the other.

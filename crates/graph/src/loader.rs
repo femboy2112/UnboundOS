@@ -213,6 +213,30 @@ mod tests {
     }
 
     #[test]
+    fn fan_out_consumers_observe_same_epoch_independently() {
+        let mut wire = WireRuntime::new(10, 1, 2);
+        let mut first = ConsumerObservation::new(10, 2);
+        let mut second = ConsumerObservation::new(10, 3);
+
+        wire.publish();
+        assert_eq!(wire.epoch(), 1);
+        assert!(wire.ready_for(first));
+        assert!(wire.ready_for(second));
+
+        first.observe(wire);
+        assert!(!wire.ready_for(first));
+        assert!(wire.ready_for(second));
+
+        second.observe(wire);
+        assert!(!wire.ready_for(first));
+        assert!(!wire.ready_for(second));
+
+        wire.publish();
+        assert!(wire.ready_for(first));
+        assert!(wire.ready_for(second));
+    }
+
+    #[test]
     fn builtin_graph_reaches_runtime_through_verified_pipeline() {
         let verified = graph_load_from_umod(BUILTIN_SOURCE_TRANSFORM_SINK_UMOD).unwrap();
         assert!(graph_compile_verified(verified).is_ok());
