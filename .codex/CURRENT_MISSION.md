@@ -1,20 +1,21 @@
 # Current Mission
 
-Mission: C10.M9 Step 3 Tokenizer and tensor descriptor validation
+Mission: C10.M9 Step 4 Model load view and arena reservation contract
 Campaign: C10 M9 UMDL Loader
 Status: ready
 
 ## Objective
 
-Execute M9 campaign Step 3 from `docs/campaigns/m9-umdl-loader.md`: validate
-tokenizer metadata and tensor descriptor tables without loading executable code
-or backend-specific kernels.
+Execute M9 campaign Step 4 from `docs/campaigns/m9-umdl-loader.md`: expose a
+read-only loaded model view and explicit arena requirements without allocating
+hidden storage.
 
 ## Scope
 
 Allowed changes:
 
 - `crates/umdl/src/lib.rs`
+- `crates/llm/src/lib.rs`
 - `docs/campaigns/m9-umdl-loader.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
@@ -22,18 +23,17 @@ Allowed changes:
 
 Out of scope:
 
-- Arena reservation, smoke target, fixture, sampler, or kernel work.
+- Smoke target, fixture, sampler, tensor kernel, or graph mutation work.
 - LLM sampler, SIMD kernels, storage, QEMU harness, or graph mutation changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- `TokenizerMetadata` and `TensorDesc` entries parse from UMDL sections using
-  fixed-width little-endian fields.
-- Supported tokenizer metadata validates through the existing raw-byte
-  contract.
-- Tensor scalar/quant IDs, rank/dim shape, alignment, and weight-blob bounds
-  return structured errors.
+- A loaded-model view carries validated header, tokenizer, tensor-count, and
+  byte-range metadata without copying hidden storage.
+- Required model, scratch, and KV-cache reservation bytes are explicit.
+- Minimum SIMD tier validates against an available tier argument.
+- No tensor kernels are called and no graph mutation surface is introduced.
 - No new unsafe code, allocation, host paths, or pointer fields are introduced.
 
 ## Baseline to verify
@@ -61,4 +61,5 @@ by project identity, but UMDL persistent-format parsing should be safe,
 fixed-width, deterministic, and free of host paths or raw pointers. Step 1
 added little-endian header parsing and malformed-header tests. Step 2 added
 overflow-safe section bounds, non-overlap checks, and deterministic checksum
+validation. Step 3 added tokenizer metadata and tensor descriptor parsing and
 validation.

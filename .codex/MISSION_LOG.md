@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C10.M9 Step 3 Tokenizer and tensor descriptor validation: ready.
+- C10.M9 Step 4 Model load view and arena reservation contract: ready.
+
+## 2026-05-23T08:05:55Z - C10.M9 Step 3 Tokenizer and tensor descriptor validation
+
+- Status: completed
+- Summary: Added fixed-width tokenizer metadata and tensor descriptor parsing
+  from validated UMDL sections, raw-byte tokenizer contract validation, tensor
+  scalar/quant/rank/shape/alignment checks, and weight-blob bounds validation.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p umdl`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; parsing and validation remain
+  explicit byte reads over validated caller-provided ranges with no allocation,
+  host path, pointer, backend kernel, or graph mutation surface.
+- Blockers: none.
 
 ## 2026-05-23T08:01:37Z - C10.M9 Step 2 Section bounds and checksum validation
 

@@ -17,6 +17,9 @@ pub const UMDL_FORMAT_MINOR: u16 = 0;
 pub const UMDL_HEADER_LENGTH: u32 = 152;
 pub const UMDL_CHECKSUM_SEED: u64 = 0xcbf2_9ce4_8422_2325;
 pub const UMDL_CHECKSUM_PRIME: u64 = 0x0000_0100_0000_01b3;
+pub const TOKENIZER_METADATA_LENGTH: u64 = 72;
+pub const TENSOR_DESC_LENGTH: u64 = 48;
+pub const TENSOR_DESC_LENGTH_USIZE: usize = 48;
 
 /// Header at file offset 0. Spec §10.5.
 #[repr(C)]
@@ -306,6 +309,20 @@ pub enum ScalarType {
     U8 = 4,
 }
 
+impl ScalarType {
+    #[must_use]
+    pub const fn from_id(id: u8) -> Option<Self> {
+        match id {
+            0 => Some(Self::F32),
+            1 => Some(Self::F16),
+            2 => Some(Self::BF16),
+            3 => Some(Self::I8),
+            4 => Some(Self::U8),
+            _ => None,
+        }
+    }
+}
+
 /// Quantization registry (spec §10.6). Stable numeric IDs.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
@@ -314,6 +331,19 @@ pub enum QuantType {
     QNoneF16 = 1,
     Q4Block32 = 10,
     Q8Block32 = 11,
+}
+
+impl QuantType {
+    #[must_use]
+    pub const fn from_id(id: u32) -> Option<Self> {
+        match id {
+            0 => Some(Self::QNoneF32),
+            1 => Some(Self::QNoneF16),
+            10 => Some(Self::Q4Block32),
+            11 => Some(Self::Q8Block32),
+            _ => None,
+        }
+    }
 }
 
 /// Tokenizer registry (spec §10.7).
@@ -449,6 +479,47 @@ impl TokenizerMetadata {
         }
         Ok(())
     }
+
+    /// Parse fixed-width tokenizer metadata from a validated tokenizer section.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UmdlLoadError` when the section is not exactly one tokenizer
+    /// metadata record or when the metadata violates the M7 raw-byte tokenizer
+    /// contract.
+    pub fn parse_umdl(bytes: &[u8], range: UmdlSectionRange) -> Result<Self, UmdlLoadError> {
+        if range.length != TOKENIZER_METADATA_LENGTH {
+            return Err(UmdlLoadError::InvalidTokenizerSectionLength {
+                expected: TOKENIZER_METADATA_LENGTH,
+                actual: range.length,
+            });
+        }
+        let section = range.slice(bytes);
+        let metadata = Self {
+            tokenizer_type: read_u32(section, 0),
+            vocabulary_size: read_u32(section, 4),
+            token_table_offset: read_u64(section, 8),
+            token_table_length: read_u64(section, 16),
+            merge_table_offset: read_u64(section, 24),
+            merge_table_length: read_u64(section, 32),
+            special_tokens: TokenizerSpecialTokens {
+                bos: read_u32(section, 40),
+                eos: read_u32(section, 44),
+                pad: read_u32(section, 48),
+                unk: read_u32(section, 52),
+            },
+            utf8_policy: read_u32(section, 56),
+            max_token_byte_length: read_u32(section, 60),
+            tokenizer_tables_checksum: read_u64(section, 64),
+        };
+        metadata.validate_m7().map_err(|error| match error {
+            TokenizerMetadataError::UnknownTokenizerType(kind) => {
+                UmdlLoadError::UnknownTokenizerType(kind)
+            }
+            _ => UmdlLoadError::InvalidTokenizerMetadata,
+        })?;
+        Ok(metadata)
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -477,6 +548,133 @@ pub struct TensorDesc {
     pub byte_length: u64,
     pub alignment: u32,
     pub flags: u32,
+}
+
+impl TensorDesc {
+    /// Parse one fixed-width tensor descriptor from a tensor section.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UmdlLoadError::TensorOutOfBounds` when `index` is outside the
+    /// descriptor section.
+    pub fn parse_umdl(
+        bytes: &[u8],
+        tensor_section: UmdlSectionRange,
+        index: u32,
+    ) -> Result<Self, UmdlLoadError> {
+        let byte_offset = u64::from(index)
+            .checked_mul(TENSOR_DESC_LENGTH)
+            .ok_or(UmdlLoadError::TensorOutOfBounds { tensor_id: index })?;
+        let Some(byte_end) = byte_offset.checked_add(TENSOR_DESC_LENGTH) else {
+            return Err(UmdlLoadError::TensorOutOfBounds { tensor_id: index });
+        };
+        if byte_end > tensor_section.length {
+            return Err(UmdlLoadError::TensorOutOfBounds { tensor_id: index });
+        }
+        let section = tensor_section.slice(bytes);
+        let start = usize::try_from(byte_offset)
+            .map_err(|_| UmdlLoadError::TensorOutOfBounds { tensor_id: index })?;
+        let desc = &section[start..start + TENSOR_DESC_LENGTH_USIZE];
+        Ok(Self {
+            tensor_id: read_u32(desc, 0),
+            scalar_type: desc[4],
+            quant_type: desc[5],
+            rank: desc[6],
+            pad_after_rank: desc[7],
+            dims: [
+                read_u32(desc, 8),
+                read_u32(desc, 12),
+                read_u32(desc, 16),
+                read_u32(desc, 20),
+            ],
+            byte_offset: read_u64(desc, 24),
+            byte_length: read_u64(desc, 32),
+            alignment: read_u32(desc, 40),
+            flags: read_u32(desc, 44),
+        })
+    }
+
+    /// Validate descriptor IDs, shape, alignment, and weight-blob bounds.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UmdlLoadError` when descriptor fields are unsupported or point
+    /// outside the declared weight blob section.
+    pub fn validate_umdl(self, weight_blob: UmdlSectionRange) -> Result<(), UmdlLoadError> {
+        if ScalarType::from_id(self.scalar_type).is_none() {
+            return Err(UmdlLoadError::UnknownScalarType(self.scalar_type));
+        }
+        if QuantType::from_id(u32::from(self.quant_type)).is_none() {
+            return Err(UmdlLoadError::UnknownQuantizationId(u32::from(
+                self.quant_type,
+            )));
+        }
+        if self.rank == 0 || self.rank > 4 {
+            return Err(UmdlLoadError::InvalidTensorRank {
+                tensor_id: self.tensor_id,
+                rank: self.rank,
+            });
+        }
+        for index in 0..4 {
+            let dim = self.dims[index];
+            if (index < usize::from(self.rank) && dim == 0)
+                || (index >= usize::from(self.rank) && dim != 0)
+            {
+                return Err(UmdlLoadError::InvalidTensorShape {
+                    tensor_id: self.tensor_id,
+                });
+            }
+        }
+        if self.alignment == 0 || !self.alignment.is_power_of_two() {
+            return Err(UmdlLoadError::InvalidTensorAlignment {
+                tensor_id: self.tensor_id,
+                alignment: self.alignment,
+            });
+        }
+        let Some(end) = self.byte_offset.checked_add(self.byte_length) else {
+            return Err(UmdlLoadError::TensorOutOfBounds {
+                tensor_id: self.tensor_id,
+            });
+        };
+        if end > weight_blob.length {
+            return Err(UmdlLoadError::TensorOutOfBounds {
+                tensor_id: self.tensor_id,
+            });
+        }
+        Ok(())
+    }
+}
+
+/// Validate every tensor descriptor in a tensor section.
+///
+/// # Errors
+///
+/// Returns `UmdlLoadError` when the section length does not match
+/// `tensor_count` or any descriptor is invalid.
+pub fn validate_tensor_descriptors(
+    bytes: &[u8],
+    tensor_section: UmdlSectionRange,
+    weight_blob: UmdlSectionRange,
+    tensor_count: u32,
+) -> Result<(), UmdlLoadError> {
+    let expected = u64::from(tensor_count)
+        .checked_mul(TENSOR_DESC_LENGTH)
+        .ok_or(UmdlLoadError::InvalidTensorSectionLength {
+            expected: u64::MAX,
+            actual: tensor_section.length,
+        })?;
+    if tensor_section.length != expected {
+        return Err(UmdlLoadError::InvalidTensorSectionLength {
+            expected,
+            actual: tensor_section.length,
+        });
+    }
+    let mut index = 0;
+    while index < tensor_count {
+        TensorDesc::parse_umdl(bytes, tensor_section, index)?.validate_umdl(weight_blob)?;
+        index += 1;
+    }
+    Ok(())
 }
 
 /// SIMD tier the runtime advertises and the loader compares against
@@ -513,7 +711,28 @@ pub enum UmdlLoadError {
     TensorOutOfBounds {
         tensor_id: u32,
     },
+    InvalidTokenizerSectionLength {
+        expected: u64,
+        actual: u64,
+    },
+    InvalidTokenizerMetadata,
+    InvalidTensorSectionLength {
+        expected: u64,
+        actual: u64,
+    },
+    UnknownScalarType(u8),
     UnknownQuantizationId(u32),
+    InvalidTensorRank {
+        tensor_id: u32,
+        rank: u8,
+    },
+    InvalidTensorShape {
+        tensor_id: u32,
+    },
+    InvalidTensorAlignment {
+        tensor_id: u32,
+        alignment: u32,
+    },
     UnknownTokenizerType(u32),
     UnknownArchitectureId(u32),
     SimdRequirementUnmet {
@@ -557,6 +776,10 @@ mod tests {
         bytes[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
     }
 
+    fn write_u32(bytes: &mut [u8], offset: usize, value: u32) {
+        bytes[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+    }
+
     fn sectioned_umdl_bytes() -> ([u8; 256], UmdlSectionChecksums) {
         let mut bytes = [0u8; 256];
         bytes[..UMDL_HEADER_LENGTH as usize].copy_from_slice(&minimal_header_bytes());
@@ -586,6 +809,54 @@ mod tests {
     fn refresh_header_checksum(bytes: &mut [u8]) {
         write_u64(bytes, 144, 0);
         write_u64(bytes, 144, checksum_header(bytes, UMDL_HEADER_LENGTH));
+    }
+
+    fn checksums_for_described(bytes: &[u8; 512]) -> UmdlSectionChecksums {
+        UmdlSectionChecksums {
+            tokenizer: checksum64(&bytes[160..232]),
+            tensor: checksum64(&bytes[240..288]),
+            weight_blob: checksum64(&bytes[320..336]),
+        }
+    }
+
+    fn described_umdl_bytes() -> ([u8; 512], UmdlSectionChecksums) {
+        let mut bytes = [0u8; 512];
+        bytes[..UMDL_HEADER_LENGTH as usize].copy_from_slice(&minimal_header_bytes());
+        write_u32(&mut bytes, 20, 1);
+
+        write_u64(&mut bytes, 24, 160);
+        write_u64(&mut bytes, 32, TOKENIZER_METADATA_LENGTH);
+        write_u64(&mut bytes, 40, 240);
+        write_u64(&mut bytes, 48, TENSOR_DESC_LENGTH);
+        write_u64(&mut bytes, 56, 320);
+        write_u64(&mut bytes, 64, 16);
+        write_u64(&mut bytes, 72, 400);
+        write_u64(&mut bytes, 80, 24);
+
+        write_u32(&mut bytes, 160, TokenizerType::RawByteToToken as u32);
+        write_u32(&mut bytes, 164, RAW_BYTE_TO_TOKEN_VOCAB_SIZE);
+        write_u32(&mut bytes, 200, TOKENIZER_TOKEN_ID_NONE);
+        write_u32(&mut bytes, 204, TOKENIZER_TOKEN_ID_NONE);
+        write_u32(&mut bytes, 208, TOKENIZER_TOKEN_ID_NONE);
+        write_u32(&mut bytes, 212, TOKENIZER_TOKEN_ID_NONE);
+        write_u32(&mut bytes, 216, TokenizerUtf8Policy::Strict as u32);
+        write_u32(&mut bytes, 220, RAW_BYTE_TO_TOKEN_MAX_TOKEN_BYTES);
+
+        write_u32(&mut bytes, 240, 7);
+        bytes[244] = ScalarType::F32 as u8;
+        bytes[245] = QuantType::QNoneF32 as u8;
+        bytes[246] = 2;
+        write_u32(&mut bytes, 248, 2);
+        write_u32(&mut bytes, 252, 4);
+        write_u64(&mut bytes, 264, 0);
+        write_u64(&mut bytes, 272, 16);
+        write_u32(&mut bytes, 280, 16);
+
+        bytes[320..336].copy_from_slice(b"0123456789abcdef");
+
+        refresh_header_checksum(&mut bytes);
+        let checksums = checksums_for_described(&bytes);
+        (bytes, checksums)
     }
 
     #[test]
@@ -722,6 +993,88 @@ mod tests {
         assert_eq!(
             header.validate_sections(&bytes, checksums).unwrap_err(),
             UmdlLoadError::TokenizerSectionChecksumMismatch
+        );
+    }
+
+    #[test]
+    fn parses_tokenizer_metadata_and_tensor_descriptors() {
+        let (bytes, checksums) = described_umdl_bytes();
+        let header = UmdlHeader::parse(&bytes).expect("header");
+        let ranges = header
+            .validate_sections(&bytes, checksums)
+            .expect("valid sections");
+        let tokenizer =
+            TokenizerMetadata::parse_umdl(&bytes, ranges.tokenizer).expect("tokenizer metadata");
+        let tensor = TensorDesc::parse_umdl(&bytes, ranges.tensor, 0).expect("tensor desc");
+
+        assert_eq!(tokenizer, TokenizerMetadata::raw_byte_to_token());
+        assert_eq!(tensor.tensor_id, 7);
+        assert_eq!(tensor.scalar_type, ScalarType::F32 as u8);
+        assert_eq!(tensor.quant_type, QuantType::QNoneF32 as u8);
+        assert_eq!(tensor.rank, 2);
+        assert_eq!(tensor.dims, [2, 4, 0, 0]);
+        validate_tensor_descriptors(
+            &bytes,
+            ranges.tensor,
+            ranges.weight_blob,
+            header.tensor_count,
+        )
+        .expect("tensor descriptors");
+    }
+
+    #[test]
+    fn rejects_bad_tokenizer_and_tensor_metadata() {
+        let (mut bytes, _) = described_umdl_bytes();
+        write_u32(&mut bytes, 160, 99);
+        refresh_header_checksum(&mut bytes);
+        let checksums = checksums_for_described(&bytes);
+        let header = UmdlHeader::parse(&bytes).expect("header");
+        let ranges = header
+            .validate_sections(&bytes, checksums)
+            .expect("valid sections");
+        assert_eq!(
+            TokenizerMetadata::parse_umdl(&bytes, ranges.tokenizer).unwrap_err(),
+            UmdlLoadError::UnknownTokenizerType(99)
+        );
+
+        let (mut bytes, _) = described_umdl_bytes();
+        bytes[245] = 99;
+        refresh_header_checksum(&mut bytes);
+        let checksums = checksums_for_described(&bytes);
+        let header = UmdlHeader::parse(&bytes).expect("header");
+        let ranges = header
+            .validate_sections(&bytes, checksums)
+            .expect("valid sections");
+        assert_eq!(
+            validate_tensor_descriptors(&bytes, ranges.tensor, ranges.weight_blob, 1).unwrap_err(),
+            UmdlLoadError::UnknownQuantizationId(99)
+        );
+
+        let (mut bytes, _) = described_umdl_bytes();
+        write_u32(&mut bytes, 252, 0);
+        refresh_header_checksum(&mut bytes);
+        let checksums = checksums_for_described(&bytes);
+        let header = UmdlHeader::parse(&bytes).expect("header");
+        let ranges = header
+            .validate_sections(&bytes, checksums)
+            .expect("valid sections");
+        assert_eq!(
+            validate_tensor_descriptors(&bytes, ranges.tensor, ranges.weight_blob, 1).unwrap_err(),
+            UmdlLoadError::InvalidTensorShape { tensor_id: 7 }
+        );
+
+        let (mut bytes, _) = described_umdl_bytes();
+        write_u64(&mut bytes, 264, 8);
+        write_u64(&mut bytes, 272, 16);
+        refresh_header_checksum(&mut bytes);
+        let checksums = checksums_for_described(&bytes);
+        let header = UmdlHeader::parse(&bytes).expect("header");
+        let ranges = header
+            .validate_sections(&bytes, checksums)
+            .expect("valid sections");
+        assert_eq!(
+            validate_tensor_descriptors(&bytes, ranges.tensor, ranges.weight_blob, 1).unwrap_err(),
+            UmdlLoadError::TensorOutOfBounds { tensor_id: 7 }
         );
     }
 
