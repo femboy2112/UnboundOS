@@ -4,7 +4,24 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C12.M11 Step 6 M11 completion audit: ready.
+- none.
+
+## 2026-05-23T08:44:53Z - C12.M11 Step 6 M11 completion audit
+
+- Status: completed
+- Summary: Marked M11 `DONE`, bumped the milestone catalog to `v0.24`,
+  recorded M11 Step 1-5 checkpoint commits in the campaign closeout, and
+  documented that the local assistant explains graph and SSOD state through
+  deterministic caller-buffer text plus caller-owned action proposal storage.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make gates`, `make repo-state`, and
+  `python3 scripts/verify.py --mission current`.
+- Repo-state: expected STOP because no milestone is `IN-PROGRESS` after M11
+  closeout.
+- Memory-unsafety audit: no new unsafe code across M11; memory-unsafe Rust
+  remains allowed by project identity at bounded, inspectable OS/model-kernel
+  boundaries.
+- Blockers: none for M11; next action is M12 local retrieval activation.
 
 ## 2026-05-23T08:43:12Z - C12.M11 Step 5 Assistant smoke evidence and gates
 

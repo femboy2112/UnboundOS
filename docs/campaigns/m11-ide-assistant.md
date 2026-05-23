@@ -270,3 +270,11 @@ python3 scripts/verify.py --mission current
 ```
 
 Commit and push.
+
+## Closeout
+
+- Step 1 — Structured action buffer contract: `a6a0659`
+- Step 2 — Graph explanation snapshot: `e2cca4d`
+- Step 3 — SSOD explanation snapshot: `b4462fa`
+- Step 4 — Assistant explanation surface: `2a5840c`
+- Step 5 — Assistant smoke evidence and gates: `be5b48f`

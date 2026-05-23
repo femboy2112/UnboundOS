@@ -2,7 +2,7 @@
 
 Mission: C12.M11 Step 6 M11 completion audit
 Campaign: C12 M11 IDE Assistant
-Status: ready
+Status: completed
 
 ## Objective
 
@@ -36,7 +36,7 @@ Out of scope:
 
 ```
 branch: campaign/m11-ide-assistant
-status: IN-PROGRESS
+status: DONE
 ```
 
 ## Verification Commands
