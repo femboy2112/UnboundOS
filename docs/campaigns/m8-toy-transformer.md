@@ -101,6 +101,8 @@ Commit and push.
 
 # Step 2 — Deterministic token generation
 
+Status: Completed.
+
 Purpose:
   Generate deterministic token IDs from the hardcoded tiny model using
   caller-provided output storage.

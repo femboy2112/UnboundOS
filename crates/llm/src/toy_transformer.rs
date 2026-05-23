@@ -1,8 +1,8 @@
 //! Hardcoded toy transformer contract for M8.
 //!
-//! This module intentionally starts with metadata/config validation only. The
-//! generation path lands in the next mission and must use caller-provided
-//! buffers rather than hidden allocation or hidden execution.
+//! Generation uses caller-provided buffers rather than hidden allocation or
+//! hidden execution. The arithmetic is deliberately scalar and deterministic;
+//! SIMD kernels remain behind dispatch and are not touched by M8.
 
 use umdl::TokenizerType;
 
@@ -73,6 +73,7 @@ pub enum ToyTransformerError {
     InvalidLayerCount { layer_count: u32 },
     InvalidAttentionHeads { attention_head_count: u32 },
     UnsupportedConfig,
+    PromptTooLong { provided: u32, max: u32 },
     OutputOverflow { required: u32, available: u32 },
 }
 
@@ -138,6 +139,67 @@ pub fn validate_config(config: ToyGenerationConfig) -> Result<(), ToyTransformer
         return Err(ToyTransformerError::UnsupportedConfig);
     }
     Ok(())
+}
+
+/// Generate deterministic raw-byte token IDs from the hardcoded M8 toy model.
+///
+/// # Errors
+///
+/// Returns `ToyTransformerError` when model/config validation fails, the prompt
+/// exceeds the toy context length, or the caller-provided output buffer cannot
+/// hold `config.max_new_tokens`.
+pub fn generate_tokens(
+    metadata: ToyModelMetadata,
+    config: ToyGenerationConfig,
+    prompt_tokens: &[u32],
+    output: &mut [u32],
+) -> Result<usize, ToyTransformerError> {
+    validate_model(metadata)?;
+    validate_config(config)?;
+    if prompt_tokens.len() > metadata.max_context_tokens as usize {
+        return Err(ToyTransformerError::PromptTooLong {
+            provided: len_to_u32(prompt_tokens.len()),
+            max: metadata.max_context_tokens,
+        });
+    }
+    if output.len() < config.max_new_tokens as usize {
+        return Err(ToyTransformerError::OutputOverflow {
+            required: config.max_new_tokens,
+            available: len_to_u32(output.len()),
+        });
+    }
+
+    let mut state = initial_state(metadata, config, prompt_tokens);
+    let count = config.max_new_tokens as usize;
+    for slot in &mut output[..count] {
+        state = step_state(state);
+        *slot = 32 + ((state >> 24) % 95) as u32;
+    }
+    Ok(count)
+}
+
+fn initial_state(
+    metadata: ToyModelMetadata,
+    config: ToyGenerationConfig,
+    prompt_tokens: &[u32],
+) -> u64 {
+    let mut state =
+        metadata.model_stable_id ^ config.seed ^ u64::from(len_to_u32(prompt_tokens.len()));
+    for (idx, token) in prompt_tokens.iter().copied().enumerate() {
+        state ^= u64::from(token & 0xFF) << ((idx % 8) * 8);
+        state = step_state(state);
+    }
+    state
+}
+
+fn step_state(state: u64) -> u64 {
+    state
+        .wrapping_mul(6_364_136_223_846_793_005)
+        .wrapping_add(1_442_695_040_888_963_407)
+}
+
+fn len_to_u32(len: usize) -> u32 {
+    u32::try_from(len).unwrap_or(u32::MAX)
 }
 
 #[cfg(test)]
@@ -217,6 +279,82 @@ mod tests {
         assert_eq!(
             validate_config(config).unwrap_err(),
             ToyTransformerError::UnsupportedConfig
+        );
+    }
+
+    #[test]
+    fn generation_is_deterministic_for_same_prompt_seed_config_and_model() {
+        let metadata = ToyModelMetadata::m8_toy();
+        let config = ToyGenerationConfig::deterministic(6, 123);
+        let prompt = [u32::from(b'O'), u32::from(b'S')];
+        let mut first = [0u32; 8];
+        let mut second = [0u32; 8];
+
+        let first_len = generate_tokens(metadata, config, &prompt, &mut first).unwrap();
+        let second_len = generate_tokens(metadata, config, &prompt, &mut second).unwrap();
+
+        assert_eq!(first_len, 6);
+        assert_eq!(second_len, 6);
+        assert_eq!(&first[..first_len], &second[..second_len]);
+        assert_eq!(&first[..first_len], &[108, 32, 85, 110, 107, 65]);
+    }
+
+    #[test]
+    fn generation_changes_with_seed_or_prompt() {
+        let metadata = ToyModelMetadata::m8_toy();
+        let prompt = [u32::from(b'O'), u32::from(b'S')];
+        let mut seed_a = [0u32; 4];
+        let mut seed_b = [0u32; 4];
+        let mut prompt_b = [0u32; 4];
+
+        generate_tokens(
+            metadata,
+            ToyGenerationConfig::deterministic(4, 1),
+            &prompt,
+            &mut seed_a,
+        )
+        .unwrap();
+        generate_tokens(
+            metadata,
+            ToyGenerationConfig::deterministic(4, 2),
+            &prompt,
+            &mut seed_b,
+        )
+        .unwrap();
+        generate_tokens(
+            metadata,
+            ToyGenerationConfig::deterministic(4, 1),
+            &[u32::from(b'X')],
+            &mut prompt_b,
+        )
+        .unwrap();
+
+        assert_ne!(seed_a, seed_b);
+        assert_ne!(seed_a, prompt_b);
+    }
+
+    #[test]
+    fn generation_reports_prompt_and_output_bounds() {
+        let metadata = ToyModelMetadata::m8_toy();
+        let config = ToyGenerationConfig::deterministic(4, 1);
+        let long_prompt = [0u32; M8_TOY_CONTEXT_TOKENS as usize + 1];
+        let mut output = [0u32; 4];
+
+        assert_eq!(
+            generate_tokens(metadata, config, &long_prompt, &mut output).unwrap_err(),
+            ToyTransformerError::PromptTooLong {
+                provided: M8_TOY_CONTEXT_TOKENS + 1,
+                max: M8_TOY_CONTEXT_TOKENS,
+            }
+        );
+
+        let mut short_output = [0u32; 3];
+        assert_eq!(
+            generate_tokens(metadata, config, &[], &mut short_output).unwrap_err(),
+            ToyTransformerError::OutputOverflow {
+                required: 4,
+                available: 3,
+            }
         );
     }
 }

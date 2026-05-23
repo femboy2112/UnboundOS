@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C9 M8 Toy Transformer
-Active mission: C9.M8 Step 2 Deterministic token generation
+Active mission: C9.M8 Step 3 Prompt-to-text toy inference path
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -25,8 +25,8 @@ See `.codex/CURRENT_MISSION.md`.
 ## Macro Sequence
 
 1. C9.M8 Step 1 Toy model architecture contract. Completed.
-2. C9.M8 Step 2 Deterministic token generation. Active.
-3. C9.M8 Step 3 Prompt-to-text toy inference path. Pending.
+2. C9.M8 Step 2 Deterministic token generation. Completed.
+3. C9.M8 Step 3 Prompt-to-text toy inference path. Active.
 4. C9.M8 Step 4 Toy transformer smoke evidence and gates. Pending.
 5. C9.M8 Step 5 M8 completion audit. Pending.
 

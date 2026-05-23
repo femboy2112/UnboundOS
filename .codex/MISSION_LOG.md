@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C9.M8 Step 2 Deterministic token generation: ready.
+- C9.M8 Step 3 Prompt-to-text toy inference path: ready.
+
+## 2026-05-23T07:47:25Z - C9.M8 Step 2 Deterministic token generation
+
+- Status: completed
+- Summary: Added deterministic toy token generation using the hardcoded M8
+  metadata/config contract, caller-provided output buffers, structured prompt
+  and output bounds errors, and reproducibility tests for same
+  prompt/seed/config/model.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p llm`, and `python3
+  scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; generation is scalar, deterministic,
+  and uses caller-provided slices.
+- Blockers: none.
 
 ## 2026-05-23T07:45:25Z - C9.M8 Step 1 Toy model architecture contract
 

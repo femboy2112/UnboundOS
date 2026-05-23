@@ -1,19 +1,19 @@
 # Current Mission
 
-Mission: C9.M8 Step 2 Deterministic token generation
+Mission: C9.M8 Step 3 Prompt-to-text toy inference path
 Campaign: C9 M8 Toy Transformer
 Status: ready
 
 ## Objective
 
-Execute M8 campaign Step 2 from `docs/campaigns/m8-toy-transformer.md`:
-generate deterministic token IDs from the hardcoded tiny model using
-caller-provided output storage.
+Execute M8 campaign Step 3 from `docs/campaigns/m8-toy-transformer.md`:
+connect M7 tokenizer encode/decode with the M8 deterministic toy generator.
 
 ## Scope
 
 Allowed changes:
 
+- `crates/llm/src/tokenizer.rs`
 - `crates/llm/src/lib.rs`
 - `crates/llm/src/toy_transformer.rs`
 - `docs/campaigns/m8-toy-transformer.md`
@@ -23,17 +23,17 @@ Allowed changes:
 
 Out of scope:
 
-- Prompt-to-text inference path.
+- Smoke target or script wiring.
 - UMDL loader, tensor descriptors, sampler, SIMD kernels, storage, or QEMU
   harness changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- Stable token sequence is produced for a prompt token stream and seed/config.
-- Same prompt, seed, config, and model produce identical tokens.
-- Overflow/config failures return structured errors, not panics.
-- No backend-specific SIMD symbol is called.
+- UTF-8 prompts tokenize through `RawByteToToken`, generate new tokens, and
+  decode to UTF-8 text using caller-provided buffers.
+- Representative prompts produce deterministic text output.
+- All state stays in explicit caller-provided buffers.
 
 ## Baseline to verify
 
@@ -57,4 +57,5 @@ python3 scripts/verify.py --mission current
 
 Campaign branch: `campaign/m8-toy-transformer`. M8 should not need new unsafe
 code. Step 1 added fixed-width toy model/config metadata and validation for
-exactly one supported toy architecture.
+exactly one supported toy architecture. Step 2 added deterministic token
+generation.
