@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C12.M11 Step 1 Structured action buffer contract: ready.
+- C12.M11 Step 2 Graph explanation snapshot: ready.
+
+## 2026-05-23T08:30:21Z - C12.M11 Step 1 Structured action buffer contract
+
+- Status: completed
+- Summary: Added `crates/llm/src/assistant.rs` with fixed-width assistant
+  proposal records, bounded proposal text storage, caller-owned
+  `StructuredActionBuffer`, deterministic overflow/unsupported-kind errors,
+  and tests proving proposals remain data-only.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code, threads, queues, eval, execution
+  hooks, or graph mutation authority.
+- Blockers: none.
 
 ## 2026-05-23T08:26:59Z - C12.M11 campaign activation
 

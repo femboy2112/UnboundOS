@@ -15,6 +15,7 @@
 #![no_std]
 #![forbid(unsafe_op_in_unsafe_fn)]
 
+pub mod assistant;
 pub mod dispatch;
 pub mod kernels;
 pub mod quantized;
@@ -56,18 +57,6 @@ pub struct TensorKernelTable {
     pub final_proj_q4: fn(/* args TBD */),
     pub sample_top_k: fn(/* args TBD */),
     pub active_tier: SimdTier,
-}
-
-/// Authority gate output. The LLM's tool-planning output flows here
-/// only — never directly into graph mutation. From here:
-/// `structured_action_buffer → action schema validator → graph
-/// verifier on a temp UMOD patch → operator approval → handle swap`.
-/// Spec §10.18.
-#[derive(Debug)]
-pub struct StructuredActionBuffer {
-    /// Pending action records. Not exposed; consumers only read the
-    /// validated stream.
-    _phantom: core::marker::PhantomData<()>,
 }
 
 /// Sampler config (spec §10.15). Explicit, deterministic in

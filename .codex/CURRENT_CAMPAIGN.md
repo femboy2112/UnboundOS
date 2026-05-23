@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C12 M11 IDE Assistant
-Active mission: C12.M11 Step 1 Structured action buffer contract
+Active mission: C12.M11 Step 2 Graph explanation snapshot
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -24,8 +24,8 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C12.M11 Step 1 Structured action buffer contract. Active.
-2. C12.M11 Step 2 Graph explanation snapshot. Pending.
+1. C12.M11 Step 1 Structured action buffer contract. Completed.
+2. C12.M11 Step 2 Graph explanation snapshot. Active.
 3. C12.M11 Step 3 SSOD explanation snapshot. Pending.
 4. C12.M11 Step 4 Assistant explanation surface. Pending.
 5. C12.M11 Step 5 Assistant smoke evidence and gates. Pending.

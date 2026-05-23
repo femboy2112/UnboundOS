@@ -70,6 +70,8 @@ Step 6 — M11 completion audit
 
 # Step 1 — Structured action buffer contract
 
+Status: Completed.
+
 Purpose:
   Replace the placeholder assistant action surface with a bounded data-only
   proposal buffer.
@@ -100,6 +102,8 @@ Commit and push.
 ---
 
 # Step 2 — Graph explanation snapshot
+
+Status: Active.
 
 Purpose:
   Produce deterministic text/data explanations from verified graph display

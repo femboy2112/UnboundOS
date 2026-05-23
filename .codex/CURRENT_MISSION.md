@@ -1,20 +1,19 @@
 # Current Mission
 
-Mission: C12.M11 Step 1 Structured action buffer contract
+Mission: C12.M11 Step 2 Graph explanation snapshot
 Campaign: C12 M11 IDE Assistant
 Status: ready
 
 ## Objective
 
-Execute M11 campaign Step 1 from `docs/campaigns/m11-ide-assistant.md`:
-replace the placeholder assistant action surface with a bounded data-only
-proposal buffer.
+Execute M11 campaign Step 2 from `docs/campaigns/m11-ide-assistant.md`:
+produce deterministic text/data explanations from verified graph display state.
 
 ## Scope
 
 Allowed changes:
 
-- `crates/llm/src/lib.rs`
+- `crates/graph/src/lib.rs`
 - `crates/llm/src/assistant.rs`
 - `docs/campaigns/m11-ide-assistant.md`
 - `.codex/CURRENT_MISSION.md`
@@ -23,16 +22,17 @@ Allowed changes:
 
 Out of scope:
 
-- Graph explanation, SSOD explanation, smoke target, graph mutation, storage,
-  QEMU harness, thread/queue, eval, or execution-hook changes.
+- SSOD explanation, unified assistant surface, smoke target, graph mutation,
+  storage, QEMU harness, thread/queue, eval, or execution-hook changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- Fixed-width action proposal records and buffer metadata exist.
-- Caller-provided storage and deterministic overflow errors are enforced.
-- Proposals are data only and cannot mutate graph state.
-- No unsafe code, threads, queues, eval, or execution hooks are introduced.
+- Graph explanation input is read-only and derived from existing display
+  snapshot data.
+- Graph identity, node/wire counts, active node, and last completed node format
+  into caller-provided output.
+- No `GraphRuntime` constructor or graph mutation surface is introduced.
 
 ## Baseline to verify
 
@@ -48,6 +48,7 @@ python3 scripts/status.py
 python3 scripts/mission.py validate
 make fmt
 make clippy
+cargo test -p graph
 cargo test -p llm
 python3 scripts/verify.py --mission current
 ```
@@ -56,4 +57,6 @@ python3 scripts/verify.py --mission current
 
 Campaign branch: `campaign/m11-ide-assistant`. Memory-unsafe Rust remains
 allowed by project identity, but M11 assistant explanation/action-buffer work
-should be safe, deterministic, bounded, and non-executing.
+should be safe, deterministic, bounded, and non-executing. Step 1 added
+fixed-width action proposal records and caller-owned `StructuredActionBuffer`
+storage.
