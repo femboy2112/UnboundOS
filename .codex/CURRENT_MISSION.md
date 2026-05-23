@@ -1,13 +1,13 @@
 # Current Mission
 
-Mission: C8.M7 Step 2 Raw-byte tokenizer encode path
+Mission: C8.M7 Step 3 Raw-byte detokenizer round trip
 Campaign: C8 M7 Tokenizer
 Status: ready
 
 ## Objective
 
-Execute M7 campaign Step 2 from `docs/campaigns/m7-tokenizer.md`: implement
-no-alloc UTF-8 byte-to-token encoding for caller-provided output storage.
+Execute M7 campaign Step 3 from `docs/campaigns/m7-tokenizer.md`: implement
+token-to-UTF-8 decoding and round-trip tests.
 
 ## Scope
 
@@ -22,16 +22,16 @@ Allowed changes:
 
 Out of scope:
 
-- Decode implementation.
+- Additional tokenizer families.
 - UMDL loader, tensor descriptors, model execution, sampler, storage, or QEMU
   harness changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- UTF-8 input bytes encode into stable raw-byte token IDs.
-- Encoding writes only into caller-provided token buffers.
-- Output overflow and invalid metadata return structured errors.
+- Raw-byte token IDs decode into caller-provided byte output.
+- Representative UTF-8 prompts round trip through encode then decode.
+- Invalid token IDs and output overflow return structured errors.
 - No hidden allocation or hidden execution path is introduced.
 
 ## Baseline to verify
@@ -53,6 +53,6 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m7-tokenizer`. Step 1 added fixed-width tokenizer
-metadata and support validation for exactly `RawByteToToken`. Step 2 should
-only add the encode path; decode lands in Step 3.
+Campaign branch: `campaign/m7-tokenizer`. Step 2 added no-alloc byte-to-token
+encoding over caller-provided buffers with structured overflow and metadata
+errors. Step 3 adds decode and round-trip coverage.

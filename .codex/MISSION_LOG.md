@@ -4,7 +4,20 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C8.M7 Step 2 Raw-byte tokenizer encode path: ready.
+- C8.M7 Step 3 Raw-byte detokenizer round trip: ready.
+
+## 2026-05-23T07:34:29Z - C8.M7 Step 2 Raw-byte tokenizer encode path
+
+- Status: completed
+- Summary: Added no-alloc raw-byte encoding from UTF-8 input bytes into stable
+  token IDs using caller-provided output buffers, with structured errors for
+  invalid metadata and output overflow.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p llm`, and `python3
+  scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; encoding uses caller-provided
+  slices and checked buffer sizing.
+- Blockers: none.
 
 ## 2026-05-23T07:32:21Z - C8.M7 Step 1 Tokenizer registry and metadata contract
 

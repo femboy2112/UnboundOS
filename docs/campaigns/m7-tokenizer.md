@@ -106,6 +106,8 @@ Commit and push.
 
 # Step 2 — Raw-byte tokenizer encode path
 
+Status: Completed.
+
 Purpose:
   Implement no-alloc UTF-8 byte-to-token encoding for caller-provided output
   storage.

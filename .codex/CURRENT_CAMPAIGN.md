@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C8 M7 Tokenizer
-Active mission: C8.M7 Step 2 Raw-byte tokenizer encode path
+Active mission: C8.M7 Step 3 Raw-byte detokenizer round trip
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -25,8 +25,8 @@ See `.codex/CURRENT_MISSION.md`.
 ## Macro Sequence
 
 1. C8.M7 Step 1 Tokenizer registry and metadata contract. Completed.
-2. C8.M7 Step 2 Raw-byte tokenizer encode path. Active.
-3. C8.M7 Step 3 Raw-byte detokenizer round trip. Pending.
+2. C8.M7 Step 2 Raw-byte tokenizer encode path. Completed.
+3. C8.M7 Step 3 Raw-byte detokenizer round trip. Active.
 4. C8.M7 Step 4 Tokenizer smoke evidence and gates. Pending.
 5. C8.M7 Step 5 M7 completion audit. Pending.
 
