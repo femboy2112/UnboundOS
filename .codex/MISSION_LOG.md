@@ -4,7 +4,19 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-*(none)*
+- C10.M9 Step 1 UMDL header parse and fixed-width contract: ready.
+
+## 2026-05-23T07:55:40Z - C10.M9 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m9-umdl-loader`, marked M9 `IN-PROGRESS`, created
+  the M9 campaign plan, and rotated `.codex` state to Step 1 for safe
+  fixed-width UMDL header parsing.
+- Verification: pending below for the active Step 1 mission state.
+- Memory-unsafety audit: M9 keeps unsafe Rust allowed by project identity but
+  excludes it from persistent-format parsing unless a later bounded loader or
+  kernel boundary explicitly needs it.
+- Blockers: none.
 
 ## 2026-05-23T07:54:10Z - C9.M8 Step 5 M8 completion audit
 
