@@ -23,6 +23,7 @@ help:
 	@echo "  make qemu-interactive-smoke # boot QEMU and exercise serial shell commands"
 	@echo "  make qemu-no-serial  # exercise no-UART boot fallback"
 	@echo "  make qemu-storage-smoke # assert M6 raw sector read under QEMU"
+	@echo "  make qemu-storage-matrix # assert M6 storage success/failure cases"
 	@echo "  make ui-smoke        # source-level M5 framebuffer/graph-state smoke"
 	@echo "  make tokenizer-smoke # source-level M7 tokenizer smoke"
 	@echo "  make toy-transformer-smoke # source-level M8 toy transformer smoke"
@@ -107,6 +108,10 @@ qemu-storage-smoke:
 	python3 scripts/make_storage_fixture.py $(STORAGE_FIXTURE)
 	UNBOUNDOS_STORAGE_SMOKE=1 $(MAKE) image IMAGE=$(STORAGE_SMOKE_IMAGE)
 	./scripts/qemu.sh --headless --image $(STORAGE_SMOKE_IMAGE) --storage-image $(STORAGE_FIXTURE) --assert-storage-marker
+
+.PHONY: qemu-storage-matrix
+qemu-storage-matrix:
+	python3 scripts/check_qemu_storage_matrix.py
 
 .PHONY: qemu-fault-de
 qemu-fault-de:

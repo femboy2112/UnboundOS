@@ -121,6 +121,11 @@ QEMU_COMMANDS = [
         requires=("make", "qemu-system-x86_64"),
     ),
     Command(
+        "qemu M6 storage matrix",
+        ["make", "-s", "qemu-storage-matrix"],
+        requires=("make", "python3", "qemu-system-x86_64"),
+    ),
+    Command(
         "qemu milestone stress",
         ["make", "-s", "qemu-stress"],
         requires=("make", "python3", "qemu-system-x86_64"),

@@ -17,7 +17,7 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-TOTAL=27
+TOTAL=28
 PASS=()
 FAILED=""
 
@@ -69,8 +69,9 @@ step 22 "qemu M2 arena/memory dump" make -s qemu-m2-dump
 step 23 "qemu initial graph boot" make -s qemu-graph-boot
 step 24 "qemu framebuffer smoke" make -s qemu-framebuffer-smoke
 step 25 "qemu M6 storage marker" make -s qemu-storage-smoke
-step 26 "qemu milestone stress" make -s qemu-stress
-step 27 "qemu CPU/RAM matrix" make -s qemu-matrix
+step 26 "qemu M6 storage matrix" make -s qemu-storage-matrix
+step 27 "qemu milestone stress" make -s qemu-stress
+step 28 "qemu CPU/RAM matrix" make -s qemu-matrix
 
 rm -f /tmp/gates-$$.log
 

@@ -11,6 +11,8 @@
 #   ./scripts/qemu.sh --assert-m2-dump
 #   ./scripts/qemu.sh --assert-graph-boot
 #   ./scripts/qemu.sh --storage-image /tmp/sector0.bin --assert-storage-marker
+#   ./scripts/qemu.sh --storage-image /tmp/bad.bin --assert-storage-mismatch
+#   ./scripts/qemu.sh --assert-storage-error
 #
 # Environment overrides:
 #   QEMU_CPU      override CPU model (default: qemu64)
@@ -35,7 +37,7 @@ ASSERT_HEARTBEAT=0
 ASSERT_SSOD_REASON=""
 ASSERT_M2_DUMP=0
 ASSERT_GRAPH_BOOT=0
-ASSERT_STORAGE_MARKER=0
+ASSERT_STORAGE_MODE=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -45,7 +47,9 @@ while [[ $# -gt 0 ]]; do
         --assert-ssod)       ASSERT_SSOD_REASON="$2"; shift 2 ;;
         --assert-m2-dump)    ASSERT_M2_DUMP=1; shift ;;
         --assert-graph-boot) ASSERT_GRAPH_BOOT=1; shift ;;
-        --assert-storage-marker) ASSERT_STORAGE_MARKER=1; shift ;;
+        --assert-storage-marker) ASSERT_STORAGE_MODE="marker"; shift ;;
+        --assert-storage-mismatch) ASSERT_STORAGE_MODE="mismatch"; shift ;;
+        --assert-storage-error) ASSERT_STORAGE_MODE="error"; shift ;;
         --storage-image)     STORAGE_IMAGE="$2"; shift 2 ;;
         --cpu)               QEMU_CPU="$2"; shift 2 ;;
         --image)             IMAGE="$2"; shift 2 ;;
@@ -73,8 +77,8 @@ if [ "$ASSERT_M2_DUMP" -eq 1 ] && [ "$NO_SERIAL" -eq 1 ]; then
     exit 2
 fi
 
-if [ "$ASSERT_STORAGE_MARKER" -eq 1 ] && [ "$NO_SERIAL" -eq 1 ]; then
-    echo "[qemu] --assert-storage-marker requires serial capture" >&2
+if [ -n "$ASSERT_STORAGE_MODE" ] && [ "$NO_SERIAL" -eq 1 ]; then
+    echo "[qemu] storage assertions require serial capture" >&2
     exit 2
 fi
 
@@ -266,17 +270,63 @@ assert_graph_boot() {
     done
 }
 
-assert_storage_marker() {
+assert_storage_common() {
     local log="$1"
 
     grep -q '^UNBOUNDOS_STORAGE_READ_BEGIN$' "$log" || {
         echo "[qemu] missing UNBOUNDOS_STORAGE_READ_BEGIN in $log" >&2
         return 1
     }
+}
+
+assert_storage_marker() {
+    local log="$1"
+
+    assert_storage_common "$log" || return 1
     grep -q '^UNBOUNDOS_STORAGE_MARKER_OK$' "$log" || {
         echo "[qemu] missing UNBOUNDOS_STORAGE_MARKER_OK in $log" >&2
         return 1
     }
+}
+
+assert_storage_mismatch() {
+    local log="$1"
+
+    assert_storage_common "$log" || return 1
+    grep -q '^UNBOUNDOS_STORAGE_MARKER_MISMATCH$' "$log" || {
+        echo "[qemu] missing UNBOUNDOS_STORAGE_MARKER_MISMATCH in $log" >&2
+        return 1
+    }
+}
+
+assert_storage_error() {
+    local log="$1"
+
+    assert_storage_common "$log" || return 1
+    grep -q '^UNBOUNDOS_STORAGE_READ_ERROR$' "$log" || {
+        echo "[qemu] missing UNBOUNDOS_STORAGE_READ_ERROR in $log" >&2
+        return 1
+    }
+    grep -Eq '^storage_status=0x[0-9a-fA-F]+$' "$log" || {
+        echo "[qemu] missing storage_status in $log" >&2
+        return 1
+    }
+    grep -Eq '^storage_timeout_count=0x[0-9a-fA-F]+$' "$log" || {
+        echo "[qemu] missing storage_timeout_count in $log" >&2
+        return 1
+    }
+}
+
+assert_storage_mode() {
+    local log="$1"
+    local mode="$2"
+
+    case "$mode" in
+        marker) assert_storage_marker "$log" ;;
+        mismatch) assert_storage_mismatch "$log" ;;
+        error) assert_storage_error "$log" ;;
+        *) echo "[qemu] unknown storage assertion mode: $mode" >&2; return 2 ;;
+    esac
 }
 
 if [ "$ASSERT_HEARTBEAT" -eq 0 ] && [ -z "$ASSERT_SSOD_REASON" ] && [ "$HEADLESS" -eq 0 ]; then
@@ -314,9 +364,9 @@ for _ in $(seq 1 600); do
         elif [ "$ASSERT_GRAPH_BOOT" -eq 1 ]; then
             assert_graph_boot "$SERIAL_LOG"
             echo "[qemu] graph boot assertion passed"
-        elif [ "$ASSERT_STORAGE_MARKER" -eq 1 ]; then
-            assert_storage_marker "$SERIAL_LOG"
-            echo "[qemu] storage marker assertion passed"
+        elif [ -n "$ASSERT_STORAGE_MODE" ]; then
+            assert_storage_mode "$SERIAL_LOG" "$ASSERT_STORAGE_MODE"
+            echo "[qemu] storage $ASSERT_STORAGE_MODE assertion passed"
         else
             echo "[qemu] boot heartbeat reached UNBOUNDOS_BOOT_OK"
         fi
@@ -343,8 +393,8 @@ fi
 if [ "$ASSERT_GRAPH_BOOT" -eq 1 ]; then
     assert_graph_boot "$SERIAL_LOG"
 fi
-if [ "$ASSERT_STORAGE_MARKER" -eq 1 ]; then
-    assert_storage_marker "$SERIAL_LOG"
+if [ -n "$ASSERT_STORAGE_MODE" ]; then
+    assert_storage_mode "$SERIAL_LOG" "$ASSERT_STORAGE_MODE"
 fi
 echo "[qemu] UNBOUNDOS_BOOT_OK not observed in $SERIAL_LOG" >&2
 exit 1

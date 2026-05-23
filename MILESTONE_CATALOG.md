@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.36
+> **Catalog version:** v0.37
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -47,6 +47,12 @@ stale mission state. Completed campaigns are archived under
 
 ## Change log
 
+- **v0.37** — Added `make qemu-storage-matrix`, which boots the storage-smoke
+  kernel under QEMU for marker success, marker mismatch, and missing-primary-disk
+  read-error cases. `scripts/qemu.sh` now has explicit storage assertion modes
+  for OK, mismatch, and read-error diagnostics, and aggregate gates plus mission
+  verification reject storage paths that silently pass the wrong sector content
+  or fail to emit structured read-error diagnostics.
 - **v0.36** — Added `make qemu-matrix`, a live hardware-profile matrix that
   runs heartbeat, M2 arena/memory, boot-time graph load, framebuffer rendering,
   and the interactive graph/LLM/retrieval/assistant shell under low-RAM,
