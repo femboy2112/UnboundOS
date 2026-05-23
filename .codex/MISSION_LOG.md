@@ -4,8 +4,16 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- M2 campaign complete. Await operator action to open the final M2 PR or rotate
-  mission state to M3.
+- C4.M3 Step 1 Runtime epoch readiness primitives: ready.
+
+## 2026-05-23T01:36:00Z - C4.M3 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m3-embedded-graph`, marked M3 `IN-PROGRESS`,
+  created the M3 campaign plan, and rotated `.codex` state to Step 1 while
+  preserving the H2 verifier-gate boundary.
+- Verification: pending below for the active Step 1 mission state.
+- Blockers: none.
 
 ## 2026-05-23T01:32:37Z - C3.M2 Step 5 M2 completion audit
 

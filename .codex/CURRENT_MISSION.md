@@ -1,46 +1,46 @@
 # Current Mission
 
-Mission: C3.M2 Step 5 M2 completion audit
-Campaign: C3 M2 Arena Memory
-Status: completed
+Mission: C4.M3 Step 1 Runtime epoch readiness primitives
+Campaign: C4 M3 Embedded Graph
+Status: ready
 
 ## Objective
 
-Execute M2 campaign Step 5 from `docs/campaigns/m2-arena-memory.md`: close M2
-only after the arena contract, named arenas, exhaustion behavior, and
-memory-map dump are all reproducibly verified.
+Execute M3 campaign Step 1 from `docs/campaigns/m3-embedded-graph.md`: add
+private runtime wire/consumer epoch observation primitives with tests that prove
+readiness is `wire_epoch > last_observed_epoch`.
 
 ## Scope
 
 Allowed changes:
 
-- `MILESTONE_CATALOG.md`
-- `docs/campaigns/m2-arena-memory.md`
+- `crates/graph/src/lib.rs`
+- `crates/graph/src/loader.rs`
+- `scripts/verify.py`
+- `docs/campaigns/m3-embedded-graph.md`
 - `.codex/CURRENT_MISSION.md`
 - `.codex/CURRENT_CAMPAIGN.md`
 - `.codex/MISSION_LOG.md`
 
 Out of scope:
 
-- Implementation changes.
-- Graph runtime construction, storage, UI, or LLM behavior.
+- Direct public `GraphRuntime` construction.
+- Storage, UI, LLM, or persistent artifact format changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- M2 is marked `DONE` in `MILESTONE_CATALOG.md`.
-- The catalog version and change log record M2 completion.
-- `docs/campaigns/m2-arena-memory.md` has a closeout section with Step 1-4
-  commit SHAs.
-- `make qemu-m2-dump` passes.
-- `make repo-state` reports the campaign is complete or otherwise clearly
-  directs the next mission-state refresh.
-- No implementation files are edited in this audit mission.
+- Runtime epoch observation primitives are private to the graph crate/loader
+  surface.
+- Tests prove readiness before observation, not ready after observation, and
+  ready again after producer epoch increment.
+- No public bypass around `graph_load_from_umod -> graph_compile_verified` is
+  added.
 
 ## Baseline to verify
 
 ```
-branch: campaign/m2-arena-memory
+branch: campaign/m3-embedded-graph
 status: IN-PROGRESS
 ```
 
@@ -49,16 +49,12 @@ status: IN-PROGRESS
 ```bash
 python3 scripts/status.py
 python3 scripts/mission.py validate
-make qemu-m2-dump
-make gates
-make repo-state
+make fmt
+make clippy
 python3 scripts/verify.py --mission current
 ```
 
 ## Notes
 
-Campaign branch: `campaign/m2-arena-memory`. The next milestone is M3 Embedded
-Graph.
-
-Stop reason: M2 campaign complete. Await operator action to open the final M2
-PR or rotate mission state to M3.
+Campaign branch: `campaign/m3-embedded-graph`. M3 must not add a developer-mode
+or test-only graph runtime constructor.
