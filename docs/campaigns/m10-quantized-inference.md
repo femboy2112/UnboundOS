@@ -107,6 +107,8 @@ Commit and push.
 
 # Step 2 — Dispatch-selected scalar kernel table
 
+Status: Completed.
+
 Purpose:
   Route graph-facing tensor calls through the loader-selected dispatch table,
   initially selecting scalar kernels only.

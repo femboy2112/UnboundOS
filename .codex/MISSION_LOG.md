@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C11.M10 Step 2 Dispatch-selected scalar kernel table: ready.
+- C11.M10 Step 3 Deterministic quantized token step: ready.
+
+## 2026-05-23T08:16:04Z - C11.M10 Step 2 Dispatch-selected scalar kernel table
+
+- Status: completed
+- Summary: Added a graph-facing `project_i8_i8_i32` function pointer to
+  `TensorKernelTable`, wired it to the safe scalar kernel in
+  `build_dispatch_table`, and tested dispatch-table invocation through an
+  active SIMD tier without direct backend calls outside dispatch/kernels.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; dispatch routes to safe scalar
+  kernels for all tiers until bounded SIMD backends exist.
+- Blockers: none.
 
 ## 2026-05-23T08:14:39Z - C11.M10 Step 1 Scalar quantized kernel contracts
 

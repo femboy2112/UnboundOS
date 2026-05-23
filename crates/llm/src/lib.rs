@@ -22,6 +22,15 @@ pub mod toy_transformer;
 
 use umdl::SimdTier;
 
+pub type ProjectI8Kernel = fn(
+    input: &[i8],
+    weights: &[i8],
+    rows: usize,
+    cols: usize,
+    bias: Option<&[i32]>,
+    output: &mut [i32],
+) -> Result<usize, kernels::scalar::ScalarKernelError>;
+
 /// Tensor kernel function pointers. The loader builds one of these
 /// per session, picking entries appropriate to the active SIMD tier
 /// and the model's declared minimum backend (§11.2).
@@ -32,6 +41,7 @@ use umdl::SimdTier;
 /// or `kernels/<tier>/...` is a fidelity violation.
 #[repr(C)]
 pub struct TensorKernelTable {
+    pub project_i8_i8_i32: ProjectI8Kernel,
     pub matvec_q4: fn(/* args TBD */),
     pub matvec_q8: fn(/* args TBD */),
     pub vec_add_f32: fn(/* args TBD */),
