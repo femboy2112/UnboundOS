@@ -7,7 +7,7 @@
 //! dependency order (structural before semantic; cycle detection
 //! after node/wire resolution; etc.).
 
-use crate::{GraphLoadError, VerifiedGraph, BUILTIN_SOURCE_TRANSFORM_SINK_UMOD};
+use crate::{GraphLoadError, VerifiedGraph};
 use umod::{
     find_section, parse_header, parse_node_descriptor, parse_pin_type, parse_resource_ref,
     parse_structural, parse_wire_descriptor, section_payload, ParsedNodeDescriptor,
@@ -28,10 +28,6 @@ const UI_COORD_LIMIT: i32 = 100_000;
 /// Public entry point. Runs all 22 checks. Returns the verified
 /// graph or the first failing check.
 pub fn verify_umod(bytes: &[u8]) -> Result<VerifiedGraph<'_>, GraphLoadError> {
-    if bytes == BUILTIN_SOURCE_TRANSFORM_SINK_UMOD {
-        return Ok(VerifiedGraph::new_internal(bytes));
-    }
-
     check_magic(bytes)?;
     check_version(bytes)?;
     check_header_length(bytes)?;
@@ -745,8 +741,8 @@ mod tests {
     }
 
     #[test]
-    fn builtin_source_transform_sink_payload_verifies() {
-        let r = verify_umod(BUILTIN_SOURCE_TRANSFORM_SINK_UMOD);
+    fn persistent_source_transform_sink_payload_verifies() {
+        let r = verify_umod(crate::SOURCE_TRANSFORM_SINK_UMOD);
         assert!(r.is_ok());
     }
 

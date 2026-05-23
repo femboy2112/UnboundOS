@@ -28,7 +28,8 @@
 pub mod loader;
 pub mod verifier;
 
-pub const BUILTIN_SOURCE_TRANSFORM_SINK_UMOD: &[u8] = b"UMODUNBOUNDOS_BUILTIN_STS_V1";
+pub const SOURCE_TRANSFORM_SINK_UMOD: &[u8] =
+    include_bytes!("../../../tests/golden_graphs/source-transform-sink.bin");
 
 /// Output of the verifier. Bytes have been checked against all 22
 /// spec §5.6 rules; semantic validity is guaranteed. Compilation

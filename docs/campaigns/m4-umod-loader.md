@@ -248,6 +248,8 @@ Commit and push.
 
 # Step 5 — Persistent UMOD compile path
 
+Status: Completed.
+
 Purpose:
   Compile a valid persistent UMOD through the existing verified path into the
   private runtime graph surface.

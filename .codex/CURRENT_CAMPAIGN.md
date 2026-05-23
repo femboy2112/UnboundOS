@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C5 M4 UMOD Loader
-Active mission: C5.M4 Step 5 Persistent UMOD compile path
+Active mission: C5.M4 Step 6 Golden and malformed fixture coverage
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -30,8 +30,8 @@ See `.codex/CURRENT_MISSION.md`.
 2. C5.M4 Step 2 Section table bounds and structural checks. Completed.
 3. C5.M4 Step 3 Node and wire semantic verifier checks. Completed.
 4. C5.M4 Step 4 Capabilities, resources, constants, and scheduling checks. Completed.
-5. C5.M4 Step 5 Persistent UMOD compile path. Active.
-6. C5.M4 Step 6 Golden and malformed fixture coverage. Pending.
+5. C5.M4 Step 5 Persistent UMOD compile path. Completed.
+6. C5.M4 Step 6 Golden and malformed fixture coverage. Active.
 7. C5.M4 Step 7 M4 completion audit. Pending.
 
 ## Required Preflight For `go`

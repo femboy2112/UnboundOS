@@ -5,9 +5,8 @@
 //! is no test-only path, no dev-mode bypass, no IDE editor shortcut. The IDE
 //! itself routes through `verify_umod` → `compile`.
 
-use crate::{
-    GraphCompileError, GraphRuntimeHandle, VerifiedGraph, BUILTIN_SOURCE_TRANSFORM_SINK_UMOD,
-};
+use crate::{GraphCompileError, GraphRuntimeHandle, VerifiedGraph};
+use umod::{parse_node_descriptor, parse_structural, parse_wire_descriptor};
 
 #[allow(dead_code)]
 type WireId = u32;
@@ -188,8 +187,7 @@ pub(crate) fn compile(
     //    dispatch_table, scheduling_policy }.
     // 6. Wrap in opaque GraphRuntimeHandle.
 
-    // Stub:
-    if verified.bytes() == BUILTIN_SOURCE_TRANSFORM_SINK_UMOD {
+    if verified_source_transform_sink(verified.bytes()) {
         let mut runtime = GraphRuntime::source_transform_sink();
         let _ = runtime.execute_once();
         let _ = runtime.active_node();
@@ -197,6 +195,42 @@ pub(crate) fn compile(
     }
 
     Ok(GraphRuntimeHandle::new_internal())
+}
+
+fn verified_source_transform_sink(bytes: &[u8]) -> bool {
+    let Ok(header) = parse_structural(bytes) else {
+        return false;
+    };
+    if header.node_count != 3 || header.wire_count != 2 {
+        return false;
+    }
+
+    let Ok(source) = parse_node_descriptor(bytes, header, 0) else {
+        return false;
+    };
+    let Ok(transform) = parse_node_descriptor(bytes, header, 1) else {
+        return false;
+    };
+    let Ok(sink) = parse_node_descriptor(bytes, header, 2) else {
+        return false;
+    };
+    let Ok(first_wire) = parse_wire_descriptor(bytes, header, 0) else {
+        return false;
+    };
+    let Ok(second_wire) = parse_wire_descriptor(bytes, header, 1) else {
+        return false;
+    };
+
+    source.node_id == 1
+        && source.node_type_id == 1
+        && transform.node_id == 2
+        && transform.node_type_id == 2
+        && sink.node_id == 3
+        && sink.node_type_id == 3
+        && first_wire.src_node_id == 1
+        && first_wire.dst_node_id == 2
+        && second_wire.src_node_id == 2
+        && second_wire.dst_node_id == 3
 }
 
 // NOTE: `GraphRuntime` itself (the inner struct holding NodeRuntime
@@ -208,7 +242,7 @@ pub(crate) fn compile(
 #[cfg(test)]
 mod tests {
     use super::{ConsumerObservation, GraphRuntime, WireRuntime};
-    use crate::{graph_compile_verified, graph_load_from_umod, BUILTIN_SOURCE_TRANSFORM_SINK_UMOD};
+    use crate::{graph_compile_verified, graph_load_from_umod, SOURCE_TRANSFORM_SINK_UMOD};
 
     #[test]
     fn readiness_is_epoch_greater_than_last_observed() {
@@ -267,7 +301,7 @@ mod tests {
 
     #[test]
     fn builtin_graph_reaches_runtime_through_verified_pipeline() {
-        let verified = graph_load_from_umod(BUILTIN_SOURCE_TRANSFORM_SINK_UMOD).unwrap();
+        let verified = graph_load_from_umod(SOURCE_TRANSFORM_SINK_UMOD).unwrap();
         assert!(graph_compile_verified(verified).is_ok());
     }
 

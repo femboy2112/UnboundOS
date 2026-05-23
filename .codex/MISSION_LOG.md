@@ -4,7 +4,24 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C5.M4 Step 5 Persistent UMOD compile path: ready.
+- C5.M4 Step 6 Golden and malformed fixture coverage: ready.
+
+## 2026-05-23T06:48:28Z - C5.M4 Step 5 Persistent UMOD compile path
+
+- Status: completed
+- Summary: Added persistent source -> transform -> sink UMOD bytes under
+  `tests/golden_graphs`, removed the old verifier sentinel bypass, and routed
+  the fixture through `graph_load_from_umod` and `graph_compile_verified` into
+  the private loader runtime path.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p umod`, `cargo test -p
+  graph`, `python3 scripts/address_scan.py tests/golden_graphs
+  tests/golden_models`, `python3 scripts/verify.py --mission current`, and
+  `make gates`.
+- Review: `graph-verifier-auditor` checks passed; `VerifiedGraph` construction
+  remains verifier-only, runtime construction remains private to `loader.rs`,
+  and no test-only runtime constructor or verifier bypass was added.
+- Blockers: none.
 
 ## 2026-05-23T02:40:33Z - C5.M4 Step 4 Capabilities, resources, constants, and scheduling checks
 
