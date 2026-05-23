@@ -17,7 +17,7 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-TOTAL=28
+TOTAL=29
 PASS=()
 FAILED=""
 
@@ -56,22 +56,23 @@ step 9 "ui-smoke" python3 scripts/check_ui_smoke.py
 step 10 "tokenizer-smoke" python3 scripts/check_tokenizer_smoke.py
 step 11 "toy-transformer-smoke" python3 scripts/check_toy_transformer_smoke.py
 step 12 "umdl-smoke" python3 scripts/check_umdl_smoke.py
-step 13 "quantized-smoke" python3 scripts/check_quantized_smoke.py
-step 14 "assistant-smoke" python3 scripts/check_assistant_smoke.py
-step 15 "retrieval-smoke" python3 scripts/check_retrieval_smoke.py
-step 16 "qemu heartbeat" make -s qemu-headless
-step 17 "qemu interactive serial shell" make -s qemu-interactive-smoke
-step 18 "qemu no-serial fallback" make -s qemu-no-serial
-step 19 "qemu SSOD divide_error" make -s qemu-fault-de
-step 20 "qemu SSOD invalid_opcode" make -s qemu-fault-ud
-step 21 "qemu SSOD page_fault" make -s qemu-fault-pf
-step 22 "qemu M2 arena/memory dump" make -s qemu-m2-dump
-step 23 "qemu initial graph boot" make -s qemu-graph-boot
-step 24 "qemu framebuffer smoke" make -s qemu-framebuffer-smoke
-step 25 "qemu M6 storage marker" make -s qemu-storage-smoke
-step 26 "qemu M6 storage matrix" make -s qemu-storage-matrix
-step 27 "qemu milestone stress" make -s qemu-stress
-step 28 "qemu CPU/RAM matrix" make -s qemu-matrix
+step 13 "parser fuzz matrix" make -s parser-fuzz-matrix
+step 14 "quantized-smoke" python3 scripts/check_quantized_smoke.py
+step 15 "assistant-smoke" python3 scripts/check_assistant_smoke.py
+step 16 "retrieval-smoke" python3 scripts/check_retrieval_smoke.py
+step 17 "qemu heartbeat" make -s qemu-headless
+step 18 "qemu interactive serial shell" make -s qemu-interactive-smoke
+step 19 "qemu no-serial fallback" make -s qemu-no-serial
+step 20 "qemu SSOD divide_error" make -s qemu-fault-de
+step 21 "qemu SSOD invalid_opcode" make -s qemu-fault-ud
+step 22 "qemu SSOD page_fault" make -s qemu-fault-pf
+step 23 "qemu M2 arena/memory dump" make -s qemu-m2-dump
+step 24 "qemu initial graph boot" make -s qemu-graph-boot
+step 25 "qemu framebuffer smoke" make -s qemu-framebuffer-smoke
+step 26 "qemu M6 storage marker" make -s qemu-storage-smoke
+step 27 "qemu M6 storage matrix" make -s qemu-storage-matrix
+step 28 "qemu milestone stress" make -s qemu-stress
+step 29 "qemu CPU/RAM matrix" make -s qemu-matrix
 
 rm -f /tmp/gates-$$.log
 

@@ -10,7 +10,8 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
 
 ## Verified Now
 
-- `make gates` passes 28/28, including live QEMU boots, the interactive serial
+- `make gates` passes 29/29, including malformed persistent-artifact corpus
+  checks, live QEMU boots, the interactive serial
   shell, no-serial fallback, three SSOD fault vectors, M2 memory diagnostics,
   boot-time graph load, framebuffer memory inspection, storage success/error
   matrix, and the repeated QEMU stress and CPU/RAM matrix sweeps.
@@ -25,6 +26,8 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
   CPU QEMU profiles.
 - `make qemu-storage-matrix` proves the M6 raw-sector path for marker success,
   marker mismatch, and missing-primary-disk read-error diagnostics under QEMU.
+- `make parser-fuzz-matrix` validates UMOD/UMDL malformed-corpus metadata and
+  runs declared malformed fixtures through the graph verifier and UMDL loader.
 - The boot path now initializes and dynamically proves all spec §4.4 named
   early/model/inference arenas: BootArena, KernelArena, GraphArena,
   ScratchArena, ModelWeightArena, InferenceArena, KVCacheArena, and
@@ -106,5 +109,5 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
    arenas with phase guards and diagnostics.
 4. Turn the framebuffer path into an interactive IDE surface rather than only a
    rendered diagnostic surface.
-5. Add remaining matrix stress gates for framebuffer mode and malformed
-   persistent artifacts.
+5. Add remaining matrix stress gates for framebuffer mode plus randomized
+   parser fuzz/soak coverage beyond the deterministic malformed corpus.

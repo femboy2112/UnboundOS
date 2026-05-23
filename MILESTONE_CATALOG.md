@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.37
+> **Catalog version:** v0.38
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -47,6 +47,14 @@ stale mission state. Completed campaigns are archived under
 
 ## Change log
 
+- **v0.38** — Added `make parser-fuzz-matrix`, a first-class deterministic
+  malformed-artifact corpus gate for UMOD and UMDL. The gate validates corpus
+  metadata, runs the graph verifier's declared UMOD malformed fixtures, runs a
+  UMDL malformed fixture through both header parsing and model loading, and is
+  now part of aggregate gates plus mission verification. The stale short UMDL
+  bad-magic fixture was regenerated into a complete fixed-width bad-magic
+  header so it proves `UmdlLoadError::BadMagic` instead of stopping early at
+  truncation.
 - **v0.37** — Added `make qemu-storage-matrix`, which boots the storage-smoke
   kernel under QEMU for marker success, marker mismatch, and missing-primary-disk
   read-error cases. `scripts/qemu.sh` now has explicit storage assertion modes

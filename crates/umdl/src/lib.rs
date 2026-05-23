@@ -1036,6 +1036,30 @@ mod tests {
     }
 
     #[test]
+    fn malformed_corpus_fixtures_reject_with_declared_errors() {
+        let bad_magic = include_bytes!("../../../tests/fuzz_corpus/umdl/bad-magic.umdl");
+
+        assert_eq!(
+            UmdlHeader::parse(bad_magic).unwrap_err(),
+            UmdlLoadError::BadMagic
+        );
+        assert_eq!(
+            load_model_view(
+                bad_magic,
+                UmdlSectionChecksums {
+                    tokenizer: 0,
+                    tensor: 0,
+                    weight_blob: 0,
+                },
+                SimdTier::Scalar,
+                u64::MAX,
+            )
+            .unwrap_err(),
+            UmdlLoadError::BadMagic
+        );
+    }
+
+    #[test]
     fn validates_section_ranges_and_checksums() {
         let (bytes, checksums) = sectioned_umdl_bytes();
         let header = UmdlHeader::parse(&bytes).expect("header");

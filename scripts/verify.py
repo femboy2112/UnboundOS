@@ -38,6 +38,7 @@ STATIC_COMMANDS = [
     Command("tokenizer smoke", ["python3", "scripts/check_tokenizer_smoke.py"]),
     Command("toy transformer smoke", ["python3", "scripts/check_toy_transformer_smoke.py"]),
     Command("UMDL smoke", ["python3", "scripts/check_umdl_smoke.py"]),
+    Command("parser fuzz matrix", ["make", "-s", "parser-fuzz-matrix"]),
     Command("quantized inference smoke", ["python3", "scripts/check_quantized_smoke.py"]),
     Command("assistant smoke", ["python3", "scripts/check_assistant_smoke.py"]),
     Command("retrieval smoke", ["python3", "scripts/check_retrieval_smoke.py"]),

@@ -30,6 +30,7 @@ help:
 	@echo "  make umdl-smoke      # source-level M9 UMDL loader smoke"
 	@echo "  make quantized-smoke # source-level M10 quantized inference smoke"
 	@echo "  make assistant-smoke # source-level M11 assistant explanation smoke"
+	@echo "  make parser-fuzz-matrix # assert malformed UMOD/UMDL corpus errors"
 	@echo "  make qemu-fault-de   # assert divide-by-zero SSOD path"
 	@echo "  make qemu-fault-ud   # assert invalid-opcode SSOD path"
 	@echo "  make qemu-fault-pf   # assert page-fault SSOD path"
@@ -151,6 +152,10 @@ toy-transformer-smoke:
 .PHONY: umdl-smoke
 umdl-smoke:
 	python3 scripts/check_umdl_smoke.py
+
+.PHONY: parser-fuzz-matrix
+parser-fuzz-matrix:
+	python3 scripts/check_parser_fuzz_matrix.py
 
 .PHONY: quantized-smoke
 quantized-smoke:
