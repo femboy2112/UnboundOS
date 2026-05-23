@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C8.M7 Step 1 Tokenizer registry and metadata contract: ready.
+- C8.M7 Step 2 Raw-byte tokenizer encode path: ready.
+
+## 2026-05-23T07:32:21Z - C8.M7 Step 1 Tokenizer registry and metadata contract
+
+- Status: completed
+- Summary: Added fixed-width tokenizer metadata with tokenizer family, vocab
+  size, table offsets/lengths, special token IDs, UTF-8 policy, max token byte
+  length, and checksum fields. M7 validates exactly `RawByteToToken` and
+  returns structured unsupported-family errors for BPE and SentencePiece.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p umdl`, `cargo test -p
+  llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; tokenizer metadata is fixed-width
+  and pointer-free.
+- Blockers: none.
 
 ## 2026-05-23T07:29:08Z - C8.M7 campaign activation
 

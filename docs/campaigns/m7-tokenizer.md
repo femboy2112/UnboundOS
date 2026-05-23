@@ -71,6 +71,8 @@ Step 5 — M7 completion audit
 
 # Step 1 — Tokenizer registry and metadata contract
 
+Status: Completed.
+
 Purpose:
   Define the supported tokenizer family and fixed-width metadata contract.
 
