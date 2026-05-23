@@ -170,7 +170,7 @@ Commit and push.
 
 # Step 4 — Assistant explanation surface
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Provide a single local assistant explain surface for graph and SSOD states.
@@ -201,6 +201,8 @@ Commit and push.
 ---
 
 # Step 5 — Assistant smoke evidence and gates
+
+Status: Active.
 
 Purpose:
   Make assistant explanation and action-buffer evidence reproducible from

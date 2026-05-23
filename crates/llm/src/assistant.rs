@@ -24,8 +24,17 @@ pub enum AssistantActionKind {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum AssistantActionError {
     UnsupportedKind { requested: u32 },
+    UnsupportedRequest { requested: u32 },
+    ActionBufferRequired,
     OutputOverflow { required: u32, available: u32 },
     TextTooLong { required: u32, available: u32 },
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum AssistantRequestKind {
+    ExplainGraph = 0,
+    ExplainSsod = 1,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -35,6 +44,56 @@ pub enum SsodFaultFamily {
     RustPanic = 2,
     Arena = 3,
     Unknown = 255,
+}
+
+/// Explicit local assistant request surface for M11.
+///
+/// Requests are explain-only. Optional proposed actions stay as fixed-width
+/// data and must be written through `StructuredActionBuffer`.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum AssistantExplainRequest<'a> {
+    Graph {
+        input: &'a GraphExplanationInput,
+        proposed_action: Option<AssistantActionProposal>,
+    },
+    Ssod {
+        input: &'a SsodExplanationInput,
+        proposed_action: Option<AssistantActionProposal>,
+    },
+    Unsupported {
+        requested: u32,
+    },
+}
+
+impl AssistantExplainRequest<'_> {
+    #[must_use]
+    pub const fn kind(&self) -> Option<AssistantRequestKind> {
+        match self {
+            Self::Graph { .. } => Some(AssistantRequestKind::ExplainGraph),
+            Self::Ssod { .. } => Some(AssistantRequestKind::ExplainSsod),
+            Self::Unsupported { .. } => None,
+        }
+    }
+
+    const fn proposed_action(&self) -> Option<AssistantActionProposal> {
+        match self {
+            Self::Graph {
+                proposed_action, ..
+            }
+            | Self::Ssod {
+                proposed_action, ..
+            } => *proposed_action,
+            Self::Unsupported { .. } => None,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(C)]
+pub struct AssistantExplainResponse {
+    pub request_kind: u32,
+    pub explanation_len: u32,
+    pub action_count: u32,
 }
 
 /// Graph display facts accepted by the assistant explainer.
@@ -349,6 +408,53 @@ pub fn explain_ssod<'a>(
     writer.finish()
 }
 
+/// Route one local assistant explanation request.
+///
+/// # Errors
+///
+/// Returns structured errors for unsupported request kinds, missing action
+/// buffers, proposal validation failures, or output overflow.
+pub fn assistant_explain(
+    request: AssistantExplainRequest<'_>,
+    output: &mut [u8],
+    actions: Option<&mut StructuredActionBuffer<'_>>,
+) -> Result<AssistantExplainResponse, AssistantActionError> {
+    let (request_kind, explanation_len) = match request {
+        AssistantExplainRequest::Graph { input, .. } => {
+            let explanation = explain_graph(input, output)?;
+            (
+                AssistantRequestKind::ExplainGraph as u32,
+                len_to_u32(explanation.len()),
+            )
+        }
+        AssistantExplainRequest::Ssod { input, .. } => {
+            let explanation = explain_ssod(input, output)?;
+            (
+                AssistantRequestKind::ExplainSsod as u32,
+                len_to_u32(explanation.len()),
+            )
+        }
+        AssistantExplainRequest::Unsupported { requested } => {
+            return Err(AssistantActionError::UnsupportedRequest { requested });
+        }
+    };
+
+    let action_count = match request.proposed_action() {
+        Some(proposal) => {
+            let buffer = actions.ok_or(AssistantActionError::ActionBufferRequired)?;
+            buffer.push(proposal)?;
+            len_to_u32(buffer.len())
+        }
+        None => 0,
+    };
+
+    Ok(AssistantExplainResponse {
+        request_kind,
+        explanation_len,
+        action_count,
+    })
+}
+
 const fn encode_optional_node(node: Option<u32>) -> u32 {
     match node {
         Some(id) => id,
@@ -617,6 +723,104 @@ mod tests {
                 required: 12,
                 available: 8,
             }
+        );
+    }
+
+    #[test]
+    fn assistant_explain_routes_graph_requests_without_actions() {
+        let input = GraphExplanationInput::new(0x0053_5453, 3, 2, None, Some(3));
+        let mut output = [0u8; 96];
+
+        let response = assistant_explain(
+            AssistantExplainRequest::Graph {
+                input: &input,
+                proposed_action: None,
+            },
+            &mut output,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(
+            response,
+            AssistantExplainResponse {
+                request_kind: AssistantRequestKind::ExplainGraph as u32,
+                explanation_len: 79,
+                action_count: 0,
+            }
+        );
+        assert_eq!(
+            str::from_utf8(&output[..usize::try_from(response.explanation_len).unwrap()]).unwrap(),
+            "graph=0x0000000000535453 nodes=3 wires=2 active_node=none last_completed_node=3"
+        );
+    }
+
+    #[test]
+    fn assistant_explain_routes_ssod_requests_and_buffers_actions() {
+        let input =
+            SsodExplanationInput::new(SsodFaultFamily::RustPanic, 0xFF, "rust_panic", 0, None)
+                .unwrap();
+        let proposal = AssistantActionProposal::new(
+            AssistantActionKind::ProposeOperatorNote,
+            9,
+            [0; ACTION_PAYLOAD_WORDS],
+            "inspect ssod",
+        )
+        .unwrap();
+        let mut storage = [empty_proposal(); 1];
+        let mut actions = StructuredActionBuffer::new(&mut storage);
+        let mut output = [0u8; 128];
+
+        let response = assistant_explain(
+            AssistantExplainRequest::Ssod {
+                input: &input,
+                proposed_action: Some(proposal),
+            },
+            &mut output,
+            Some(&mut actions),
+        )
+        .unwrap();
+
+        assert_eq!(
+            response.request_kind,
+            AssistantRequestKind::ExplainSsod as u32
+        );
+        assert_eq!(response.action_count, 1);
+        assert_eq!(actions.proposals(), &[proposal]);
+    }
+
+    #[test]
+    fn assistant_explain_requires_buffer_for_proposals() {
+        let input = GraphExplanationInput::new(0x0053_5453, 3, 2, None, Some(3));
+        let proposal = AssistantActionProposal::explain_only("note").unwrap();
+        let mut output = [0u8; 96];
+
+        assert_eq!(
+            assistant_explain(
+                AssistantExplainRequest::Graph {
+                    input: &input,
+                    proposed_action: Some(proposal),
+                },
+                &mut output,
+                None,
+            )
+            .unwrap_err(),
+            AssistantActionError::ActionBufferRequired
+        );
+    }
+
+    #[test]
+    fn assistant_explain_rejects_unsupported_requests() {
+        let mut output = [0u8; 96];
+
+        assert_eq!(
+            assistant_explain(
+                AssistantExplainRequest::Unsupported { requested: 99 },
+                &mut output,
+                None,
+            )
+            .unwrap_err(),
+            AssistantActionError::UnsupportedRequest { requested: 99 }
         );
     }
 }

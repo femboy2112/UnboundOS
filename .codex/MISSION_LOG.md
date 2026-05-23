@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C12.M11 Step 4 Assistant explanation surface: ready.
+- C12.M11 Step 5 Assistant smoke evidence and gates: ready.
+
+## 2026-05-23T08:40:47Z - C12.M11 Step 4 Assistant explanation surface
+
+- Status: completed
+- Summary: Added a single `assistant_explain` request/response surface for
+  graph and SSOD explanation requests, structured unsupported-request errors,
+  and optional proposal routing that requires caller-owned
+  `StructuredActionBuffer` storage.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code, graph mutation, hidden execution,
+  queue/thread, eval path, or direct assistant mutation authority.
+- Blockers: none.
 
 ## 2026-05-23T08:38:10Z - C12.M11 Step 3 SSOD explanation snapshot
 

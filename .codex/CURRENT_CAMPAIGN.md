@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C12 M11 IDE Assistant
-Active mission: C12.M11 Step 4 Assistant explanation surface
+Active mission: C12.M11 Step 5 Assistant smoke evidence and gates
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -27,8 +27,8 @@ See `.codex/CURRENT_MISSION.md`.
 1. C12.M11 Step 1 Structured action buffer contract. Completed.
 2. C12.M11 Step 2 Graph explanation snapshot. Completed.
 3. C12.M11 Step 3 SSOD explanation snapshot. Completed.
-4. C12.M11 Step 4 Assistant explanation surface. Active.
-5. C12.M11 Step 5 Assistant smoke evidence and gates. Pending.
+4. C12.M11 Step 4 Assistant explanation surface. Completed.
+5. C12.M11 Step 5 Assistant smoke evidence and gates. Active.
 6. C12.M11 Step 6 M11 completion audit. Pending.
 
 ## Required Preflight For `go`
