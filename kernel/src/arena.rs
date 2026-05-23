@@ -75,6 +75,30 @@ pub const SCRATCH_ARENA: ArenaDescriptor = ArenaDescriptor {
     phase: ArenaPhase::ScratchPhase,
 };
 
+pub const MODEL_WEIGHT_ARENA: ArenaDescriptor = ArenaDescriptor {
+    id: ArenaId::ModelWeight,
+    name: "ModelWeightArena",
+    phase: ArenaPhase::LoadedModel,
+};
+
+pub const INFERENCE_ARENA: ArenaDescriptor = ArenaDescriptor {
+    id: ArenaId::Inference,
+    name: "InferenceArena",
+    phase: ArenaPhase::ActiveInference,
+};
+
+pub const KV_CACHE_ARENA: ArenaDescriptor = ArenaDescriptor {
+    id: ArenaId::KvCache,
+    name: "KVCacheArena",
+    phase: ArenaPhase::ActiveChat,
+};
+
+pub const TOKENIZER_ARENA: ArenaDescriptor = ArenaDescriptor {
+    id: ArenaId::Tokenizer,
+    name: "TokenizerArena",
+    phase: ArenaPhase::LoadedModel,
+};
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[allow(dead_code)]
 pub enum AllocError {
@@ -156,6 +180,10 @@ pub struct M2ArenaRegions {
     pub kernel: ArenaRange,
     pub graph: ArenaRange,
     pub scratch: ArenaRange,
+    pub model_weight: ArenaRange,
+    pub inference: ArenaRange,
+    pub kv_cache: ArenaRange,
+    pub tokenizer: ArenaRange,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -164,6 +192,10 @@ pub struct M2ArenaSet {
     kernel: Arena,
     graph: Arena,
     scratch: Arena,
+    model_weight: Arena,
+    inference: Arena,
+    kv_cache: Arena,
+    tokenizer: Arena,
 }
 
 impl Arena {
@@ -263,6 +295,10 @@ impl M2ArenaSet {
             kernel: Arena::from_descriptor(KERNEL_ARENA, regions.kernel)?,
             graph: Arena::from_descriptor(GRAPH_ARENA, regions.graph)?,
             scratch: Arena::from_descriptor(SCRATCH_ARENA, regions.scratch)?,
+            model_weight: Arena::from_descriptor(MODEL_WEIGHT_ARENA, regions.model_weight)?,
+            inference: Arena::from_descriptor(INFERENCE_ARENA, regions.inference)?,
+            kv_cache: Arena::from_descriptor(KV_CACHE_ARENA, regions.kv_cache)?,
+            tokenizer: Arena::from_descriptor(TOKENIZER_ARENA, regions.tokenizer)?,
         })
     }
 
@@ -280,6 +316,22 @@ impl M2ArenaSet {
 
     pub const fn scratch(&self) -> &Arena {
         &self.scratch
+    }
+
+    pub const fn model_weight(&self) -> &Arena {
+        &self.model_weight
+    }
+
+    pub const fn inference(&self) -> &Arena {
+        &self.inference
+    }
+
+    pub const fn kv_cache(&self) -> &Arena {
+        &self.kv_cache
+    }
+
+    pub const fn tokenizer(&self) -> &Arena {
+        &self.tokenizer
     }
 
     /// `BootArena` may allocate only before permanent kernel init completes.
@@ -301,6 +353,26 @@ impl M2ArenaSet {
     pub fn with_scratch_arena<R>(&mut self, f: impl FnOnce(&mut Arena) -> R) -> R {
         f(&mut self.scratch)
     }
+
+    /// `ModelWeightArena` allocation is reserved for model loading.
+    pub fn with_model_weight_arena<R>(&mut self, f: impl FnOnce(&mut Arena) -> R) -> R {
+        f(&mut self.model_weight)
+    }
+
+    /// `InferenceArena` allocation is reserved for active inference sessions.
+    pub fn with_inference_arena<R>(&mut self, f: impl FnOnce(&mut Arena) -> R) -> R {
+        f(&mut self.inference)
+    }
+
+    /// `KVCacheArena` allocation is reserved for a declared chat/session pair.
+    pub fn with_kv_cache_arena<R>(&mut self, f: impl FnOnce(&mut Arena) -> R) -> R {
+        f(&mut self.kv_cache)
+    }
+
+    /// `TokenizerArena` allocation is reserved for tokenizer table loading.
+    pub fn with_tokenizer_arena<R>(&mut self, f: impl FnOnce(&mut Arena) -> R) -> R {
+        f(&mut self.tokenizer)
+    }
 }
 
 fn align_up(value: usize, alignment: usize) -> Option<usize> {
@@ -313,7 +385,8 @@ fn align_up(value: usize, alignment: usize) -> Option<usize> {
 mod tests {
     use super::{
         AllocError, Arena, ArenaFaultContext, ArenaId, ArenaPhase, ArenaRange, M2ArenaRegions,
-        M2ArenaSet, BOOT_ARENA, GRAPH_ARENA, KERNEL_ARENA, SCRATCH_ARENA,
+        M2ArenaSet, BOOT_ARENA, GRAPH_ARENA, INFERENCE_ARENA, KERNEL_ARENA, KV_CACHE_ARENA,
+        MODEL_WEIGHT_ARENA, SCRATCH_ARENA, TOKENIZER_ARENA,
     };
 
     #[test]
@@ -424,10 +497,22 @@ mod tests {
         assert_eq!(SCRATCH_ARENA.name, "ScratchArena");
         assert_eq!(ArenaId::Scratch.as_str(), "ScratchArena");
         assert_eq!(SCRATCH_ARENA.phase, ArenaPhase::ScratchPhase);
+        assert_eq!(MODEL_WEIGHT_ARENA.name, "ModelWeightArena");
+        assert_eq!(ArenaId::ModelWeight.as_str(), "ModelWeightArena");
+        assert_eq!(MODEL_WEIGHT_ARENA.phase, ArenaPhase::LoadedModel);
+        assert_eq!(INFERENCE_ARENA.name, "InferenceArena");
+        assert_eq!(ArenaId::Inference.as_str(), "InferenceArena");
+        assert_eq!(INFERENCE_ARENA.phase, ArenaPhase::ActiveInference);
+        assert_eq!(KV_CACHE_ARENA.name, "KVCacheArena");
+        assert_eq!(ArenaId::KvCache.as_str(), "KVCacheArena");
+        assert_eq!(KV_CACHE_ARENA.phase, ArenaPhase::ActiveChat);
+        assert_eq!(TOKENIZER_ARENA.name, "TokenizerArena");
+        assert_eq!(ArenaId::Tokenizer.as_str(), "TokenizerArena");
+        assert_eq!(TOKENIZER_ARENA.phase, ArenaPhase::LoadedModel);
     }
 
     #[test]
-    fn m2_arena_set_uses_named_guard_methods() {
+    fn m2_arena_set_uses_named_guard_methods_for_all_required_arenas() {
         let mut arenas = M2ArenaSet::new(M2ArenaRegions {
             boot: ArenaRange {
                 base: 0x1000,
@@ -445,6 +530,22 @@ mod tests {
                 base: 0x4000,
                 size: 0x100,
             },
+            model_weight: ArenaRange {
+                base: 0x5000,
+                size: 0x100,
+            },
+            inference: ArenaRange {
+                base: 0x6000,
+                size: 0x100,
+            },
+            kv_cache: ArenaRange {
+                base: 0x7000,
+                size: 0x100,
+            },
+            tokenizer: ArenaRange {
+                base: 0x8000,
+                size: 0x100,
+            },
         })
         .unwrap();
 
@@ -452,6 +553,10 @@ mod tests {
         assert_eq!(arenas.kernel().id(), ArenaId::Kernel);
         assert_eq!(arenas.graph().id(), ArenaId::Graph);
         assert_eq!(arenas.scratch().id(), ArenaId::Scratch);
+        assert_eq!(arenas.model_weight().id(), ArenaId::ModelWeight);
+        assert_eq!(arenas.inference().id(), ArenaId::Inference);
+        assert_eq!(arenas.kv_cache().id(), ArenaId::KvCache);
+        assert_eq!(arenas.tokenizer().id(), ArenaId::Tokenizer);
         assert_eq!(
             arenas.with_boot_arena(|a| a.alloc_aligned(8, 8)),
             Ok(0x1000)
@@ -467,6 +572,22 @@ mod tests {
         assert_eq!(
             arenas.with_scratch_arena(|a| a.alloc_aligned(8, 8)),
             Ok(0x4000)
+        );
+        assert_eq!(
+            arenas.with_model_weight_arena(|a| a.alloc_aligned(8, 8)),
+            Ok(0x5000)
+        );
+        assert_eq!(
+            arenas.with_inference_arena(|a| a.alloc_aligned(8, 8)),
+            Ok(0x6000)
+        );
+        assert_eq!(
+            arenas.with_kv_cache_arena(|a| a.alloc_aligned(8, 8)),
+            Ok(0x7000)
+        );
+        assert_eq!(
+            arenas.with_tokenizer_arena(|a| a.alloc_aligned(8, 8)),
+            Ok(0x8000)
         );
     }
 }

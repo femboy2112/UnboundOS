@@ -2,7 +2,7 @@
 
 Date: 2026-05-23
 Branch: `campaign/m12-local-retrieval`
-Baseline: `6762c05`
+Baseline: current tree after full arena initialization hardening
 
 This audit is intentionally stricter than the milestone catalog. It records
 where the current repo is dynamically verified and where `DONE` milestone rows
@@ -20,6 +20,12 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
   heartbeat, no-serial fallback, divide-error SSOD, invalid-opcode SSOD,
   page-fault SSOD, M2 memory dump, graph boot, framebuffer render, interactive
   graph/LLM/retrieval/assistant shell, and storage marker read.
+- The boot path now initializes and dynamically proves all spec §4.4 named
+  early/model/inference arenas: BootArena, KernelArena, GraphArena,
+  ScratchArena, ModelWeightArena, InferenceArena, KVCacheArena, and
+  TokenizerArena. `make qemu-m2-dump` rejects missing arena names, missing
+  initialized status markers, missing nonzero bases, missing allocation smoke,
+  or missing `UNBOUNDOS_KERNEL_STRUCTURES_OK`.
 - The memory-unsafety constraint is being treated correctly: unsafe Rust remains
   allowed at bounded hardware and boot-memory boundaries, with
   `#![forbid(unsafe_op_in_unsafe_fn)]` preserving explicit unsafe blocks. The
@@ -47,14 +53,13 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
    graph state. That is useful, but it is not a clean implementation of the
    written order.
 
-3. The arena model is incomplete beyond the M2 slice.
+3. The arena model still lacks paging-backed hardening.
 
-   The repo has bounded BootArena, KernelArena, GraphArena, and ScratchArena
-   smoke coverage. Spec §4.4 also names ModelWeightArena, InferenceArena,
-   KVCacheArena, and TokenizerArena with phase ownership and reset semantics.
-   UMDL tests account for model arena reservation, but the booted OS does not
-   yet own these arenas as permanent kernel structures with paging/read-only
-   policy or guard-zone behavior.
+   The repo now carves and allocation-smokes BootArena, KernelArena,
+   GraphArena, ScratchArena, ModelWeightArena, InferenceArena, KVCacheArena,
+   and TokenizerArena from the QEMU boot memory map. What remains incomplete is
+   paging/read-only policy for model weights, guard pages or poisoning for
+   debug reset discipline, and richer runtime diagnostics for phase violations.
 
 4. The UI is framebuffer text plus serial shell, not a full framebuffer IDE.
 
@@ -68,8 +73,7 @@ still represent thin prototype paths instead of fully fleshed-out OS behavior.
 
    The interactive QEMU shell exercises tokenizer, toy transformer, quantized
    kernels, retrieval, and assistant explanation. It does not yet prove a
-   full graph-native model package lifecycle with boot-owned ModelWeightArena,
-   TokenizerArena, InferenceArena, KVCacheArena, read-only model weights, or
+   full graph-native model package lifecycle with read-only model weights or
    hardware-selected SIMD backends beyond the current scalar/SSE2 profile work.
 
 6. Stress coverage is still short-run.

@@ -1,6 +1,6 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.34
+> **Catalog version:** v0.35
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
 > **Active milestone:** none
 
@@ -47,6 +47,14 @@ stale mission state. Completed campaigns are archived under
 
 ## Change log
 
+- **v0.35** — Expanded boot-owned arena initialization beyond the original M2
+  four-arena slice. The QEMU memory/arena dump now requires ModelWeightArena,
+  InferenceArena, KVCacheArena, and TokenizerArena to be carved from the
+  bootloader memory map, initialized, and allocation-smoked alongside
+  BootArena, KernelArena, GraphArena, and ScratchArena. The boot path now emits
+  `UNBOUNDOS_KERNEL_STRUCTURES_OK` after allocating permanent kernel registry
+  slots and initial model/tokenizer/inference/session table slots through the
+  named arena guards, and the live QEMU gates reject missing markers.
 - **v0.34** — Added `make qemu-stress`, a repeated live-QEMU sweep across the
   runtime milestone paths: boot heartbeat, no-serial fallback, SSOD forced
   faults, M2 arena/memory dump, boot-time graph load, framebuffer rendering,

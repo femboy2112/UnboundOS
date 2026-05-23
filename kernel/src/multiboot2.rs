@@ -24,8 +24,18 @@ pub const M2_BOOT_ARENA_BYTES: u64 = 64 * 1024;
 pub const M2_KERNEL_ARENA_BYTES: u64 = 256 * 1024;
 pub const M2_GRAPH_ARENA_BYTES: u64 = 256 * 1024;
 pub const M2_SCRATCH_ARENA_BYTES: u64 = 128 * 1024;
-pub const M2_ARENA_BYTES: u64 =
-    M2_BOOT_ARENA_BYTES + M2_KERNEL_ARENA_BYTES + M2_GRAPH_ARENA_BYTES + M2_SCRATCH_ARENA_BYTES;
+pub const M2_MODEL_WEIGHT_ARENA_BYTES: u64 = 2 * 1024 * 1024;
+pub const M2_INFERENCE_ARENA_BYTES: u64 = 1024 * 1024;
+pub const M2_KV_CACHE_ARENA_BYTES: u64 = 1024 * 1024;
+pub const M2_TOKENIZER_ARENA_BYTES: u64 = 512 * 1024;
+pub const M2_ARENA_BYTES: u64 = M2_BOOT_ARENA_BYTES
+    + M2_KERNEL_ARENA_BYTES
+    + M2_GRAPH_ARENA_BYTES
+    + M2_SCRATCH_ARENA_BYTES
+    + M2_MODEL_WEIGHT_ARENA_BYTES
+    + M2_INFERENCE_ARENA_BYTES
+    + M2_KV_CACHE_ARENA_BYTES
+    + M2_TOKENIZER_ARENA_BYTES;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct FramebufferInfo {
@@ -302,7 +312,9 @@ fn read_u64_from(bytes: &[u8], offset: usize) -> u64 {
 mod tests {
     use super::{
         summarize_bytes, BOOTLOADER_MAGIC, IDENTITY_MAPPED_LIMIT, M2_ARENA_BYTES,
-        M2_BOOT_ARENA_BYTES, M2_GRAPH_ARENA_BYTES, M2_KERNEL_ARENA_BYTES, M2_SCRATCH_ARENA_BYTES,
+        M2_BOOT_ARENA_BYTES, M2_GRAPH_ARENA_BYTES, M2_INFERENCE_ARENA_BYTES, M2_KERNEL_ARENA_BYTES,
+        M2_KV_CACHE_ARENA_BYTES, M2_MODEL_WEIGHT_ARENA_BYTES, M2_SCRATCH_ARENA_BYTES,
+        M2_TOKENIZER_ARENA_BYTES,
     };
 
     #[test]
@@ -366,13 +378,17 @@ mod tests {
     }
 
     #[test]
-    fn arena_size_constants_cover_four_boot_arenas() {
+    fn arena_size_constants_cover_required_boot_arenas() {
         assert_eq!(
             M2_ARENA_BYTES,
             M2_BOOT_ARENA_BYTES
                 + M2_KERNEL_ARENA_BYTES
                 + M2_GRAPH_ARENA_BYTES
                 + M2_SCRATCH_ARENA_BYTES
+                + M2_MODEL_WEIGHT_ARENA_BYTES
+                + M2_INFERENCE_ARENA_BYTES
+                + M2_KV_CACHE_ARENA_BYTES
+                + M2_TOKENIZER_ARENA_BYTES
         );
     }
 

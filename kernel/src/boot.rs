@@ -113,8 +113,7 @@ pub unsafe fn run(handoff: BootHandoff) -> ! {
     }
 
     // spec §3.2 step 12: initialize permanent kernel structures.
-    // TODO M3 (spec §4.4–§4.11): KernelArena, GraphArena,
-    // ScratchArena, ModelWeightArena, registries.
+    initialize_permanent_kernel_structures(&mut m2_arenas);
 
     run_m6_storage_smoke_from_env();
 
@@ -310,6 +309,10 @@ fn emit_m2_memory_diagnostics(summary: multiboot2::MemorySummary) -> Option<aren
     heartbeat::emit_kv_str("m2_arena_kernel", arena::KERNEL_ARENA.name);
     heartbeat::emit_kv_str("m2_arena_graph", arena::GRAPH_ARENA.name);
     heartbeat::emit_kv_str("m2_arena_scratch", arena::SCRATCH_ARENA.name);
+    heartbeat::emit_kv_str("m2_arena_model_weight", arena::MODEL_WEIGHT_ARENA.name);
+    heartbeat::emit_kv_str("m2_arena_inference", arena::INFERENCE_ARENA.name);
+    heartbeat::emit_kv_str("m2_arena_kv_cache", arena::KV_CACHE_ARENA.name);
+    heartbeat::emit_kv_str("m2_arena_tokenizer", arena::TOKENIZER_ARENA.name);
 
     let arenas = summary
         .arena_region
@@ -321,11 +324,19 @@ fn emit_m2_memory_diagnostics(summary: multiboot2::MemorySummary) -> Option<aren
         emit_arena_initialized("m2_arena_kernel", arena_set.kernel());
         emit_arena_initialized("m2_arena_graph", arena_set.graph());
         emit_arena_initialized("m2_arena_scratch", arena_set.scratch());
+        emit_arena_initialized("m2_arena_model_weight", arena_set.model_weight());
+        emit_arena_initialized("m2_arena_inference", arena_set.inference());
+        emit_arena_initialized("m2_arena_kv_cache", arena_set.kv_cache());
+        emit_arena_initialized("m2_arena_tokenizer", arena_set.tokenizer());
     } else {
         heartbeat::emit_kv_str("m2_arena_boot_status", "uninitialized");
         heartbeat::emit_kv_str("m2_arena_kernel_status", "uninitialized");
         heartbeat::emit_kv_str("m2_arena_graph_status", "uninitialized");
         heartbeat::emit_kv_str("m2_arena_scratch_status", "uninitialized");
+        heartbeat::emit_kv_str("m2_arena_model_weight_status", "uninitialized");
+        heartbeat::emit_kv_str("m2_arena_inference_status", "uninitialized");
+        heartbeat::emit_kv_str("m2_arena_kv_cache_status", "uninitialized");
+        heartbeat::emit_kv_str("m2_arena_tokenizer_status", "uninitialized");
     }
     heartbeat::emit("UNBOUNDOS_M2_MEMORY_DUMP_END");
     arenas
@@ -341,11 +352,71 @@ fn exercise_m2_arenas(arenas: &mut Option<arena::M2ArenaSet>) {
     let kernel = arenas.with_kernel_arena(|a| a.alloc_aligned(16, 16));
     let graph = arenas.with_graph_arena(|a| a.alloc_aligned(16, 16));
     let scratch = arenas.with_scratch_arena(|a| a.alloc_aligned(16, 16));
-    if boot.is_ok() && kernel.is_ok() && graph.is_ok() && scratch.is_ok() {
+    let model = arenas.with_model_weight_arena(|a| a.alloc_aligned(16, 16));
+    let inference = arenas.with_inference_arena(|a| a.alloc_aligned(16, 16));
+    let kv_cache = arenas.with_kv_cache_arena(|a| a.alloc_aligned(16, 16));
+    let tokenizer = arenas.with_tokenizer_arena(|a| a.alloc_aligned(16, 16));
+    if boot.is_ok()
+        && kernel.is_ok()
+        && graph.is_ok()
+        && scratch.is_ok()
+        && model.is_ok()
+        && inference.is_ok()
+        && kv_cache.is_ok()
+        && tokenizer.is_ok()
+    {
         heartbeat::emit_kv_str("m2_allocator_status", "alloc_smoke_ok");
     } else {
         heartbeat::emit_kv_str("m2_allocator_status", "alloc_smoke_failed");
     }
+}
+
+fn initialize_permanent_kernel_structures(arenas: &mut Option<arena::M2ArenaSet>) {
+    heartbeat::emit("UNBOUNDOS_KERNEL_STRUCTURES_BEGIN");
+    let Some(arenas) = arenas else {
+        heartbeat::emit_kv_str("kernel_structures_status", "unavailable");
+        heartbeat::emit("UNBOUNDOS_KERNEL_STRUCTURES_END");
+        return;
+    };
+
+    let idt_registry = arenas.with_kernel_arena(|a| a.alloc_aligned(64, 64));
+    let driver_registry = arenas.with_kernel_arena(|a| a.alloc_aligned(64, 64));
+    let graph_registry = arenas.with_kernel_arena(|a| a.alloc_aligned(64, 64));
+    let model_catalog = arenas.with_model_weight_arena(|a| a.alloc_aligned(64, 64));
+    let tokenizer_table = arenas.with_tokenizer_arena(|a| a.alloc_aligned(64, 64));
+    let inference_session = arenas.with_inference_arena(|a| a.alloc_aligned(64, 64));
+    let kv_session = arenas.with_kv_cache_arena(|a| a.alloc_aligned(64, 64));
+
+    if let (
+        Ok(idt_registry),
+        Ok(driver_registry),
+        Ok(graph_registry),
+        Ok(model_catalog),
+        Ok(tokenizer_table),
+        Ok(inference_session),
+        Ok(kv_session),
+    ) = (
+        idt_registry,
+        driver_registry,
+        graph_registry,
+        model_catalog,
+        tokenizer_table,
+        inference_session,
+        kv_session,
+    ) {
+        heartbeat::emit_kv_str("kernel_structures_status", "initialized");
+        heartbeat::emit_kv_hex("kernel_registry_idt", idt_registry as u64);
+        heartbeat::emit_kv_hex("kernel_registry_driver", driver_registry as u64);
+        heartbeat::emit_kv_hex("kernel_registry_graph", graph_registry as u64);
+        heartbeat::emit_kv_hex("model_catalog_base", model_catalog as u64);
+        heartbeat::emit_kv_hex("tokenizer_table_base", tokenizer_table as u64);
+        heartbeat::emit_kv_hex("inference_session_base", inference_session as u64);
+        heartbeat::emit_kv_hex("kv_session_base", kv_session as u64);
+        heartbeat::emit("UNBOUNDOS_KERNEL_STRUCTURES_OK");
+    } else {
+        heartbeat::emit_kv_str("kernel_structures_status", "alloc_failed");
+    }
+    heartbeat::emit("UNBOUNDOS_KERNEL_STRUCTURES_END");
 }
 
 fn m2_arena_regions_from(base: u64) -> Result<arena::M2ArenaRegions, ()> {
@@ -362,12 +433,32 @@ fn m2_arena_regions_from(base: u64) -> Result<arena::M2ArenaRegions, ()> {
         .checked_add(multiboot2::M2_GRAPH_ARENA_BYTES)
         .ok_or(())?;
     let scratch = range_at(scratch_base, multiboot2::M2_SCRATCH_ARENA_BYTES)?;
+    let model_base = scratch_base
+        .checked_add(multiboot2::M2_SCRATCH_ARENA_BYTES)
+        .ok_or(())?;
+    let model_weight = range_at(model_base, multiboot2::M2_MODEL_WEIGHT_ARENA_BYTES)?;
+    let inference_base = model_base
+        .checked_add(multiboot2::M2_MODEL_WEIGHT_ARENA_BYTES)
+        .ok_or(())?;
+    let inference = range_at(inference_base, multiboot2::M2_INFERENCE_ARENA_BYTES)?;
+    let kv_cache_base = inference_base
+        .checked_add(multiboot2::M2_INFERENCE_ARENA_BYTES)
+        .ok_or(())?;
+    let kv_cache = range_at(kv_cache_base, multiboot2::M2_KV_CACHE_ARENA_BYTES)?;
+    let tokenizer_base = kv_cache_base
+        .checked_add(multiboot2::M2_KV_CACHE_ARENA_BYTES)
+        .ok_or(())?;
+    let tokenizer = range_at(tokenizer_base, multiboot2::M2_TOKENIZER_ARENA_BYTES)?;
 
     Ok(arena::M2ArenaRegions {
         boot,
         kernel,
         graph,
         scratch,
+        model_weight,
+        inference,
+        kv_cache,
+        tokenizer,
     })
 }
 
@@ -392,6 +483,10 @@ fn status_key(prefix: &str) -> &'static str {
         "m2_arena_kernel" => "m2_arena_kernel_status",
         "m2_arena_graph" => "m2_arena_graph_status",
         "m2_arena_scratch" => "m2_arena_scratch_status",
+        "m2_arena_model_weight" => "m2_arena_model_weight_status",
+        "m2_arena_inference" => "m2_arena_inference_status",
+        "m2_arena_kv_cache" => "m2_arena_kv_cache_status",
+        "m2_arena_tokenizer" => "m2_arena_tokenizer_status",
         _ => "m2_arena_unknown_status",
     }
 }
@@ -402,6 +497,10 @@ fn base_key(prefix: &str) -> &'static str {
         "m2_arena_kernel" => "m2_arena_kernel_base",
         "m2_arena_graph" => "m2_arena_graph_base",
         "m2_arena_scratch" => "m2_arena_scratch_base",
+        "m2_arena_model_weight" => "m2_arena_model_weight_base",
+        "m2_arena_inference" => "m2_arena_inference_base",
+        "m2_arena_kv_cache" => "m2_arena_kv_cache_base",
+        "m2_arena_tokenizer" => "m2_arena_tokenizer_base",
         _ => "m2_arena_unknown_base",
     }
 }
@@ -412,6 +511,10 @@ fn size_key(prefix: &str) -> &'static str {
         "m2_arena_kernel" => "m2_arena_kernel_size",
         "m2_arena_graph" => "m2_arena_graph_size",
         "m2_arena_scratch" => "m2_arena_scratch_size",
+        "m2_arena_model_weight" => "m2_arena_model_weight_size",
+        "m2_arena_inference" => "m2_arena_inference_size",
+        "m2_arena_kv_cache" => "m2_arena_kv_cache_size",
+        "m2_arena_tokenizer" => "m2_arena_tokenizer_size",
         _ => "m2_arena_unknown_size",
     }
 }
