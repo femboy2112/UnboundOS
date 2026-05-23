@@ -1,8 +1,8 @@
 # UnboundOS Milestone Catalog
 
-> **Catalog version:** v0.22
+> **Catalog version:** v0.23
 > **Spec rev:** `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf`
-> **Active milestone:** none
+> **Active milestone:** M11 IDE assistant
 
 Every milestone owns exactly one campaign file under
 `docs/campaigns/`. The top-level `CURRENT_CAMPAIGN.md` is a working
@@ -36,7 +36,7 @@ archived under `docs/campaigns/` and never edited again.
 | M8  | Toy transformer | §10.8, §13.7 | DONE | Hardcoded tiny model generates deterministic token output; `make gates` PROCEED | docs/campaigns/m8-toy-transformer.md |
 | M9  | UMDL loader | §10, §13.11 | DONE | Model package validates and loads; `make gates` PROCEED | docs/campaigns/m9-umdl-loader.md |
 | M10 | Quantized inference | §10, §11, §13.12 | DONE | Small quantized model streams tokens; `make gates` PROCEED | docs/campaigns/m10-quantized-inference.md |
-| M11 | IDE assistant | §10, §13.1 | TODO | Local assistant explains graph and SSOD | docs/campaigns/m11-ide-assistant.md *(not yet written)* |
+| M11 | IDE assistant | §10, §13.1 | IN-PROGRESS | Local assistant explains graph and SSOD; `make gates` PROCEED | docs/campaigns/m11-ide-assistant.md |
 | M12 | Local retrieval | §10, §13.1 | TODO | Assistant searches local docs | docs/campaigns/m12-local-retrieval.md *(not yet written)* |
 
 ## Deferred reasons
@@ -45,6 +45,10 @@ archived under `docs/campaigns/` and never edited again.
 
 ## Change log
 
+- **v0.23** — Opened M11 IDE assistant on `campaign/m11-ide-assistant`.
+  The campaign owns graph/SSOD explanation surfaces and a structured action
+  buffer that keeps assistant output as data until schema validation, graph
+  verification, and operator approval.
 - **v0.22** — M10 completed on `campaign/m10-quantized-inference`: safe scalar
   quantized kernels, dispatch-table routing, deterministic next-token stepping,
   explicit streaming state/buffers, and `make quantized-smoke` now prove a

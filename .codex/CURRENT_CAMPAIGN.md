@@ -1,8 +1,8 @@
 # Current Campaign
 
-Campaign: C11 M10 Quantized Inference
-Active mission: C11.M10 Step 6 M10 completion audit
-Status: completed
+Campaign: C12 M11 IDE Assistant
+Active mission: C12.M11 Step 1 Structured action buffer contract
+Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
 failed verification.
@@ -11,12 +11,12 @@ mission state after each completed mission.
 Publish policy: commit and push the campaign branch after each completed
 mission.
 Main policy: never merge to main, never push main, or force-push.
-Campaign branch: campaign/m10-quantized-inference
+Campaign branch: campaign/m11-ide-assistant
 
 ## Campaign Objective
 
-Close M10 by proving the spec §13.12 local-LLM criterion: a small quantized
-model streams tokens.
+Close M11 by proving the spec §13.1 assistant criterion: a local assistant
+explains graph and SSOD.
 
 ## Active Mission
 
@@ -24,17 +24,17 @@ See `.codex/CURRENT_MISSION.md`.
 
 ## Macro Sequence
 
-1. C11.M10 Step 1 Scalar quantized kernel contracts. Completed.
-2. C11.M10 Step 2 Dispatch-selected scalar kernel table. Completed.
-3. C11.M10 Step 3 Deterministic quantized token step. Completed.
-4. C11.M10 Step 4 Streaming token surface. Completed.
-5. C11.M10 Step 5 Quantized inference smoke evidence and gates. Completed.
-6. C11.M10 Step 6 M10 completion audit. Completed.
+1. C12.M11 Step 1 Structured action buffer contract. Active.
+2. C12.M11 Step 2 Graph explanation snapshot. Pending.
+3. C12.M11 Step 3 SSOD explanation snapshot. Pending.
+4. C12.M11 Step 4 Assistant explanation surface. Pending.
+5. C12.M11 Step 5 Assistant smoke evidence and gates. Pending.
+6. C12.M11 Step 6 M11 completion audit. Pending.
 
 ## Required Preflight For `go`
 
 1. Read `CLAUDE.md`.
-2. Read `docs/campaigns/m10-quantized-inference.md`.
+2. Read `docs/campaigns/m11-ide-assistant.md`.
 3. Read `docs/UnboundOS_Tech_Spec_v2_1_1_Fidelity_Hardening.pdf` or the
    extracted requirements in `.codex/PROJECT_PLAN.md`.
 4. Read `.codex/CURRENT_CAMPAIGN.md`.
@@ -51,6 +51,6 @@ unless the mission explicitly permits that skip.
 
 ## Campaign Source
 
-The detailed M10 step contract is `docs/campaigns/m10-quantized-inference.md`.
+The detailed M11 step contract is `docs/campaigns/m11-ide-assistant.md`.
 Step allowed-file blocks are binding for implementation files; `.codex/*`
 files may be edited only for required mission-state closeout.

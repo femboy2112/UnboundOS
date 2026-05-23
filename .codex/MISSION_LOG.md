@@ -4,7 +4,19 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-*(none)*
+- C12.M11 Step 1 Structured action buffer contract: ready.
+
+## 2026-05-23T08:26:59Z - C12.M11 campaign activation
+
+- Status: completed
+- Summary: Opened `campaign/m11-ide-assistant`, marked M11 `IN-PROGRESS`,
+  created the M11 campaign plan, and rotated `.codex` state to Step 1 for the
+  structured assistant action-buffer contract.
+- Verification: pending below for the active Step 1 mission state.
+- Memory-unsafety audit: M11 keeps unsafe Rust allowed by project identity, but
+  assistant proposal/explanation surfaces should remain safe, bounded,
+  deterministic, and non-executing.
+- Blockers: none.
 
 ## 2026-05-23T08:24:19Z - C11.M10 Step 6 M10 completion audit
 
