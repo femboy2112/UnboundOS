@@ -68,6 +68,8 @@ Step 5 — M8 completion audit
 
 # Step 1 — Toy model architecture contract
 
+Status: Completed.
+
 Purpose:
   Define the hardcoded toy model metadata, deterministic generation config, and
   caller-provided buffer contracts.

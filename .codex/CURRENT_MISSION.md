@@ -1,14 +1,14 @@
 # Current Mission
 
-Mission: C9.M8 Step 1 Toy model architecture contract
+Mission: C9.M8 Step 2 Deterministic token generation
 Campaign: C9 M8 Toy Transformer
 Status: ready
 
 ## Objective
 
-Execute M8 campaign Step 1 from `docs/campaigns/m8-toy-transformer.md`:
-define the hardcoded toy model metadata, deterministic generation config, and
-caller-provided buffer contracts.
+Execute M8 campaign Step 2 from `docs/campaigns/m8-toy-transformer.md`:
+generate deterministic token IDs from the hardcoded tiny model using
+caller-provided output storage.
 
 ## Scope
 
@@ -23,17 +23,17 @@ Allowed changes:
 
 Out of scope:
 
-- Token generation implementation beyond metadata/config validation.
+- Prompt-to-text inference path.
 - UMDL loader, tensor descriptors, sampler, SIMD kernels, storage, or QEMU
   harness changes.
 - Merging to or pushing `main`.
 
 ## Acceptance Criteria
 
-- Toy model module defines fixed-width model/config metadata.
-- M8 exposes exactly one supported toy architecture.
-- Structured errors exist for output buffer overflow and unsupported config.
-- No hidden allocation or hidden execution path is introduced.
+- Stable token sequence is produced for a prompt token stream and seed/config.
+- Same prompt, seed, config, and model produce identical tokens.
+- Overflow/config failures return structured errors, not panics.
+- No backend-specific SIMD symbol is called.
 
 ## Baseline to verify
 
@@ -56,5 +56,5 @@ python3 scripts/verify.py --mission current
 ## Notes
 
 Campaign branch: `campaign/m8-toy-transformer`. M8 should not need new unsafe
-code. If a later model loader or SIMD kernel requires unsafe access, it must be
-bounded, inspectable, deterministic, and not undefined by design.
+code. Step 1 added fixed-width toy model/config metadata and validation for
+exactly one supported toy architecture.

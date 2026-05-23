@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C9.M8 Step 1 Toy model architecture contract: ready.
+- C9.M8 Step 2 Deterministic token generation: ready.
+
+## 2026-05-23T07:45:25Z - C9.M8 Step 1 Toy model architecture contract
+
+- Status: completed
+- Summary: Added `crates/llm/src/toy_transformer.rs` with fixed-width toy
+  model metadata, deterministic generation config metadata, one supported M8
+  architecture, and structured errors for unsupported architecture/tokenizer,
+  invalid shape, unsupported config, and future output overflow.
+- Verification: `python3 scripts/status.py`, `python3 scripts/mission.py
+  validate`, `make fmt`, `make clippy`, `cargo test -p llm`, and `python3
+  scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; contracts are fixed-width and
+  pointer-free, and later generation must use caller-provided buffers.
+- Blockers: none.
 
 ## 2026-05-23T07:41:48Z - C9.M8 campaign activation
 

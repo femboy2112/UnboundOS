@@ -17,6 +17,7 @@
 
 pub mod dispatch;
 pub mod tokenizer;
+pub mod toy_transformer;
 
 use umdl::SimdTier;
 
