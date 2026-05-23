@@ -1,19 +1,19 @@
 # Current Mission
 
-Mission: C13.M12 Step 1 Retrieval data contracts
+Mission: C13.M12 Step 2 Local document index snapshot
 Campaign: C13 M12 Local Retrieval
 Status: ready
 
 ## Objective
 
-Execute M12 campaign Step 1 from `docs/campaigns/m12-local-retrieval.md`:
-add fixed-width retrieval query, document reference, and result records.
+Execute M12 campaign Step 2 from `docs/campaigns/m12-local-retrieval.md`:
+represent a read-only local document index snapshot from fixed document
+records.
 
 ## Scope
 
 Allowed changes:
 
-- `crates/llm/src/lib.rs`
 - `crates/llm/src/retrieval.rs`
 - `docs/campaigns/m12-local-retrieval.md`
 - `.codex/CURRENT_MISSION.md`
@@ -29,12 +29,11 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- `crates/llm` exposes a retrieval module.
-- Retrieval query, document reference, and result records use fixed-width
-  bounded fields and caller-owned buffers.
-- Host paths, `local://`, and oversized text are rejected deterministically.
-- No unsafe code, filesystem access, thread/queue, eval, execution hook, or
-  graph mutation surface is introduced.
+- Document index snapshots are read-only views over caller-owned document
+  records.
+- Empty indexes, duplicate document IDs, and invalid document references return
+  structured errors.
+- Opaque document/resource IDs remain enforced above storage adapters.
 
 ## Baseline to verify
 
@@ -56,6 +55,7 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m12-local-retrieval`. M11 completed at `8f91be3`.
-Memory-unsafe Rust remains allowed by project identity, but M12 retrieval
-contracts should be safe, deterministic, bounded, and non-executing.
+Campaign branch: `campaign/m12-local-retrieval`. Step 1 added fixed-width
+retrieval query, document reference, result, and caller-owned result buffer
+contracts. Memory-unsafe Rust remains allowed by project identity, but M12
+retrieval contracts should be safe, deterministic, bounded, and non-executing.

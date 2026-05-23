@@ -68,7 +68,7 @@ Step 7 — M12 completion audit
 
 # Step 1 — Retrieval data contracts
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Add fixed-width retrieval query, document reference, and result records.
@@ -101,6 +101,8 @@ Commit and push.
 ---
 
 # Step 2 — Local document index snapshot
+
+Status: Active.
 
 Purpose:
   Represent a read-only local document index snapshot from fixed document

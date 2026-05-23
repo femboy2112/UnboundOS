@@ -4,7 +4,22 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C13.M12 Step 1 Retrieval data contracts: ready.
+- C13.M12 Step 2 Local document index snapshot: ready.
+
+## 2026-05-23T08:51:54Z - C13.M12 Step 1 Retrieval data contracts
+
+- Status: completed
+- Summary: Added `crates/llm/src/retrieval.rs` with fixed-width retrieval
+  query, document reference, result, and caller-owned result buffer records;
+  the contracts reject oversized text, host-path-shaped refs, and non-opaque
+  document refs deterministically.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code, filesystem access, host-path
+  leakage above storage adapters, graph mutation, thread/queue, eval, or
+  execution-hook path.
+- Blockers: none.
 
 ## 2026-05-23T08:46:21Z - C13.M12 campaign activation
 

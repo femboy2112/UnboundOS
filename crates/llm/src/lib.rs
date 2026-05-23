@@ -19,6 +19,7 @@ pub mod assistant;
 pub mod dispatch;
 pub mod kernels;
 pub mod quantized;
+pub mod retrieval;
 pub mod tokenizer;
 pub mod toy_transformer;
 
