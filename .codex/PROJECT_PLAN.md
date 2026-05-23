@@ -32,6 +32,9 @@ next review gate, failed verification, blocker, or ambiguous scope.
 
 ## Campaigns
 
+Status: complete through M12. `MILESTONE_CATALOG.md` is authoritative for
+per-milestone status and currently records no active milestone.
+
 ### C0 Control Plane
 
 Install and validate the Codex-native workflow.
@@ -43,7 +46,7 @@ Install and validate the Codex-native workflow.
 
 ### C1 M0 Boot Heartbeat
 
-Active campaign: `docs/campaigns/m0-boot-heartbeat.md` on branch
+Completed campaign: `docs/campaigns/m0-boot-heartbeat.md` on branch
 `campaign/m0-boot-heartbeat`.
 
 Exit criterion: QEMU boots the kernel, serial prints the required heartbeat,
@@ -57,6 +60,9 @@ and the kernel intentionally reaches halt/idle.
 
 ### C2 M1 Diagnostics Core
 
+Completed campaign: `docs/campaigns/m1-diagnostics-core.md` on branch
+`campaign/m1-diagnostics-core`.
+
 Exit criterion: IDT and SSOD handle forced faults with structured serial output.
 
 - Install IDT handlers for #DE, #UD, #DF, #GP, #PF, and debug trap.
@@ -64,6 +70,9 @@ Exit criterion: IDT and SSOD handle forced faults with structured serial output.
 - Add QEMU forced-fault assertions for #DE, #UD, and #PF.
 
 ### C3 M2 Arena Memory
+
+Completed campaign: `docs/campaigns/m2-arena-memory.md` on branch
+`campaign/m2-arena-memory`.
 
 Exit criterion: named bounded arenas allocate, align, reset, and fail with
 deterministic context.
@@ -74,6 +83,9 @@ deterministic context.
 
 ### C4 M3 Embedded Graph
 
+Completed campaign: `docs/campaigns/m3-embedded-graph.md` on branch
+`campaign/m3-embedded-graph`.
+
 Exit criterion: hardcoded graph executes once with epoch readiness and fan-out.
 
 - Define minimal runtime node/wire types private to the graph runtime.
@@ -81,6 +93,9 @@ Exit criterion: hardcoded graph executes once with epoch readiness and fan-out.
 - Add active node diagnostics.
 
 ### C5 M4 UMOD Loader
+
+Completed campaign: `docs/campaigns/m4-umod-loader.md` on branch
+`campaign/m4-umod-loader`.
 
 Exit criterion: valid symbolic UMOD verifies and executes; malformed UMODs
 return structured errors.
@@ -93,6 +108,10 @@ return structured errors.
 
 ### C6 M5-M6 UI And Storage
 
+Completed campaigns: `docs/campaigns/m5-minimal-ui.md` on branch
+`campaign/m5-minimal-ui`, and `docs/campaigns/m6-storage-stage-1.md` on branch
+`campaign/m6-storage-stage-1`.
+
 Exit criterion: minimal framebuffer IDE displays graph state, and raw storage
 read works with timeout while graph-visible refs remain opaque.
 
@@ -103,6 +122,10 @@ read works with timeout while graph-visible refs remain opaque.
 
 ### C7 M7-M10 Local LLM Core
 
+Completed campaigns: `docs/campaigns/m7-tokenizer.md`,
+`docs/campaigns/m8-toy-transformer.md`, `docs/campaigns/m9-umdl-loader.md`,
+and `docs/campaigns/m10-quantized-inference.md`.
+
 Exit criterion: local graph-native inference path streams deterministic tokens
 from a validated model package.
 
@@ -112,6 +135,9 @@ from a validated model package.
 - Implement scalar CPU kernels, then dispatch-selected SIMD tiers.
 
 ### C8 M11-M12 Assistant And Retrieval
+
+Completed campaigns: `docs/campaigns/m11-ide-assistant.md` and
+`docs/campaigns/m12-local-retrieval.md`.
 
 Exit criterion: assistant explains graph/SSOD state and searches local docs
 without direct mutation authority.
