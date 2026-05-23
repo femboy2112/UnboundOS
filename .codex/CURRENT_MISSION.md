@@ -1,13 +1,13 @@
 # Current Mission
 
-Mission: C13.M12 Step 3 Deterministic retrieval ranking
+Mission: C13.M12 Step 4 Context packing
 Campaign: C13 M12 Local Retrieval
 Status: ready
 
 ## Objective
 
-Execute M12 campaign Step 3 from `docs/campaigns/m12-local-retrieval.md`:
-return deterministic top-k local document matches into caller-provided output.
+Execute M12 campaign Step 4 from `docs/campaigns/m12-local-retrieval.md`:
+pack retrieved document snippets into bounded assistant context.
 
 ## Scope
 
@@ -28,9 +28,10 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- Query matching and top-k ranking are deterministic with stable tie-breaking.
-- Ranked results are written only into caller-provided output.
-- Output overflow and unsupported query shapes return structured errors.
+- Retrieved document snippets pack deterministically into caller-provided byte
+  output.
+- Packed context preserves document IDs and snippet boundaries.
+- Output overflow rejects without silent truncation.
 
 ## Baseline to verify
 
@@ -52,8 +53,8 @@ python3 scripts/verify.py --mission current
 
 ## Notes
 
-Campaign branch: `campaign/m12-local-retrieval`. Step 2 added read-only local
-document index snapshots over caller-owned records, with validation for empty
-indexes, duplicate refs, and invalid refs. Memory-unsafe Rust remains allowed
-by project identity, but M12 retrieval contracts should be safe,
+Campaign branch: `campaign/m12-local-retrieval`. Step 3 added deterministic
+top-k retrieval ranking with stable tie-breaking, caller-owned result output,
+and structured overflow/unsupported-query errors. Memory-unsafe Rust remains
+allowed by project identity, but M12 retrieval contracts should be safe,
 deterministic, bounded, and non-executing.

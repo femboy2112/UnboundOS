@@ -22,6 +22,7 @@ pub enum RetrievalError {
     IndexEmpty,
     DuplicateResourceRef { first: u32, duplicate: u32 },
     DocumentRefInvalid { index: u32 },
+    UnsupportedQuery,
     TextTooLong { required: u32, available: u32 },
     OutputOverflow { required: u32, available: u32 },
 }
@@ -164,7 +165,14 @@ impl RetrievalResult {
         score: u32,
         resource_ref: &str,
     ) -> Result<Self, RetrievalError> {
-        let resource_ref_bytes = resource_ref.as_bytes();
+        Self::from_resource_ref_bytes(document_index, score, resource_ref.as_bytes())
+    }
+
+    fn from_resource_ref_bytes(
+        document_index: u32,
+        score: u32,
+        resource_ref_bytes: &[u8],
+    ) -> Result<Self, RetrievalError> {
         if resource_ref_bytes.len() > RETRIEVAL_RESOURCE_REF_BYTES {
             return Err(RetrievalError::ResourceRefTooLong {
                 required: len_to_u32(resource_ref_bytes.len()),
@@ -190,6 +198,44 @@ impl RetrievalResult {
         let len = u32_to_usize(self.resource_ref_len).min(RETRIEVAL_RESOURCE_REF_BYTES);
         &self.resource_ref[..len]
     }
+}
+
+/// Rank local documents deterministically into caller-provided output.
+///
+/// # Errors
+///
+/// Returns `RetrievalError` when `query` has no searchable bytes or `output`
+/// cannot hold the requested top-k result set.
+pub fn retrieve_top_k(
+    index: &RetrievalIndexSnapshot<'_>,
+    query: &RetrievalQuery,
+    top_k: usize,
+    output: &mut RetrievalResultBuffer<'_>,
+) -> Result<usize, RetrievalError> {
+    if top_k == 0 || !query.text_bytes().iter().any(u8::is_ascii_alphanumeric) {
+        return Err(RetrievalError::UnsupportedQuery);
+    }
+
+    let mut emitted = 0usize;
+    while emitted < top_k {
+        let Some((document_index, score)) = next_ranked_document(index, query, output.results())
+        else {
+            return Ok(emitted);
+        };
+
+        let document = index
+            .get(document_index)
+            .ok_or(RetrievalError::DocumentRefInvalid {
+                index: len_to_u32(document_index),
+            })?;
+        output.push(RetrievalResult::from_resource_ref_bytes(
+            len_to_u32(document_index),
+            score,
+            document.resource_ref_bytes(),
+        )?)?;
+        emitted += 1;
+    }
+    Ok(emitted)
 }
 
 pub struct RetrievalResultBuffer<'a> {
@@ -317,6 +363,75 @@ fn checked_text_bytes(text: &str, capacity: usize) -> Result<&[u8], RetrievalErr
         });
     }
     Ok(bytes)
+}
+
+fn next_ranked_document(
+    index: &RetrievalIndexSnapshot<'_>,
+    query: &RetrievalQuery,
+    emitted: &[RetrievalResult],
+) -> Option<(usize, u32)> {
+    let mut best: Option<(usize, u32)> = None;
+    for (candidate_index, document) in index.documents().iter().enumerate() {
+        if emitted
+            .iter()
+            .any(|result| result.document_index == len_to_u32(candidate_index))
+        {
+            continue;
+        }
+
+        let score = score_document(query, document);
+        if score == 0 {
+            continue;
+        }
+        if best.map_or(true, |(best_index, best_score)| {
+            ranked_before(index, candidate_index, score, best_index, best_score)
+        }) {
+            best = Some((candidate_index, score));
+        }
+    }
+    best
+}
+
+fn ranked_before(
+    index: &RetrievalIndexSnapshot<'_>,
+    candidate_index: usize,
+    candidate_score: u32,
+    best_index: usize,
+    best_score: u32,
+) -> bool {
+    candidate_score > best_score
+        || (candidate_score == best_score
+            && resource_order(
+                index.documents()[candidate_index].resource_ref_bytes(),
+                index.documents()[best_index].resource_ref_bytes(),
+            )
+            .is_lt())
+}
+
+fn score_document(query: &RetrievalQuery, document: &RetrievalDocumentRef) -> u32 {
+    let mut score = 0u32;
+    for query_byte in query.text_bytes() {
+        if !query_byte.is_ascii_alphanumeric() {
+            continue;
+        }
+        if contains_ascii_case_insensitive(document.title_bytes(), *query_byte)
+            || contains_ascii_case_insensitive(document.snippet_bytes(), *query_byte)
+        {
+            score = score.saturating_add(1);
+        }
+    }
+    score
+}
+
+fn contains_ascii_case_insensitive(haystack: &[u8], needle: u8) -> bool {
+    let needle = needle.to_ascii_lowercase();
+    haystack
+        .iter()
+        .any(|byte| byte.to_ascii_lowercase() == needle)
+}
+
+fn resource_order(left: &[u8], right: &[u8]) -> core::cmp::Ordering {
+    left.cmp(right)
 }
 
 fn is_opaque_resource_ref(bytes: &[u8]) -> bool {
@@ -491,6 +606,57 @@ mod tests {
         assert_eq!(
             RetrievalIndexSnapshot::new(&invalid_docs).unwrap_err(),
             RetrievalError::DocumentRefInvalid { index: 0 }
+        );
+    }
+
+    #[test]
+    fn retrieve_top_k_ranks_matches_deterministically() {
+        let docs = [
+            RetrievalDocumentRef::new("index:zeta", "Boot", "heartbeat").unwrap(),
+            RetrievalDocumentRef::new("index:alpha", "Boot", "heartbeat").unwrap(),
+            RetrievalDocumentRef::new("index:arena", "Arena", "memory").unwrap(),
+        ];
+        let index = RetrievalIndexSnapshot::new(&docs).unwrap();
+        let query = RetrievalQuery::new("boot").unwrap();
+        let mut storage = [empty_result(); 2];
+        let mut results = RetrievalResultBuffer::new(&mut storage);
+
+        assert_eq!(retrieve_top_k(&index, &query, 2, &mut results), Ok(2));
+
+        assert_eq!(results.results()[0].resource_ref_bytes(), b"index:alpha");
+        assert_eq!(results.results()[1].resource_ref_bytes(), b"index:zeta");
+        assert_eq!(results.results()[0].score, results.results()[1].score);
+    }
+
+    #[test]
+    fn retrieve_top_k_reports_overflow_and_unsupported_query() {
+        let docs = [
+            RetrievalDocumentRef::new("index:first", "Boot", "heartbeat").unwrap(),
+            RetrievalDocumentRef::new("index:second", "Boot", "serial").unwrap(),
+        ];
+        let index = RetrievalIndexSnapshot::new(&docs).unwrap();
+        let query = RetrievalQuery::new("boot").unwrap();
+        let mut storage = [empty_result(); 1];
+        let mut results = RetrievalResultBuffer::new(&mut storage);
+
+        assert_eq!(
+            retrieve_top_k(&index, &query, 2, &mut results),
+            Err(RetrievalError::OutputOverflow {
+                required: 2,
+                available: 1,
+            })
+        );
+
+        let empty_shape = RetrievalQuery::new("---").unwrap();
+        let mut storage = [empty_result(); 1];
+        let mut results = RetrievalResultBuffer::new(&mut storage);
+        assert_eq!(
+            retrieve_top_k(&index, &empty_shape, 1, &mut results),
+            Err(RetrievalError::UnsupportedQuery)
+        );
+        assert_eq!(
+            retrieve_top_k(&index, &query, 0, &mut results),
+            Err(RetrievalError::UnsupportedQuery)
         );
     }
 }

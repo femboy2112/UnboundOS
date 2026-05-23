@@ -133,7 +133,7 @@ Commit and push.
 
 # Step 3 — Deterministic retrieval ranking
 
-Status: Active.
+Status: Completed.
 
 Purpose:
   Return deterministic top-k local document matches into caller-provided output.
@@ -162,6 +162,8 @@ Commit and push.
 ---
 
 # Step 4 — Context packing
+
+Status: Active.
 
 Purpose:
   Pack retrieved document snippets into bounded assistant context.

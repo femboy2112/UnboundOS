@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C13.M12 Step 3 Deterministic retrieval ranking: ready.
+- C13.M12 Step 4 Context packing: ready.
+
+## 2026-05-23T08:57:04Z - C13.M12 Step 3 Deterministic retrieval ranking
+
+- Status: completed
+- Summary: Added deterministic `retrieve_top_k` ranking over read-only local
+  document snapshots, with stable opaque-ref tie-breaking, caller-owned result
+  output, structured output overflow, and unsupported-query errors.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code, filesystem access, graph
+  mutation, storage behavior change, hidden execution, thread/queue, eval, or
+  execution hook.
+- Blockers: none.
 
 ## 2026-05-23T08:54:10Z - C13.M12 Step 2 Local document index snapshot
 
