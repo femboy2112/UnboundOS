@@ -4,7 +4,21 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C11.M10 Step 1 Scalar quantized kernel contracts: ready.
+- C11.M10 Step 2 Dispatch-selected scalar kernel table: ready.
+
+## 2026-05-23T08:14:39Z - C11.M10 Step 1 Scalar quantized kernel contracts
+
+- Status: completed
+- Summary: Added `crates/llm/src/kernels/scalar.rs` with a safe scalar i8 x i8
+  to i32 projection kernel, caller-provided output buffer contract, shape and
+  overflow errors, and deterministic tiny projection tests.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code or backend-specific SIMD symbols;
+  M10 starts with deterministic safe scalar math under the future kernel
+  boundary.
+- Blockers: none.
 
 ## 2026-05-23T08:12:15Z - C11.M10 campaign activation
 

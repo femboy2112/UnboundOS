@@ -16,6 +16,7 @@
 #![forbid(unsafe_op_in_unsafe_fn)]
 
 pub mod dispatch;
+pub mod kernels;
 pub mod tokenizer;
 pub mod toy_transformer;
 

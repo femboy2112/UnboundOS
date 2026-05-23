@@ -73,6 +73,8 @@ Step 6 — M10 completion audit
 
 # Step 1 — Scalar quantized kernel contracts
 
+Status: Completed.
+
 Purpose:
   Add scalar quantized kernel contracts and deterministic tests without
   touching SIMD-specific backends.
