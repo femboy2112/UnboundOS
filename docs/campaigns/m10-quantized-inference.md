@@ -175,6 +175,8 @@ Commit and push.
 
 # Step 4 — Streaming token surface
 
+Status: Completed.
+
 Purpose:
   Stream deterministic tokens through an explicit callable surface.
 

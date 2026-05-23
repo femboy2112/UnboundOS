@@ -19,6 +19,43 @@ pub struct QuantizedStepBuffers<'a> {
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct QuantizedStreamConfig {
+    pub max_new_tokens: u32,
+    pub step: QuantizedStepConfig,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct QuantizedStreamState {
+    pub generated_tokens: u32,
+    pub last_token: u32,
+}
+
+impl QuantizedStreamState {
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            generated_tokens: 0,
+            last_token: 0,
+        }
+    }
+}
+
+impl Default for QuantizedStreamState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub struct QuantizedStreamBuffers<'a> {
+    pub prompt_tokens: &'a [u32],
+    pub projection_input: &'a [i8],
+    pub projection_weights: &'a [i8],
+    pub projection_bias: Option<&'a [i32]>,
+    pub logits: &'a mut [i32],
+    pub output_tokens: &'a mut [u32],
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum QuantizedInferenceError {
     InvalidConfig,
     LogitOverflow { required: u32, available: u32 },
@@ -89,6 +126,56 @@ pub fn next_token_step(
     }
     buffers.output_tokens[0] = token_id;
     Ok(token_id)
+}
+
+/// Stream deterministic tokens through explicit caller-owned buffers.
+///
+/// # Errors
+///
+/// Returns `QuantizedInferenceError` when stream config/buffers are invalid or
+/// any underlying token step fails.
+pub fn stream_tokens(
+    model: LoadedUmdlModel,
+    kernels: &TensorKernelTable,
+    config: QuantizedStreamConfig,
+    state: &mut QuantizedStreamState,
+    buffers: &mut QuantizedStreamBuffers<'_>,
+) -> Result<usize, QuantizedInferenceError> {
+    if config.max_new_tokens == 0 || buffers.prompt_tokens.is_empty() {
+        return Err(QuantizedInferenceError::InvalidConfig);
+    }
+    let count = usize::try_from(config.max_new_tokens).unwrap_or(usize::MAX);
+    if buffers.output_tokens.len() < count {
+        return Err(QuantizedInferenceError::OutputOverflow {
+            required: config.max_new_tokens,
+            available: len_to_u32(buffers.output_tokens.len()),
+        });
+    }
+
+    for index in 0..count {
+        let step = QuantizedStepConfig {
+            candidate_token_base: config
+                .step
+                .candidate_token_base
+                .saturating_add(state.generated_tokens),
+            candidate_count: config.step.candidate_count,
+        };
+        let token = next_token_step(
+            model,
+            kernels,
+            step,
+            &mut QuantizedStepBuffers {
+                projection_input: buffers.projection_input,
+                projection_weights: buffers.projection_weights,
+                projection_bias: buffers.projection_bias,
+                logits: buffers.logits,
+                output_tokens: &mut buffers.output_tokens[index..=index],
+            },
+        )?;
+        state.generated_tokens = state.generated_tokens.saturating_add(1);
+        state.last_token = token;
+    }
+    Ok(count)
 }
 
 fn len_to_u32(len: usize) -> u32 {
@@ -297,6 +384,95 @@ mod tests {
             QuantizedInferenceError::TokenOutOfVocabulary {
                 token_id: 256,
                 vocabulary_size: 256,
+            }
+        );
+    }
+
+    #[test]
+    fn quantized_stream_produces_stable_token_sequence() {
+        let kernels = build_dispatch_table(SimdTier::Scalar);
+        let prompt = [u32::from(b'O'), u32::from(b'S')];
+        let input = [2, -3, 4];
+        let weights = [
+            1, 2, 3, //
+            -4, 5, -6, //
+            3, -2, 1,
+        ];
+        let bias = [7, -8, 3];
+        let mut logits = [0i32; 3];
+        let mut output = [0u32; 3];
+        let mut state = QuantizedStreamState::new();
+        let mut buffers = QuantizedStreamBuffers {
+            prompt_tokens: &prompt,
+            projection_input: &input,
+            projection_weights: &weights,
+            projection_bias: Some(&bias),
+            logits: &mut logits,
+            output_tokens: &mut output,
+        };
+
+        let count = stream_tokens(
+            model_view(),
+            &kernels,
+            QuantizedStreamConfig {
+                max_new_tokens: 3,
+                step: QuantizedStepConfig {
+                    candidate_token_base: 65,
+                    candidate_count: 3,
+                },
+            },
+            &mut state,
+            &mut buffers,
+        )
+        .unwrap();
+
+        assert_eq!(count, 3);
+        assert_eq!(output, [67, 68, 69]);
+        assert_eq!(
+            state,
+            QuantizedStreamState {
+                generated_tokens: 3,
+                last_token: 69,
+            }
+        );
+    }
+
+    #[test]
+    fn quantized_stream_reports_output_overflow() {
+        let kernels = build_dispatch_table(SimdTier::Scalar);
+        let prompt = [1u32];
+        let input = [1, 2];
+        let weights = [1, 1, 2, 2];
+        let mut logits = [0i32; 2];
+        let mut output = [0u32; 1];
+        let mut state = QuantizedStreamState::new();
+        let mut buffers = QuantizedStreamBuffers {
+            prompt_tokens: &prompt,
+            projection_input: &input,
+            projection_weights: &weights,
+            projection_bias: None,
+            logits: &mut logits,
+            output_tokens: &mut output,
+        };
+
+        assert_eq!(
+            stream_tokens(
+                model_view(),
+                &kernels,
+                QuantizedStreamConfig {
+                    max_new_tokens: 2,
+                    step: QuantizedStepConfig {
+                        candidate_token_base: 65,
+                        candidate_count: 2,
+                    },
+                },
+                &mut state,
+                &mut buffers,
+            )
+            .unwrap_err(),
+            QuantizedInferenceError::OutputOverflow {
+                required: 2,
+                available: 1,
             }
         );
     }

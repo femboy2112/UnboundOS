@@ -1,7 +1,7 @@
 # Current Campaign
 
 Campaign: C11 M10 Quantized Inference
-Active mission: C11.M10 Step 4 Streaming token surface
+Active mission: C11.M10 Step 5 Quantized inference smoke evidence and gates
 Status: ready
 Stop rule: stop after one complete mission unless the operator explicitly
 approves a bundled run; bundled runs stop at the next review gate, blocker, or
@@ -27,8 +27,8 @@ See `.codex/CURRENT_MISSION.md`.
 1. C11.M10 Step 1 Scalar quantized kernel contracts. Completed.
 2. C11.M10 Step 2 Dispatch-selected scalar kernel table. Completed.
 3. C11.M10 Step 3 Deterministic quantized token step. Completed.
-4. C11.M10 Step 4 Streaming token surface. Active.
-5. C11.M10 Step 5 Quantized inference smoke evidence and gates. Pending.
+4. C11.M10 Step 4 Streaming token surface. Completed.
+5. C11.M10 Step 5 Quantized inference smoke evidence and gates. Active.
 6. C11.M10 Step 6 M10 completion audit. Pending.
 
 ## Required Preflight For `go`

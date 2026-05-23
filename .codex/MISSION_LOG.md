@@ -4,7 +4,20 @@ Append one entry per completed mission. Keep entries concise and factual.
 
 ## Pending
 
-- C11.M10 Step 4 Streaming token surface: ready.
+- C11.M10 Step 5 Quantized inference smoke evidence and gates: ready.
+
+## 2026-05-23T08:22:02Z - C11.M10 Step 4 Streaming token surface
+
+- Status: completed
+- Summary: Added `QuantizedStreamConfig`, `QuantizedStreamState`, stream buffer
+  contracts, and `stream_tokens` to produce deterministic token sequences
+  through the quantized step using caller-owned prompt/logit/output buffers.
+- Verification: `python3 scripts/status.py`,
+  `python3 scripts/mission.py validate`, `make fmt`, `make clippy`,
+  `cargo test -p llm`, and `python3 scripts/verify.py --mission current`.
+- Memory-unsafety audit: no new unsafe code; streaming writes generated tokens
+  only to caller-provided output slices and has no graph mutation authority.
+- Blockers: none.
 
 ## 2026-05-23T08:20:06Z - C11.M10 Step 3 Deterministic quantized token step
 
